@@ -14,7 +14,7 @@ struct ContentView: View {
                 .imageScale(.large)
                 .foregroundStyle(.tint)
             
-            Text("YES")
+            Text("NEVER AGAIN")
 
         }
         .padding()
