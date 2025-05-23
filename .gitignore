@@ -1,0 +1,42 @@
+
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Swift Package Manager
+.build/
+Packages/
+.swiftpm/
+
+# CocoaPods (if you ever use it)
+Pods/
+Podfile.lock
+
+# Carthage (if you ever use it)
+Carthage/Build/
+Carthage/Checkouts/
+
+# fastlane (automated screenshots, reports)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# IDEs
+.idea/
+.vscode/
+
+# App-specific
+# (Uncomment if you do NOT want to commit your Firebase config)
+# GoogleService-Info.plist
