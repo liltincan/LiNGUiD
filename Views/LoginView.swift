@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
+    let onSuccess: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
@@ -17,8 +18,13 @@ struct LoginView: View {
             }
 
             Button("Log In") {
-                Task { await vm.login() }
+                Task {
+                    if await vm.login() {
+                        onSuccess()
+                    }
+                }
             }
+            .buttonStyle(.borderedProminent)
         }
         .padding()
     }

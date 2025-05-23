@@ -8,16 +8,18 @@ class LoginViewModel: ObservableObject {
 
     private let authService: AuthService
 
-    init(authService: AuthService = DependencyContainer.shared.resolve()) {
+    init(authService: AuthService = FirebaseAuthService.shared) {
         self.authService = authService
     }
 
-    func login() async {
+    /// Returns true on success, false on failure
+    func login() async -> Bool {
         do {
             try await authService.signIn(email: email, password: password)
-            // TODO: notify coordinator of success
+            return true
         } catch {
             errorMessage = error.localizedDescription
+            return false
         }
     }
 }

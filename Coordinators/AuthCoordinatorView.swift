@@ -8,16 +8,10 @@ struct AuthCoordinatorView: View {
             if isLoggedIn {
                 VideoFeedCoordinatorView()
             } else {
-                LoginView()
-                    .onLoginSuccess { isLoggedIn = true }
+                LoginView {
+                    isLoggedIn = true
+                }
             }
         }
-    }
-}
-
-private extension View {
-    func onLoginSuccess(_ action: @escaping () -> Void) -> some View {
-        // TODO: hook into notification or binding
-        self
     }
 }

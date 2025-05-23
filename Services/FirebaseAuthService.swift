@@ -1,17 +1,21 @@
+// Services/FirebaseAuthService.swift
+
 import FirebaseAuth
 
 final class FirebaseAuthService: AuthService {
+    static let shared = FirebaseAuthService()
+    // Removed `private` so you can call `FirebaseAuthService()` if needed
+    init() {}
+
     var currentUserID: String? {
         Auth.auth().currentUser?.uid
     }
 
     func signIn(email: String, password: String) async throws {
-        // TODO: implement Firebase Auth email/password sign-in
         _ = try await Auth.auth().signIn(withEmail: email, password: password)
     }
 
     func signOut() throws {
-        // TODO: implement sign-out
         try Auth.auth().signOut()
     }
 }

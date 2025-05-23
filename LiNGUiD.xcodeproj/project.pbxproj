@@ -30,6 +30,18 @@
 		8FB929562DE02A790020AFCD /* VideoRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F2322DE023C300397726 /* VideoRepository.swift */; };
 		8FB929572DE02A790020AFCD /* FirebaseAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F2312DE023A600397726 /* FirebaseAuthService.swift */; };
 		8FB929582DE02A8A0020AFCD /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F23B2DE024B400397726 /* DependencyContainer.swift */; };
+		8FB9295B2DE10B7B0020AFCD /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8FB9295A2DE10B7B0020AFCD /* FirebaseCore */; };
+		8FB9295D2DE10B860020AFCD /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 8FB9295C2DE10B860020AFCD /* FirebaseAuth */; };
+		8FB9295F2DE10B910020AFCD /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 8FB9295E2DE10B910020AFCD /* FirebaseFirestore */; };
+		8FB929612DE10B9B0020AFCD /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 8FB929602DE10B9B0020AFCD /* FirebaseStorage */; };
+		8FB929632DE115090020AFCD /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929622DE115040020AFCD /* AppState.swift */; };
+		8FB929652DE1161A0020AFCD /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929642DE116100020AFCD /* OnboardingFlowView.swift */; };
+		8FB929672DE116370020AFCD /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929662DE1162E0020AFCD /* MainTabView.swift */; };
+		8FB929692DE116590020AFCD /* OnboardingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929682DE116460020AFCD /* OnboardingPageView.swift */; };
+		8FB9296B2DE1168B0020AFCD /* ChatListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296A2DE116820020AFCD /* ChatListView.swift */; };
+		8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296C2DE1169D0020AFCD /* DashboardView.swift */; };
+		8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296E2DE116BC0020AFCD /* PracticeView.swift */; };
+		8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929702DE116CE0020AFCD /* ProfileView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +86,14 @@
 		8F823B4C2DD987F8007B6E5E /* LiNGUiD.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LiNGUiD.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F823B5A2DD987FA007B6E5E /* LiNGUiDTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LiNGUiDTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F823B642DD987FA007B6E5E /* LiNGUiDUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LiNGUiDUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8FB929622DE115040020AFCD /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		8FB929642DE116100020AFCD /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
+		8FB929662DE1162E0020AFCD /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		8FB929682DE116460020AFCD /* OnboardingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageView.swift; sourceTree = "<group>"; };
+		8FB9296A2DE116820020AFCD /* ChatListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListView.swift; sourceTree = "<group>"; };
+		8FB9296C2DE1169D0020AFCD /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		8FB9296E2DE116BC0020AFCD /* PracticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeView.swift; sourceTree = "<group>"; };
+		8FB929702DE116CE0020AFCD /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,8 +103,12 @@
 			files = (
 				8F51F2282DE022D200397726 /* FirebaseAnalytics in Frameworks */,
 				8F51F22A2DE022D200397726 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
+				8FB929612DE10B9B0020AFCD /* FirebaseStorage in Frameworks */,
 				8F51F2262DE022D200397726 /* FirebaseAI in Frameworks */,
 				8F51F22E2DE022D200397726 /* FirebaseAppCheck in Frameworks */,
+				8FB9295B2DE10B7B0020AFCD /* FirebaseCore in Frameworks */,
+				8FB9295F2DE10B910020AFCD /* FirebaseFirestore in Frameworks */,
+				8FB9295D2DE10B860020AFCD /* FirebaseAuth in Frameworks */,
 				8F51F22C2DE022D200397726 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -150,9 +174,15 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				8FB929702DE116CE0020AFCD /* ProfileView.swift */,
+				8FB9296E2DE116BC0020AFCD /* PracticeView.swift */,
+				8FB9296C2DE1169D0020AFCD /* DashboardView.swift */,
+				8FB9296A2DE116820020AFCD /* ChatListView.swift */,
+				8FB929682DE116460020AFCD /* OnboardingPageView.swift */,
+				8FB929662DE1162E0020AFCD /* MainTabView.swift */,
+				8FB929642DE116100020AFCD /* OnboardingFlowView.swift */,
 				8F51F2382DE0247000397726 /* VideoFeedView.swift */,
 				8F51F2372DE0245500397726 /* LoginView.swift */,
-				8F51F2362DE0243400397726 /* RootCoordinatorView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -162,6 +192,7 @@
 			children = (
 				8F51F23A2DE0249A00397726 /* VideoFeedCoordinatorView.swift */,
 				8F51F2392DE0248500397726 /* AuthCoordinatorView.swift */,
+				8F51F2362DE0243400397726 /* RootCoordinatorView.swift */,
 			);
 			path = Coordinators;
 			sourceTree = "<group>";
@@ -169,6 +200,7 @@
 		8F51F2222DE01CB500397726 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				8FB929622DE115040020AFCD /* AppState.swift */,
 				8F51F23B2DE024B400397726 /* DependencyContainer.swift */,
 			);
 			path = Utilities;
@@ -200,6 +232,7 @@
 				8F51F21E2DE01C8A00397726 /* Views */,
 				8F51F2222DE01CB500397726 /* Utilities */,
 				8F51F2232DE01CCF00397726 /* Resources */,
+				8FB929592DE10B7B0020AFCD /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -211,6 +244,13 @@
 				8F823B642DD987FA007B6E5E /* LiNGUiDUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8FB929592DE10B7B0020AFCD /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -235,6 +275,10 @@
 				8F51F2292DE022D200397726 /* FirebaseAnalyticsOnDeviceConversion */,
 				8F51F22B2DE022D200397726 /* FirebaseAnalyticsWithoutAdIdSupport */,
 				8F51F22D2DE022D200397726 /* FirebaseAppCheck */,
+				8FB9295A2DE10B7B0020AFCD /* FirebaseCore */,
+				8FB9295C2DE10B860020AFCD /* FirebaseAuth */,
+				8FB9295E2DE10B910020AFCD /* FirebaseFirestore */,
+				8FB929602DE10B9B0020AFCD /* FirebaseStorage */,
 			);
 			productName = LiNGUiD;
 			productReference = 8F823B4C2DD987F8007B6E5E /* LiNGUiD.app */;
@@ -371,15 +415,23 @@
 				8FB9294D2DE02A320020AFCD /* VideoFeedView.swift in Sources */,
 				8FB9294C2DE02A2C0020AFCD /* LoginView.swift in Sources */,
 				8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */,
+				8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */,
 				8FB929522DE02A600020AFCD /* VideoFeedCoordinatorView.swift in Sources */,
 				8FB9294B2DE02A260020AFCD /* RootCoordinatorView.swift in Sources */,
+				8FB929692DE116590020AFCD /* OnboardingPageView.swift in Sources */,
+				8FB929632DE115090020AFCD /* AppState.swift in Sources */,
+				8FB9296B2DE1168B0020AFCD /* ChatListView.swift in Sources */,
 				8FB929542DE02A790020AFCD /* FirestoreVideoRepository.swift in Sources */,
 				8FB929552DE02A790020AFCD /* AuthService.swift in Sources */,
+				8FB929672DE116370020AFCD /* MainTabView.swift in Sources */,
+				8FB929652DE1161A0020AFCD /* OnboardingFlowView.swift in Sources */,
 				8FB929562DE02A790020AFCD /* VideoRepository.swift in Sources */,
 				8FB929572DE02A790020AFCD /* FirebaseAuthService.swift in Sources */,
 				8FB929502DE02A540020AFCD /* VideoFeedViewModel.swift in Sources */,
 				8FB9294F2DE02A3F0020AFCD /* Video.swift in Sources */,
+				8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */,
 				8FB929512DE02A590020AFCD /* LoginViewModel.swift in Sources */,
+				8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */,
 				8FB929532DE02A650020AFCD /* AuthCoordinatorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -770,6 +822,26 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAppCheck;
+		};
+		8FB9295A2DE10B7B0020AFCD /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		8FB9295C2DE10B860020AFCD /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		8FB9295E2DE10B910020AFCD /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		8FB929602DE10B9B0020AFCD /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
