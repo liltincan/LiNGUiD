@@ -11,7 +11,7 @@ struct LiNGUiDApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootCoordinatorView()
+            RootCoordinatorView().environment(\.font, .custom("Poppins-Regular", size: 16))
         }
     }
 }
