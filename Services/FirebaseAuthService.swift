@@ -3,6 +3,7 @@
 import FirebaseAuth
 import GoogleSignIn
 import FirebaseCore
+import AuthenticationServices
 
 
 final class FirebaseAuthService: AuthService {
@@ -58,6 +59,20 @@ final class FirebaseAuthService: AuthService {
         } catch {
             print("Google sign-in failed:", error.localizedDescription)
         }
+    }
+    
+    func signInWithApple(credential: ASAuthorizationAppleIDCredential, rawNonce: String) async throws {
+        guard let tokenData = credential.identityToken,
+              let tokenString = String(data: tokenData, encoding: .utf8) else {
+            throw NSError(domain: "FirebaseAuth", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid identity token"])
+        }
+        
+        let firebaseCredential = OAuthProvider.credential(
+            providerID: AuthProviderID.apple,
+            idToken: tokenString,
+            rawNonce: rawNonce
+        )
+        try await Auth.auth().signIn(with: firebaseCredential)
     }
 }
 

@@ -35,6 +35,8 @@ class LoginViewModel: ObservableObject {
         }
     }
     
+    
+    
     func logout() {
         do{
             try authService.signOut()
