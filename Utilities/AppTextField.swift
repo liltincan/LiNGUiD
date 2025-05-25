@@ -21,7 +21,7 @@ struct AppTextField: View {
                 TextField(placeholder, text: $text)
                     .keyboardType(keyboardType)
             }
-        }.padding(12)
+        }.padding(14)
             .font(.system(size: 18))
             .background(Color.white)
             .cornerRadius(10)

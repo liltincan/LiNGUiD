@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 @MainActor
 class LoginViewModel: ObservableObject {
@@ -20,6 +21,25 @@ class LoginViewModel: ObservableObject {
         } catch {
             errorMessage = error.localizedDescription
             return false
+        }
+    }
+    
+    func loginWithGoogle(presenting: UIViewController, onSuccess: @escaping ()-> Void ){
+        Task{
+            do{
+                try await authService.signInWithGoogle(presenting: presenting)
+                onSuccess()
+            } catch{
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+    
+    func logout() {
+        do{
+            try authService.signOut()
+        } catch{
+            
         }
     }
 }
