@@ -38,15 +38,15 @@
 	</array>
 	<key>UISceneManifest</key>
 	<dict>
-        <key>UIAppFonts</key>
-        <array>
-            <string>Poppins-Regular.ttf</string>
-            <string>Poppins-Bold.ttf</string>
-            <string>Poppins-SemiBold.ttf</string>
-            <string>Poppins-Light.ttf</string>
-            <string>Poppins-Medium.ttf</string>
-            <string>Poppins-Thin.ttf</string>
-        </array>
+		<key>UIAppFonts</key>
+		<array>
+			<string>Poppins-Regular.ttf</string>
+			<string>Poppins-Bold.ttf</string>
+			<string>Poppins-SemiBold.ttf</string>
+			<string>Poppins-Light.ttf</string>
+			<string>Poppins-Medium.ttf</string>
+			<string>Poppins-Thin.ttf</string>
+		</array>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 		<key>UISceneConfigurations</key>
@@ -62,5 +62,14 @@
 			</array>
 		</dict>
 	</dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.46600094458-v6g0steqhk4kb3d4mmvn4qlvbsu7nr7b</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -8,7 +8,7 @@ struct LoginView: View {
         ZStack{
             Color.black.ignoresSafeArea()
             VStack(spacing: 20) {
-                Image("AppLogoPdf").resizable().scaledToFit().padding(.horizontal, 30)
+                Image("AppLogoPdf").resizable().scaledToFit().padding(30)
                 VStack(spacing: 5){
                     Text("Create an account")
                     .foregroundColor(Color.white)
@@ -18,13 +18,6 @@ struct LoginView: View {
                     .foregroundColor(Color.white)
                 }
                 AppTextField(placeholder: "Email", text: $vm.email, keyboardType: UIKeyboardType.emailAddress)
-                    
-//                TextField("Email", text: $vm.email)
-//                    .autocapitalization(.none)
-//                    .textFieldStyle(.roundedBorder)
-//
-//                SecureField("Password", text: $vm.password)
-//                    .textFieldStyle(.roundedBorder)
 
                 if let error = vm.errorMessage {
                     Text(error).foregroundColor(.red)
@@ -43,8 +36,48 @@ struct LoginView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color(red: 124/255, green: 58/255, blue: 237/255))
-                        .cornerRadius(12)
+                        .cornerRadius(10)
                 }
+                
+                HStack{
+                    Rectangle()
+                        .fill(Color.white.opacity(0.5))
+                        .frame(height: 1)
+                    
+                    Text("or")
+                        .foregroundColor(Color.white.opacity(0.5))
+                    
+                    Rectangle()
+                        .fill(Color.white.opacity(0.5))
+                        .frame(height: 1)
+                }
+                
+                AppSocialLoginButton(icon: "GoogleLogo", text: "Continue with Google", action: {
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let rootVC = windowScene.windows.first?.rootViewController {
+                        vm.loginWithGoogle(presenting: rootVC){
+                            onSuccess()
+                        }
+                    }
+                })
+                
+                AppSocialLoginButton(icon: "AppleLogo", text: "Continue with Apple", action: {})
+                
+                VStack{
+                    Text("By clicking continue, you agree to our ")
+                        .foregroundColor(Color.white.opacity(0.5))
+                    + Text("Terms of Service")
+                        .foregroundColor(Color.white)
+                        .fontWeight(.medium)
+                    + Text(" and ")
+                        .foregroundColor(Color.white.opacity(0.5))
+                    + Text("Privacy Policy")
+                        .foregroundColor(Color.white)
+                        .fontWeight(.medium)
+                }
+                .multilineTextAlignment(.center)
+                .padding(.vertical,10)
+                
             }
             .padding()
         }

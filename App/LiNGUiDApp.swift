@@ -1,4 +1,6 @@
 import SwiftUI
+import FirebaseAuth
+import GoogleSignIn
 import FirebaseCore
 
 @main
@@ -7,6 +9,7 @@ struct LiNGUiDApp: App {
         // TODO: configure Firebase and dependency container
         FirebaseApp.configure()
         DependencyContainer.shared.registerAll()
+
     }
 
     var body: some Scene {
