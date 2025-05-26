@@ -22,12 +22,13 @@ struct AppSocialLoginButton: View {
                 Text(text)
                     .foregroundColor(.black)
                     .fontWeight(.medium)
+                    .font(.system(size: 20))
 
                        
             }
             .padding()
             .frame(maxWidth: .infinity)
-            .background(Color(.systemGray6))
+            .background(Color(.white))
             .cornerRadius(10)
         }
     }

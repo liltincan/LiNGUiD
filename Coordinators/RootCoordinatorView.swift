@@ -1,13 +1,15 @@
 import SwiftUI
 
 struct RootCoordinatorView: View {
-    @StateObject private var state = AppState()
+    @EnvironmentObject var state: AppState
 
     var body: some View {
         Group {
             if !state.isSignedIn {
+                
                 AuthCoordinatorView()
                     .onAppear {
+                        print(state.isSignedIn)
                         // in case user restored session
                         state.isSignedIn = FirebaseAuthService.shared.currentUserID != nil
                     }

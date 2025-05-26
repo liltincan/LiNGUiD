@@ -7,6 +7,7 @@ import AuthenticationServices
 
 
 final class FirebaseAuthService: AuthService {
+   
     static let shared = FirebaseAuthService()
     // Removed `private` so you can call `FirebaseAuthService()` if needed
     init() {}
@@ -31,8 +32,8 @@ final class FirebaseAuthService: AuthService {
     
     // Sign in with Google
     
-    func signInWithGoogle(presenting: UIViewController) async throws {
-        guard let clientID = FirebaseApp.app()?.options.clientID else { return }
+    func signInWithGoogle(presenting: UIViewController) async throws -> Bool {
+        guard let clientID = FirebaseApp.app()?.options.clientID else { return false}
         
         let config = GIDConfiguration(clientID: clientID)
         
@@ -44,7 +45,7 @@ final class FirebaseAuthService: AuthService {
 
             guard let idToken = user.idToken?.tokenString else {
                 print("Missing ID Token")
-                return
+                return false
             }
 
             let accessToken = user.accessToken.tokenString
@@ -54,10 +55,12 @@ final class FirebaseAuthService: AuthService {
             )
 
             try await Auth.auth().signIn(with: credential)
+            return true
             
             
         } catch {
             print("Google sign-in failed:", error.localizedDescription)
+            return false
         }
     }
     

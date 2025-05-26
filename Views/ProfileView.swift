@@ -2,9 +2,12 @@ import SwiftUI
 
 struct ProfileView: View {
     @StateObject private var vm = LoginViewModel()
-    @StateObject private var state = AppState()
+    @EnvironmentObject var state: AppState
+
+
     var body: some View {
         VStack {
+            
             Image(systemName: "person.crop.circle.fill")
                 .resizable()
                 .frame(width: 100, height: 100)
@@ -14,8 +17,10 @@ struct ProfileView: View {
             
             Button {
                 Task {
-                    vm.logout()
-                    state.isSignedIn = false
+                    let result = vm.logout()
+                    if (result){
+                        state.isSignedIn = false
+                    }
                 }
             } label: {
                 Text("Log Out")
@@ -35,5 +40,7 @@ struct ProfileView: View {
 struct ProfileView_Previews: PreviewProvider {
     static var previews: some View {
         ProfileView()
+            .environmentObject(AppState())
     }
 }
+
