@@ -7,7 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */; };
+		609FE7C92DE2D42600F6DE0E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F23D2DE0257500397726 /* Info.plist */; };
+		609FE7CA2DE2D42600F6DE0E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F23D2DE0257500397726 /* Info.plist */; };
 		60C7E5B62DE1B0BD00C1AAF2 /* AppTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C7E5B52DE1B0B700C1AAF2 /* AppTextField.swift */; };
+		60C7E5B82DE2B52600C1AAF2 /* AppSocialLoginButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C7E5B72DE2B51B00C1AAF2 /* AppSocialLoginButton.swift */; };
+		60C7E5BB2DE2C0C500C1AAF2 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 60C7E5BA2DE2C0C500C1AAF2 /* GoogleSignIn */; };
+		60C7E5BD2DE2C0C500C1AAF2 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 60C7E5BC2DE2C0C500C1AAF2 /* GoogleSignInSwift */; };
+		60DAC59C2DE2F770002C5410 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */; };
 		8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F1FE2DE0183300397726 /* LiNGUiDApp.swift */; };
 		8F51F2042DE0183300397726 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F1F82DE0183300397726 /* GoogleService-Info.plist */; };
 		8F51F2052DE0183300397726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F1F62DE0183300397726 /* Assets.xcassets */; };
@@ -63,7 +70,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonceGenerator.swift; sourceTree = "<group>"; };
 		60C7E5B52DE1B0B700C1AAF2 /* AppTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTextField.swift; sourceTree = "<group>"; };
+		60C7E5B72DE2B51B00C1AAF2 /* AppSocialLoginButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSocialLoginButton.swift; sourceTree = "<group>"; };
+		60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
 		8F51F1F62DE0183300397726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F51F1F82DE0183300397726 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		8F51F1FC2DE0183300397726 /* LiNGUiD.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiNGUiD.entitlements; sourceTree = "<group>"; };
@@ -116,10 +126,12 @@
 				8FB929612DE10B9B0020AFCD /* FirebaseStorage in Frameworks */,
 				8F51F2262DE022D200397726 /* FirebaseAI in Frameworks */,
 				8F51F22E2DE022D200397726 /* FirebaseAppCheck in Frameworks */,
+				60C7E5BB2DE2C0C500C1AAF2 /* GoogleSignIn in Frameworks */,
 				8FB9295B2DE10B7B0020AFCD /* FirebaseCore in Frameworks */,
 				8FB9295F2DE10B910020AFCD /* FirebaseFirestore in Frameworks */,
 				8FB9295D2DE10B860020AFCD /* FirebaseAuth in Frameworks */,
 				8F51F22C2DE022D200397726 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
+				60C7E5BD2DE2C0C500C1AAF2 /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -175,6 +187,7 @@
 		8F51F21C2DE01C6900397726 /* View Models */ = {
 			isa = PBXGroup;
 			children = (
+				60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */,
 				8F51F2352DE0241E00397726 /* VideoFeedViewModel.swift */,
 				8F51F2342DE023FB00397726 /* LoginViewModel.swift */,
 			);
@@ -210,6 +223,8 @@
 		8F51F2222DE01CB500397726 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */,
+				60C7E5B72DE2B51B00C1AAF2 /* AppSocialLoginButton.swift */,
 				60C7E5B52DE1B0B700C1AAF2 /* AppTextField.swift */,
 				8FB929622DE115040020AFCD /* AppState.swift */,
 				8F51F23B2DE024B400397726 /* DependencyContainer.swift */,
@@ -294,6 +309,8 @@
 				8FB9295C2DE10B860020AFCD /* FirebaseAuth */,
 				8FB9295E2DE10B910020AFCD /* FirebaseFirestore */,
 				8FB929602DE10B9B0020AFCD /* FirebaseStorage */,
+				60C7E5BA2DE2C0C500C1AAF2 /* GoogleSignIn */,
+				60C7E5BC2DE2C0C500C1AAF2 /* GoogleSignInSwift */,
 			);
 			productName = LiNGUiD;
 			productReference = 8F823B4C2DD987F8007B6E5E /* LiNGUiD.app */;
@@ -374,6 +391,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				60C7E5B92DE2C0C500C1AAF2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8F823B4D2DD987F8007B6E5E /* Products */;
@@ -409,6 +427,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				609FE7C92DE2D42600F6DE0E /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -416,6 +435,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				609FE7CA2DE2D42600F6DE0E /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -433,6 +453,7 @@
 				8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */,
 				8FB929522DE02A600020AFCD /* VideoFeedCoordinatorView.swift in Sources */,
 				8FB9294B2DE02A260020AFCD /* RootCoordinatorView.swift in Sources */,
+				604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */,
 				8FB929692DE116590020AFCD /* OnboardingPageView.swift in Sources */,
 				8FB929632DE115090020AFCD /* AppState.swift in Sources */,
 				8FB9296B2DE1168B0020AFCD /* ChatListView.swift in Sources */,
@@ -440,6 +461,7 @@
 				8FB929552DE02A790020AFCD /* AuthService.swift in Sources */,
 				8FB929672DE116370020AFCD /* MainTabView.swift in Sources */,
 				8FB929652DE1161A0020AFCD /* OnboardingFlowView.swift in Sources */,
+				60DAC59C2DE2F770002C5410 /* ProfileViewModel.swift in Sources */,
 				8FB929562DE02A790020AFCD /* VideoRepository.swift in Sources */,
 				8FB929572DE02A790020AFCD /* FirebaseAuthService.swift in Sources */,
 				8FB929502DE02A540020AFCD /* VideoFeedViewModel.swift in Sources */,
@@ -448,6 +470,7 @@
 				8FB929512DE02A590020AFCD /* LoginViewModel.swift in Sources */,
 				8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */,
 				8FB929532DE02A650020AFCD /* AuthCoordinatorView.swift in Sources */,
+				60C7E5B82DE2B52600C1AAF2 /* AppSocialLoginButton.swift in Sources */,
 				60C7E5B62DE1B0BD00C1AAF2 /* AppTextField.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -602,28 +625,32 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = LiNGUiD.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5B7V5JB4WS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Resources/Info.plist\n";
-				"INFOPLIST_FILE[sdk=*]" = "";
+				INFOPLIST_FILE = "";
+				"INFOPLIST_FILE[sdk=*]" = Resources/Info.plist;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = Julian.LiNGUiD;
+				PRODUCT_BUNDLE_IDENTIFIER = LiNGUid.com;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -642,28 +669,32 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = LiNGUiD.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 5B7V5JB4WS;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Resources/Info.plist\n";
-				"INFOPLIST_FILE[sdk=*]" = "";
+				INFOPLIST_FILE = "";
+				"INFOPLIST_FILE[sdk=*]" = Resources/Info.plist;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = armv7;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = Julian.LiNGUiD;
+				PRODUCT_BUNDLE_IDENTIFIER = LiNGUid.com;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -803,6 +834,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		60C7E5B92DE2C0C500C1AAF2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
 		8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -814,6 +853,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		60C7E5BA2DE2C0C500C1AAF2 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60C7E5B92DE2C0C500C1AAF2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		60C7E5BC2DE2C0C500C1AAF2 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60C7E5B92DE2C0C500C1AAF2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
 		8F51F2252DE022D200397726 /* FirebaseAI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

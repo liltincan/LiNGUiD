@@ -1,35 +1,69 @@
 import SwiftUI
+import _AuthenticationServices_SwiftUI
 
 struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
     let onSuccess: () -> Void
 
     var body: some View {
-        ZStack{
+        ZStack {
             Color.black.ignoresSafeArea()
-            VStack(spacing: 20) {
-                Image("AppLogoPdf").resizable().scaledToFit().padding(.horizontal, 30)
-                VStack(spacing: 5){
-                    Text("Create an account")
-                    .foregroundColor(Color.white)
-                    .bold()
-                    .font(.system(size: 20))
-                    Text("Enter your email to sign up for LiNGUiD")
-                    .foregroundColor(Color.white)
-                }
-                AppTextField(placeholder: "Email", text: $vm.email, keyboardType: UIKeyboardType.emailAddress)
-                    
-//                TextField("Email", text: $vm.email)
-//                    .autocapitalization(.none)
-//                    .textFieldStyle(.roundedBorder)
-//
-//                SecureField("Password", text: $vm.password)
-//                    .textFieldStyle(.roundedBorder)
 
-                if let error = vm.errorMessage {
-                    Text(error).foregroundColor(.red)
+            VStack(spacing: 20) {
+                Image("AppLogoPdf")
+                    .scaledToFit()
+                    .padding(30)
+
+                VStack(spacing: 5) {
+                    Text("Create an account")
+                        .foregroundColor(.white)
+                        .bold()
+                        .font(.system(size: 20))
+
+                    Text("Enter your email to sign up for LiNGUiD")
+                        .foregroundColor(.white)
                 }
-                
+
+                VStack(spacing: 20) {
+                    ZStack {
+                        AppTextField(
+                            placeholder: "",
+                            text: $vm.email,
+                            keyboardType: .emailAddress
+                        )
+
+                        if vm.email.isEmpty {
+                            Text("Email")
+                                .foregroundColor(.gray)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 15)
+                        }
+                    }
+                    if(vm.email != "" || !vm.email.isEmpty){
+                        ZStack {
+                            AppTextField(
+                                placeholder: "",
+                                text: $vm.password,
+                                isSecureTextEntry: true,
+                            )
+
+                            if vm.password.isEmpty {
+                                Text("Password")
+                                    .foregroundColor(.gray)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 15)
+                            }
+                        }
+                    }
+                    
+
+                    if let error = vm.errorMessage {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+
                 Button {
                     Task {
                         if await vm.login() {
@@ -43,7 +77,72 @@ struct LoginView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color(red: 124/255, green: 58/255, blue: 237/255))
-                        .cornerRadius(12)
+                        .cornerRadius(10)
+                }
+
+                HStack {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.5))
+                        .frame(height: 1)
+
+                    Text("or")
+                        .foregroundColor(Color.white.opacity(0.5))
+
+                    Rectangle()
+                        .fill(Color.white.opacity(0.5))
+                        .frame(height: 1)
+                }
+
+                AppSocialLoginButton(
+                    icon: "GoogleLogo",
+                    text: "Continue with Google",
+                    action: {
+                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                           let rootVC = windowScene.windows.first?.rootViewController {
+                            vm.loginWithGoogle(presenting: rootVC) {
+                                onSuccess()
+                            }
+                        }
+                    }
+                )
+
+                SignInWithAppleButton(
+                    .continue,
+                    onRequest: { request in
+                        vm.prepareAppleSignInRequest(request)
+                    },
+                    onCompletion: { result in
+                        switch result {
+                        case .success(let authResults):
+                            if let appleIDCredential = authResults.credential as? ASAuthorizationAppleIDCredential {
+                                vm.loginWithApple(credential: appleIDCredential) {
+                                    onSuccess()
+                                }
+                            }
+                        case .failure(let error):
+                            vm.errorMessage = error.localizedDescription
+                        }
+                    }
+                )
+                .signInWithAppleButtonStyle(.whiteOutline)
+                .frame(height: 55)
+                .cornerRadius(12)
+
+                VStack {
+                    (
+                        Text("By clicking continue, you agree to our ")
+                            .foregroundColor(.white.opacity(0.5)) +
+                        Text("Terms of Service")
+                            .foregroundColor(.white)
+                            .fontWeight(.medium) +
+                        Text(" and ")
+                            .foregroundColor(.white.opacity(0.5)) +
+                        Text("Privacy Policy")
+                            .foregroundColor(.white)
+                            .fontWeight(.medium)
+                    )
+                    .multilineTextAlignment(.center)
+                    .padding(.vertical, 10)
                 }
             }
             .padding()
