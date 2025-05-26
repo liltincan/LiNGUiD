@@ -7,6 +7,7 @@ import AuthenticationServices
 
 
 final class FirebaseAuthService: AuthService {
+    
    
     static let shared = FirebaseAuthService()
     // Removed `private` so you can call `FirebaseAuthService()` if needed
@@ -16,9 +17,27 @@ final class FirebaseAuthService: AuthService {
         Auth.auth().currentUser?.uid
     }
     
-    func signIn(email: String, password: String) async throws {
-        _ = try await Auth.auth().signIn(withEmail: email, password: password)
+    @MainActor
+    func registerOrLogin(email: String, password: String) async -> String? {
+        do {
+            try await Auth.auth().createUser(withEmail: email, password: password)
+            return nil
+        } catch let error as NSError {
+            if error.code == AuthErrorCode.emailAlreadyInUse.rawValue {
+                do {
+                    try await Auth.auth().signIn(withEmail: email, password: password)
+                    return nil
+                } catch {
+                    return "Incorrect password for existing account"
+                }
+            }
+            return error.localizedDescription
+        }
     }
+
+
+
+    
     
     func signOut() throws {
         if(GIDSignIn.sharedInstance.currentUser != nil){

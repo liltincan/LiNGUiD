@@ -17,21 +17,26 @@ class LoginViewModel: ObservableObject {
     }
 
     /// Returns true on success, false on failure
+    @MainActor
     func login() async -> Bool {
-        if(email == "" || email.isEmpty){
+        guard !email.isEmpty else {
             errorMessage = "Email is required"
             return false
-        } else{
-            do {
-                try await authService.signIn(email: email, password: password)
-                return true
-            } catch {
-                errorMessage = error.localizedDescription
+        }
+
+        do {
+            let result = try await authService.registerOrLogin(email: email, password: password)
+            if let error = result {
+                errorMessage = error
                 return false
             }
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
         }
-        
     }
+
     
     func loginWithGoogle(presenting: UIViewController, onSuccess: @escaping ()-> Void ){
         Task{

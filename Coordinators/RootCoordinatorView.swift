@@ -9,7 +9,7 @@ struct RootCoordinatorView: View {
                 
                 AuthCoordinatorView()
                     .onAppear {
-                        print(state.isSignedIn)
+                        print("isSignedIn = " , state.isSignedIn)
                         // in case user restored session
                         state.isSignedIn = FirebaseAuthService.shared.currentUserID != nil
                     }
@@ -24,5 +24,4 @@ struct RootCoordinatorView: View {
         }
     }
 }
-
 

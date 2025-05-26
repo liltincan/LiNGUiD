@@ -24,7 +24,7 @@ struct LoginView: View {
                         .foregroundColor(.white)
                 }
 
-                VStack(spacing: 10) {
+                VStack(spacing: 20) {
                     ZStack {
                         AppTextField(
                             placeholder: "",
@@ -39,6 +39,23 @@ struct LoginView: View {
                                 .padding(.leading, 15)
                         }
                     }
+                    if(vm.email != "" || !vm.email.isEmpty){
+                        ZStack {
+                            AppTextField(
+                                placeholder: "",
+                                text: $vm.password,
+                                isSecureTextEntry: true,
+                            )
+
+                            if vm.password.isEmpty {
+                                Text("Password")
+                                    .foregroundColor(.gray)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 15)
+                            }
+                        }
+                    }
+                    
 
                     if let error = vm.errorMessage {
                         Text(error)
