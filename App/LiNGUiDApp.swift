@@ -5,10 +5,10 @@ import FirebaseCore
 
 @main
 struct LiNGUiDApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var state = AppState()
 
     init() {
-        FirebaseApp.configure()
         DependencyContainer.shared.registerAll()
     }
 
@@ -16,7 +16,7 @@ struct LiNGUiDApp: App {
         WindowGroup {
             RootCoordinatorView()
                 .environmentObject(state) 
-                .environment(\.font, .custom("Poppins-Regular", size: 16))
+                .environment(\.font, .custom("Poppins", size: 16))
         }
     }
 }

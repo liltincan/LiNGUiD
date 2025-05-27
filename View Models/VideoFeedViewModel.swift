@@ -20,9 +20,10 @@ class VideoFeedViewModel: ObservableObject {
         defer { isLoading = false }
         
         do {
-            let newVideos = try await repository.fetchVideos(afterID: nil, limit: pageSize)
+            let newVideos = try await repository.fetchVideos(afterID: "russian", limit: pageSize)
             videos = newVideos
             lastID = newVideos.last?.id
+//            print("TEST:        ",newVideos.last?.id)
         } catch {
             print("Error loading initial videos: \(error)")
         }
