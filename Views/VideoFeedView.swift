@@ -13,7 +13,7 @@ struct VideoFeedView: View {
                     VideoPlayer(player: player)
                         .frame(height: 300)
                         .onAppear {
-                            Task { await vm.loadMore() }
+                            Task { await vm.fetchMoreVideos() }
                         }
                 }
                 if vm.isLoading {
@@ -21,6 +21,6 @@ struct VideoFeedView: View {
                 }
             }
         }
-        .task { await vm.loadInitial() }
+        .task { await vm.fetchInitialVideos() }
     }
 }
