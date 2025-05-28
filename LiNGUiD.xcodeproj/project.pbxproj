@@ -52,6 +52,8 @@
 		8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929702DE116CE0020AFCD /* ProfileView.swift */; };
 		D69E51D42DE66EF600329D64 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */; };
 		D69E51D62DE6735A00329D64 /* VideoCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51D52DE6735A00329D64 /* VideoCache.swift */; };
+		D69E51FF2DE6C0F600329D64 /* VideoPlayerLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */; };
+		D69E52012DE6CC5500329D64 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E52002DE6CC5500329D64 /* PlayerView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -110,6 +112,8 @@
 		8FB929702DE116CE0020AFCD /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		D69E51D52DE6735A00329D64 /* VideoCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCache.swift; sourceTree = "<group>"; };
+		D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerLayerView.swift; sourceTree = "<group>"; };
+		D69E52002DE6CC5500329D64 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -184,7 +188,6 @@
 				8F51F2322DE023C300397726 /* VideoRepository.swift */,
 				8F51F2312DE023A600397726 /* FirebaseAuthService.swift */,
 				8F51F2302DE0238900397726 /* AuthService.swift */,
-				D69E51D52DE6735A00329D64 /* VideoCache.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -211,6 +214,8 @@
 				8FB929642DE116100020AFCD /* OnboardingFlowView.swift */,
 				8F51F2382DE0247000397726 /* VideoFeedView.swift */,
 				D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */,
+				D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */,
+				D69E52002DE6CC5500329D64 /* PlayerView.swift */,
 				8F51F2372DE0245500397726 /* LoginView.swift */,
 			);
 			path = Views;
@@ -231,6 +236,7 @@
 			children = (
 				604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */,
 				60C7E5B72DE2B51B00C1AAF2 /* AppSocialLoginButton.swift */,
+				D69E51D52DE6735A00329D64 /* VideoCache.swift */,
 				60C7E5B52DE1B0B700C1AAF2 /* AppTextField.swift */,
 				8FB929622DE115040020AFCD /* AppState.swift */,
 				8F51F23B2DE024B400397726 /* DependencyContainer.swift */,
@@ -455,6 +461,7 @@
 				8FB929582DE02A8A0020AFCD /* DependencyContainer.swift in Sources */,
 				8FB9294D2DE02A320020AFCD /* VideoFeedView.swift in Sources */,
 				D69E51D62DE6735A00329D64 /* VideoCache.swift in Sources */,
+				D69E52012DE6CC5500329D64 /* PlayerView.swift in Sources */,
 				8FB9294C2DE02A2C0020AFCD /* LoginView.swift in Sources */,
 				8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */,
 				8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */,
@@ -467,6 +474,7 @@
 				8FB929542DE02A790020AFCD /* FirestoreVideoRepository.swift in Sources */,
 				8FB929552DE02A790020AFCD /* AuthService.swift in Sources */,
 				8FB929672DE116370020AFCD /* MainTabView.swift in Sources */,
+				D69E51FF2DE6C0F600329D64 /* VideoPlayerLayerView.swift in Sources */,
 				8FB929652DE1161A0020AFCD /* OnboardingFlowView.swift in Sources */,
 				60DAC59C2DE2F770002C5410 /* ProfileViewModel.swift in Sources */,
 				8FB929562DE02A790020AFCD /* VideoRepository.swift in Sources */,

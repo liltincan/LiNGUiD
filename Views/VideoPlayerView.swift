@@ -6,52 +6,55 @@
 //
 
 import SwiftUI
-import AVKit
 import AVFoundation
 
 struct VideoPlayerView: View {
-    let url: URL //url of video we want to play
-    @State private var isPlaying = true //used to check if video is currently being played
-    @State private var observer: Any? //used to monitor video completion
-        
-    private var player: AVPlayer {
-        VideoCache.shared.player(for: url) ?? AVPlayer(url: url)  //searches cache for video player with url and creates one if it doesn't exist
-    }
     
+    let url: URL //url of the video we want to play
+    
+    @State private var isPlaying = true //video should start by playing
+    @State private var player: AVQueuePlayer = .init() //used to queue up videos for looping
+    @State private var looper: AVPlayerLooper? //used to loop the video
+
     var body: some View {
-        VideoPlayer(player: player) //create video player from the AV player created with URL
-            .scaledToFill()
-            .ignoresSafeArea()
-            .onTapGesture { // play/pause on tap
-                togglePlayPause()
+        VideoPlayerLayerView(player: player) //layer view that visually represents the contents of the current player
+            .onTapGesture {
+                togglePlayPause() // pauses/plays video upon user tap
             }
-            .onAppear { //initiate video loop as soon as it's shown on screen
-                startLooping()
-                if isPlaying { //only play video if user did not manually pause it before scrolling away
+            .onAppear {
+                if let cached = VideoCache.shared.player(for: url) as? AVQueuePlayer {
+                    player = cached //get the player from the cache if it already exists with the url
+                    looper = AVPlayerLooper(player: cached, templateItem: AVPlayerItem(url: url)) //creates video looper
+                    
+                    
+                } else { //if not, we make it here
+                    
+                    let queuePlayer = AVQueuePlayer() //queue of player items
+                    
+                    looper = AVPlayerLooper(player: queuePlayer, templateItem: AVPlayerItem(url: url)) //creates video looper
+                    VideoCache.shared.setPlayer(queuePlayer, for: url) //saves new queue player to the cache
+                    player = queuePlayer //sets the new queue player as the player for the view
+                }
+
+                if isPlaying { //plays as long as it wasn't manually paused by the user prior to disappearing
                     player.play()
                 }
             }
-            .onDisappear { //pause video when it leaves the screen
+            .onDisappear { //pauses upon disappearing
                 player.pause()
             }
     }
-    
+
     private func togglePlayPause() {
-        isPlaying.toggle() //switches boolean value of isPlaying
-        isPlaying ? player.play() : player.pause() //plays if set to playing, pauses if not
+        isPlaying.toggle() //toggles the boolean value for isPlaying
+        isPlaying ? player.play() : player.pause() //plays if true, pauses if not
     }
     
-    private func startLooping() {
-        NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: player.currentItem, queue: .main
-        ) {_ in
-            player.seek(to: .zero) //checks to see when video finishes in entirety and resets it to the beginning
-            
-            if isPlaying { //only play video if user did not manually pause it before scrolling
-                player.play()
-            }
-        }
+    private func createLooper(queuePlayer: AVQueuePlayer, videoUrl: URL) -> AVPlayerLooper {
+        AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
     }
 }
+
 
 #Preview {
     VideoPlayerView(url: URL(string: "https://www.w3schools.com/html/mov_bbb.mp4")!)
