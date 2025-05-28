@@ -50,9 +50,6 @@ struct VideoPlayerView: View {
         isPlaying ? player.play() : player.pause() //plays if true, pauses if not
     }
     
-    private func createLooper(queuePlayer: AVQueuePlayer, videoUrl: URL) -> AVPlayerLooper {
-        AVPlayerLooper(player: player, templateItem: AVPlayerItem(url: url))
-    }
 }
 
 
