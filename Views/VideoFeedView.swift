@@ -9,7 +9,7 @@ struct VideoFeedView: View {
     var body: some View {
             TabView(selection: $currentIndex) {
                 ForEach(Array(vm.videos.enumerated()), id: \.element.id) { index, video in
-                    VideoPlayerView(videoURL: video.url)
+                    VideoPlayerView(url: video.url)
                         .tag(index)
                         .ignoresSafeArea()
                         .onAppear {
