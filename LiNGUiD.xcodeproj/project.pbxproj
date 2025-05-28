@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */; };
+		60974D5F2DE6561A0075CAAE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60974D5E2DE656130075CAAE /* AppDelegate.swift */; };
 		609FE7C92DE2D42600F6DE0E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F23D2DE0257500397726 /* Info.plist */; };
 		609FE7CA2DE2D42600F6DE0E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F23D2DE0257500397726 /* Info.plist */; };
 		60C7E5B62DE1B0BD00C1AAF2 /* AppTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C7E5B52DE1B0B700C1AAF2 /* AppTextField.swift */; };
@@ -75,6 +76,7 @@
 
 /* Begin PBXFileReference section */
 		604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonceGenerator.swift; sourceTree = "<group>"; };
+		60974D5E2DE656130075CAAE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		60C7E5B52DE1B0B700C1AAF2 /* AppTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTextField.swift; sourceTree = "<group>"; };
 		60C7E5B72DE2B51B00C1AAF2 /* AppSocialLoginButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSocialLoginButton.swift; sourceTree = "<group>"; };
 		60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
@@ -168,6 +170,7 @@
 		8F51F2152DE01BC800397726 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				60974D5E2DE656130075CAAE /* AppDelegate.swift */,
 				8F51F1FE2DE0183300397726 /* LiNGUiDApp.swift */,
 			);
 			path = App;
@@ -482,6 +485,7 @@
 				8FB929502DE02A540020AFCD /* VideoFeedViewModel.swift in Sources */,
 				8FB9294F2DE02A3F0020AFCD /* Video.swift in Sources */,
 				8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */,
+				60974D5F2DE6561A0075CAAE /* AppDelegate.swift in Sources */,
 				8FB929512DE02A590020AFCD /* LoginViewModel.swift in Sources */,
 				8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */,
 				D69E51D42DE66EF600329D64 /* VideoPlayerView.swift in Sources */,
