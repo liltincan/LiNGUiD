@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1320204F2DE8D07100DD8AF1 /* SettingsView.swift */; };
 		604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */; };
 		609FE7C92DE2D42600F6DE0E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F23D2DE0257500397726 /* Info.plist */; };
 		609FE7CA2DE2D42600F6DE0E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F23D2DE0257500397726 /* Info.plist */; };
@@ -70,6 +71,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1320204F2DE8D07100DD8AF1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonceGenerator.swift; sourceTree = "<group>"; };
 		60C7E5B52DE1B0B700C1AAF2 /* AppTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTextField.swift; sourceTree = "<group>"; };
 		60C7E5B72DE2B51B00C1AAF2 /* AppSocialLoginButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSocialLoginButton.swift; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				1320204F2DE8D07100DD8AF1 /* SettingsView.swift */,
 				8FB929702DE116CE0020AFCD /* ProfileView.swift */,
 				8FB9296E2DE116BC0020AFCD /* PracticeView.swift */,
 				8FB9296C2DE1169D0020AFCD /* DashboardView.swift */,
@@ -467,6 +470,7 @@
 				8FB929502DE02A540020AFCD /* VideoFeedViewModel.swift in Sources */,
 				8FB9294F2DE02A3F0020AFCD /* Video.swift in Sources */,
 				8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */,
+				132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */,
 				8FB929512DE02A590020AFCD /* LoginViewModel.swift in Sources */,
 				8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */,
 				8FB929532DE02A650020AFCD /* AuthCoordinatorView.swift in Sources */,
