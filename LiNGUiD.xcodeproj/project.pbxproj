@@ -216,11 +216,11 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-<<<<<<< HEAD
+
 				60974D892DE803760075CAAE /* PracticeWordView.swift */,
-=======
+
 				1320204F2DE8D07100DD8AF1 /* SettingsView.swift */,
->>>>>>> 3517e474349178c4062dbdd9eace7ed55395c462
+3517e474349178c4062dbdd9eace7ed55395c462
 				8FB929702DE116CE0020AFCD /* ProfileView.swift */,
 				8FB9296E2DE116BC0020AFCD /* PracticeView.swift */,
 				8FB9296C2DE1169D0020AFCD /* DashboardView.swift */,
