@@ -60,6 +60,8 @@
 		D69E51D62DE6735A00329D64 /* VideoCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51D52DE6735A00329D64 /* VideoCache.swift */; };
 		D69E51FF2DE6C0F600329D64 /* VideoPlayerLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */; };
 		D69E52012DE6CC5500329D64 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E52002DE6CC5500329D64 /* PlayerView.swift */; };
+		D69E53EC2DEA4B5000329D64 /* UserSessionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E53EB2DEA4B5000329D64 /* UserSessionViewModel.swift */; };
+		D69E53EE2DEA4C5E00329D64 /* FirestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E53ED2DEA4C5E00329D64 /* FirestoreService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -126,6 +128,8 @@
 		D69E51D52DE6735A00329D64 /* VideoCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCache.swift; sourceTree = "<group>"; };
 		D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerLayerView.swift; sourceTree = "<group>"; };
 		D69E52002DE6CC5500329D64 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
+		D69E53EB2DEA4B5000329D64 /* UserSessionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSessionViewModel.swift; sourceTree = "<group>"; };
+		D69E53ED2DEA4C5E00329D64 /* FirestoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -201,6 +205,7 @@
 				8F51F2332DE023DF00397726 /* FirestoreVideoRepository.swift */,
 				8F51F2322DE023C300397726 /* VideoRepository.swift */,
 				8F51F2312DE023A600397726 /* FirebaseAuthService.swift */,
+				D69E53ED2DEA4C5E00329D64 /* FirestoreService.swift */,
 				8F51F2302DE0238900397726 /* AuthService.swift */,
 			);
 			path = Services;
@@ -212,6 +217,7 @@
 				60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */,
 				8F51F2352DE0241E00397726 /* VideoFeedViewModel.swift */,
 				8F51F2342DE023FB00397726 /* LoginViewModel.swift */,
+				D69E53EB2DEA4B5000329D64 /* UserSessionViewModel.swift */,
 			);
 			path = "View Models";
 			sourceTree = "<group>";
@@ -484,12 +490,14 @@
 				8FB9294C2DE02A2C0020AFCD /* LoginView.swift in Sources */,
 				8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */,
 				8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */,
+				D69E53EC2DEA4B5000329D64 /* UserSessionViewModel.swift in Sources */,
 				8FB929522DE02A600020AFCD /* VideoFeedCoordinatorView.swift in Sources */,
 				8FB9294B2DE02A260020AFCD /* RootCoordinatorView.swift in Sources */,
 				604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */,
 				8FB929692DE116590020AFCD /* OnboardingPageView.swift in Sources */,
 				8FB929632DE115090020AFCD /* AppState.swift in Sources */,
 				8FB9296B2DE1168B0020AFCD /* ChatListView.swift in Sources */,
+				D69E53EE2DEA4C5E00329D64 /* FirestoreService.swift in Sources */,
 				8FB929542DE02A790020AFCD /* FirestoreVideoRepository.swift in Sources */,
 				8FB929552DE02A790020AFCD /* AuthService.swift in Sources */,
 				60974D882DE79D130075CAAE /* AppColors.swift in Sources */,

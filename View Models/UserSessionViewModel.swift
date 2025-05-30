@@ -6,3 +6,29 @@
 //
 
 import Foundation
+import FirebaseAuth
+import FirebaseFirestore
+
+@MainActor
+class UserSessionViewModel: ObservableObject {
+    
+    @Published var currentUser: User?
+    private let firestoreService = FirestoreService.shared
+    
+    init() {
+        getCurrentUser()
+    }
+    
+    func getCurrentUser() { //talks to firebase service to fetch user data
+        firestoreService.getCurrentUser { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let user):
+                    self.currentUser = user //sets current values to db values
+                case .failure(let error):
+                    print("Failed to get current user: \(error.localizedDescription)") //explain if unable to access
+                }
+            }
+        }
+    }
+}
