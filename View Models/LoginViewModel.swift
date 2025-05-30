@@ -30,6 +30,11 @@ class LoginViewModel: ObservableObject {
                 errorMessage = error
                 return false
             }
+
+            email = ""
+            password = ""
+            errorMessage = nil
+
             return true
         } catch {
             errorMessage = error.localizedDescription
@@ -37,19 +42,21 @@ class LoginViewModel: ObservableObject {
         }
     }
 
-    
-    func loginWithGoogle(presenting: UIViewController, onSuccess: @escaping ()-> Void ){
-        Task{
-            do{
+    func loginWithGoogle(presenting: UIViewController, onSuccess: @escaping () -> Void) {
+        Task {
+            do {
                 let success = try await authService.signInWithGoogle(presenting: presenting)
-                if (success){
+                if success {
                     onSuccess()
+                } else {
+                    errorMessage = "Google sign-in failed"
                 }
-            } catch{
+            } catch {
                 errorMessage = error.localizedDescription
             }
         }
     }
+
     
     private var currentNonce: String?
 
@@ -80,12 +87,13 @@ class LoginViewModel: ObservableObject {
     
     
     func logout() -> Bool {
-        // Google Sign-Out
-        GIDSignIn.sharedInstance.signOut()
-
-        // Firebase Sign-Out
-        try? Auth.auth().signOut()
-        
-        return true
+        do {
+            try authService.signOut()
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
     }
+
 }
