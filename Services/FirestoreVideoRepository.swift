@@ -25,8 +25,6 @@ final class FirestoreVideoRepository: VideoRepository {
                   let title = document.data()["title"] as? String else {
                 return nil
             }
-            print("URL: ", url)
-            print("title: ", title)
             
             return Video(id: document.documentID, url: url, title: title)
         }

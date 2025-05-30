@@ -19,27 +19,27 @@
 	</array>
 	<key>UISceneManifest</key>
 	<dict>
-        <key>UIAppFonts</key>
-        <array>
-            <string>Fonts/Poppins-Black.ttf</string>
-            <string>Fonts/Poppins-BlackItalic.ttf</string>
-            <string>Fonts/Poppins-Bold.ttf</string>
-            <string>Fonts/Poppins-BoldItalic.ttf</string>
-            <string>Fonts/Poppins-ExtraBold.ttf</string>
-            <string>Fonts/Poppins-ExtraBoldItalic.ttf</string>
-            <string>Fonts/Poppins-ExtraLight.ttf</string>
-            <string>Fonts/Poppins-ExtraLightItalic.ttf</string>
-            <string>Fonts/Poppins-Italic.ttf</string>
-            <string>Fonts/Poppins-Light.ttf</string>
-            <string>Fonts/Poppins-LightItalic.ttf</string>
-            <string>Fonts/Poppins-Medium.ttf</string>
-            <string>Fonts/Poppins-MediumItalic.ttf</string>
-            <string>Fonts/Poppins-Regular.ttf</string>
-            <string>Fonts/Poppins-SemiBold.ttf</string>
-            <string>Fonts/Poppins-SemiBoldItalic.ttf</string>
-            <string>Fonts/Poppins-Thin.ttf</string>
-            <string>Fonts/Poppins-ThinItalic.ttf</string>
-        </array>
+		<key>UIAppFonts</key>
+		<array>
+			<string>Fonts/Poppins-Black.ttf</string>
+			<string>Fonts/Poppins-BlackItalic.ttf</string>
+			<string>Fonts/Poppins-Bold.ttf</string>
+			<string>Fonts/Poppins-BoldItalic.ttf</string>
+			<string>Fonts/Poppins-ExtraBold.ttf</string>
+			<string>Fonts/Poppins-ExtraBoldItalic.ttf</string>
+			<string>Fonts/Poppins-ExtraLight.ttf</string>
+			<string>Fonts/Poppins-ExtraLightItalic.ttf</string>
+			<string>Fonts/Poppins-Italic.ttf</string>
+			<string>Fonts/Poppins-Light.ttf</string>
+			<string>Fonts/Poppins-LightItalic.ttf</string>
+			<string>Fonts/Poppins-Medium.ttf</string>
+			<string>Fonts/Poppins-MediumItalic.ttf</string>
+			<string>Fonts/Poppins-Regular.ttf</string>
+			<string>Fonts/Poppins-SemiBold.ttf</string>
+			<string>Fonts/Poppins-SemiBoldItalic.ttf</string>
+			<string>Fonts/Poppins-Thin.ttf</string>
+			<string>Fonts/Poppins-ThinItalic.ttf</string>
+		</array>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 		<key>UISceneConfigurations</key>

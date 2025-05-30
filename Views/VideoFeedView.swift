@@ -29,30 +29,6 @@ struct VideoFeedView: View {
             }
         }
 }
-
-//import SwiftUI
-//import AVKit
-
-//struct VideoPlayerView: View {
-//    let videoURL: URL
-//    @State private var player: AVPlayer?
-//
-//    var body: some View {
-//        VideoPlayer(player: player)
-//            .rotationEffect(.degrees(-90))
-//            .onAppear {
-//                player = AVPlayer(url: videoURL)
-//                player?.play()
-//                    
-//            }
-//            .onDisappear {
-//                player?.pause()
-//                player = nil
-//            }
-//    }
-//}
-
-
 struct VideoFeedView_Previews: PreviewProvider {
     static var previews: some View {
         VideoFeedView()
