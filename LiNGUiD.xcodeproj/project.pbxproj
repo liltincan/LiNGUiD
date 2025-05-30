@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1320204F2DE8D07100DD8AF1 /* SettingsView.swift */; };
 		604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */; };
 		60974D5F2DE6561A0075CAAE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60974D5E2DE656130075CAAE /* AppDelegate.swift */; };
 		60974D862DE79BE70075CAAE /* AppTitleText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60974D852DE79BDF0075CAAE /* AppTitleText.swift */; };
@@ -78,6 +79,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1320204F2DE8D07100DD8AF1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonceGenerator.swift; sourceTree = "<group>"; };
 		60974D5E2DE656130075CAAE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		60974D852DE79BDF0075CAAE /* AppTitleText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTitleText.swift; sourceTree = "<group>"; };
@@ -214,7 +216,11 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+<<<<<<< HEAD
 				60974D892DE803760075CAAE /* PracticeWordView.swift */,
+=======
+				1320204F2DE8D07100DD8AF1 /* SettingsView.swift */,
+>>>>>>> 3517e474349178c4062dbdd9eace7ed55395c462
 				8FB929702DE116CE0020AFCD /* ProfileView.swift */,
 				8FB9296E2DE116BC0020AFCD /* PracticeView.swift */,
 				8FB9296C2DE1169D0020AFCD /* DashboardView.swift */,
@@ -497,6 +503,7 @@
 				8FB929502DE02A540020AFCD /* VideoFeedViewModel.swift in Sources */,
 				8FB9294F2DE02A3F0020AFCD /* Video.swift in Sources */,
 				8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */,
+				132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */,
 				60974D5F2DE6561A0075CAAE /* AppDelegate.swift in Sources */,
 				8FB929512DE02A590020AFCD /* LoginViewModel.swift in Sources */,
 				8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */,

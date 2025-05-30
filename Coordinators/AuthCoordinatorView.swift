@@ -1,19 +1,11 @@
 import SwiftUI
 
 struct AuthCoordinatorView: View {
-    @State private var isLoggedIn = false
+    let onSuccessfulLogin: () -> Void
 
     var body: some View {
-        Group {
-            if isLoggedIn {
-                VideoFeedCoordinatorView()
-            } else {
-                LoginView {
-                    isLoggedIn = true
-                }
-            }
+        LoginView {
+            onSuccessfulLogin()
         }
     }
 }
-
-
