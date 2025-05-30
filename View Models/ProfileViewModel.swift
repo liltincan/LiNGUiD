@@ -35,6 +35,7 @@ class ProfileViewModel: ObservableObject {
 
             DispatchQueue.main.async {
                 self.user = data["username"] as? String ?? ""
+                self.user = data["userName"] as? String ?? ""
 
                 if let languagesData = data["languagesData"] as? [String: Any],
                    let languageName = languagesData.keys.first {
