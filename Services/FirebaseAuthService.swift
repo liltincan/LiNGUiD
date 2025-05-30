@@ -18,15 +18,20 @@ final class FirebaseAuthService: AuthService {
     private func saveUserData(user: User, loginMethod: String, isNewUser: Bool = false) {
         guard isNewUser else { return }
 
+        let email = user.email ?? ""
+        let username = email.components(separatedBy: "@").first ?? "user"
+
         let userData: [String: Any] = [
             "uid": user.uid,
-            "email": user.email ?? "",
+            "email": email,
+            "userName": username,
             "loginWith": loginMethod,
             "createdAt": FieldValue.serverTimestamp()
         ]
 
         db.collection("users").document(user.uid).setData(userData, merge: true)
     }
+
 
     private func userDocumentExists(uid: String) async -> Bool {
         do {
