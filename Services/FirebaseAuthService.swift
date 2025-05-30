@@ -15,7 +15,7 @@ final class FirebaseAuthService: AuthService {
         Auth.auth().currentUser?.uid
     }
 
-    private func saveUserData(user: User, loginMethod: String, isNewUser: Bool = false) {
+    private func saveUserData(user: FirebaseAuth.User, loginMethod: String, isNewUser: Bool = false) {
         guard isNewUser else { return }
 
         let email = user.email ?? ""
@@ -52,7 +52,7 @@ final class FirebaseAuthService: AuthService {
         } catch let error as NSError {
             if error.code == AuthErrorCode.emailAlreadyInUse.rawValue {
                 do {
-                    let result = try await Auth.auth().signIn(withEmail: email, password: password)
+                    _ = try await Auth.auth().signIn(withEmail: email, password: password)
                     return nil
                 } catch {
                     return "Incorrect password for existing account"
