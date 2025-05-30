@@ -1,0 +1,161 @@
+///
+///  PracticeWordView.swift
+///  LiNGUiD
+///
+///  Created by Dev Gohil on 5/28/25.
+///
+
+import SwiftUI
+
+struct PracticeWordView: View {
+    @State private var currentIndex = 0
+    @State private var isFlipped = false
+    @State private var dragOffset: CGSize = .zero
+
+    let maxVisibleCards = 3
+    let words = ["fraîche", "bonjour", "merci", "chat", "voiture"]
+    let translations = ["fresh", "hello", "thank you", "cat", "car"]
+
+    @State private var knownWords: [String] = []
+    @State private var unknownWords: [String] = []
+
+    var body: some View {
+        VStack(spacing: 20) {
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Known words: \(knownWords.count)")
+                    .font(.system(size: 20, weight: .bold))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text("Unknown words: \(unknownWords.count)")
+                    .font(.system(size: 20, weight: .bold))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.bottom, 60)
+            .padding(.leading, 20)
+            
+            VStack(spacing: 20) {
+                progressText.padding(.bottom)
+
+                ZStack {
+                    ForEach(Array(words.enumerated()), id: \.0) { index, word in
+                        let visibleIndex = index - currentIndex
+                        if visibleIndex >= 0 && visibleIndex < maxVisibleCards {
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.black, lineWidth: 2)
+                                .fill(
+                                    isFlipped && index == currentIndex ? Color.appSecondaryColor : Color.appPrimaryColor)
+                                .frame(width: 300, height: 150)
+                                .overlay(
+                                    ZStack {
+                                        // Front text
+                                        Text(words[index])
+                                            .font(.system(size: 40, weight: .bold))
+                                            .foregroundColor(.white)
+                                            .opacity(!isFlipped || index != currentIndex ? 1 : 0)
+
+                                        // Back text
+                                        Text(translations[index])
+                                            .font(.system(size: 30, weight: .medium))
+                                            .foregroundColor(.white)
+                                            .opacity(isFlipped && index == currentIndex ? 1 : 0)
+                                            .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                                    }
+                                    .animation(nil, value: isFlipped)
+                                )
+
+
+
+
+                                .offset(
+                                    x: visibleIndex == 0 ? dragOffset.width : CGFloat(-visibleIndex * 8),
+                                    y: CGFloat(-visibleIndex * 8)
+                                )
+                                .zIndex(Double(maxVisibleCards - visibleIndex))
+                                .rotation3DEffect(
+                                    .degrees(isFlipped && index == currentIndex ? 180 : 0),
+                                    axis: (x: 0, y: 1, z: 0)
+                                )
+                                .animation(.spring(), value: currentIndex)
+                                .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 2)
+                        }
+                    }
+                }
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                                dragOffset = isFlipped ? CGSize(width: -value.translation.width, height: value.translation.height) : value.translation
+                            }
+                        .onEnded { _ in handleSwipe() }
+                )
+                .onTapGesture {
+                    withAnimation { isFlipped.toggle() }
+                }
+
+                if currentIndex < words.count {
+                    Text("Tap to flip")
+                        .foregroundColor(.white)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .multilineTextAlignment(.center)
+
+        } 
+        .padding()
+        .background(Color.black)
+    }
+
+    var progressText: some View {
+        if currentIndex == words.count {
+            return Text("Congratulations!")
+                .font(.title)
+                .foregroundColor(.white)
+        } else {
+            return Text("\(currentIndex)/\(words.count)")
+                .font(.subheadline)
+                .foregroundColor(.white)
+        }
+    }
+
+    func handleSwipe() {
+        let threshold: CGFloat = 100
+        let swipingRight = dragOffset.width > threshold
+        let swipingLeft = dragOffset.width < -threshold
+
+        if isFlipped {
+            if swipingLeft {
+                knownWords.append(words[currentIndex])
+                advance()
+            } else if swipingRight {
+                unknownWords.append(words[currentIndex])
+                advance()
+            } else {
+                dragOffset = .zero
+            }
+        } else {
+            if swipingRight {
+                knownWords.append(words[currentIndex])
+                advance()
+            } else if swipingLeft {
+                unknownWords.append(words[currentIndex])
+                advance()
+            } else {
+                dragOffset = .zero
+            }
+        }
+    }
+
+
+
+    func advance() {
+        dragOffset = .zero
+        isFlipped = false
+        currentIndex += 1
+    }
+}
+
+struct PracticeWordView_Previews: PreviewProvider {
+    static var previews: some View {
+        PracticeWordView()
+    }
+}

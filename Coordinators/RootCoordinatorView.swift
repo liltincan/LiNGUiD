@@ -1,22 +1,24 @@
 import SwiftUI
 
 struct RootCoordinatorView: View {
-    @EnvironmentObject var state: AppState
+    @EnvironmentObject var appState: AppState
 
     var body: some View {
         Group {
-            if !state.isSignedIn {
-                
-                AuthCoordinatorView()
-                    .onAppear {
-                        print("isSignedIn = " , state.isSignedIn)
-                        // in case user restored session
-                        state.isSignedIn = FirebaseAuthService.shared.currentUserID != nil
+            if !appState.isSignedIn {
+                AuthCoordinatorView(onSuccessfulLogin: {
+                    appState.isSignedIn = true
+                })
+                .onAppear {
+                    let isUserAuthenticated = FirebaseAuthService.shared.currentUserID != nil
+                    if isUserAuthenticated && !appState.isSignedIn {
+                        appState.isSignedIn = true
                     }
-            } else if state.needsOnboarding {
+                }
+            } else if appState.needsOnboarding {
                 OnboardingFlowView {
                     UserDefaults.standard.set(true, forKey: "didCompleteOnboarding")
-                    state.needsOnboarding = false
+                    appState.needsOnboarding = false
                 }
             } else {
                 MainTabView()
