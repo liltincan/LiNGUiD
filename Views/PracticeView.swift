@@ -105,7 +105,7 @@ struct PracticeView: View {
 //
 //
 //                        let db = Firestore.firestore()
-//                        db.collection("users").document("ZzQKRM0coDg7yl4CIyfeHp5wLVv1").setData(data, merge: true)
+//                        db.collection("users").document("dkmJGqUodRZXhSViPYWPCxfIBzC2").setData(data, merge: true)
 //
 //                    }, label: {
 //                        Text("save words")

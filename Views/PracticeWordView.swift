@@ -135,8 +135,12 @@ struct PracticeWordView: View {
 
     func handleSwipe() {
         let threshold: CGFloat = 100
-        let swipingRight = dragOffset.width > threshold
-        let swipingLeft = dragOffset.width < -threshold
+        var swipingRight = dragOffset.width > threshold
+        var swipingLeft = dragOffset.width < -threshold
+
+        if isFlipped {
+            swap(&swipingRight, &swipingLeft)
+        }
 
         guard currentIndex < flashcardCache.count else { return }
 
@@ -146,12 +150,12 @@ struct PracticeWordView: View {
             savedWordsViewModel.moveToKnown(word: currentWord)
             advance()
         } else if swipingLeft {
-            // Word stays in unknown list
-            advance()
+            advance() // stay in unknown list
         } else {
             dragOffset = .zero
         }
     }
+
 
 
 
