@@ -17,119 +17,212 @@ struct PracticeWordView: View {
     @State private var knownWords: [String] = []
     @State private var unknownWords: [String] = []
     @State private var flashcardCache: [WordPair] = []
-    
+
     @ObservedObject var savedWordsViewModel: SavedWordViewModel
 
     var knownWordsCount: Int {
-        savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?.savedWords.knownWords.count ?? 0
+        savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
+            .savedWords.knownWords.count ?? 0
     }
 
     var unknownWordsCount: Int {
-        savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?.savedWords.unknownWords.count ?? 0
+        savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
+            .savedWords.unknownWords.count ?? 0
     }
-    
-    
-
 
     var body: some View {
         VStack(spacing: 20) {
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Known words: \(knownWordsCount)")
-                    .font(.system(size: 20, weight: .bold))
-                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text("Unknown words: \(unknownWordsCount)")
-                    .font(.system(size: 20, weight: .bold))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(.bottom, 60)
-            .padding(.leading, 20)
-            
-            VStack(spacing: 20) {
-                progressText.padding(.bottom)
-
-                ZStack {
-                    ForEach(Array(flashcardCache.enumerated()), id: \.offset) { index, word in
-                        let visibleIndex = index - currentIndex
-                        if visibleIndex >= 0 && visibleIndex < maxVisibleCards {
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.black, lineWidth: 2)
-                                .fill(
-                                    isFlipped && index == currentIndex ? Color.appSecondaryColor : Color.appPrimaryColor)
-                                .frame(width: 300, height: 150)
-                                .overlay(
-                                    ZStack {
-                                        // Front text
-                                        Text(flashcardCache[index].target)
-                                            .font(.system(size: 40, weight: .bold))
-                                            .foregroundColor(.white)
-                                            .opacity(!isFlipped || index != currentIndex ? 1 : 0)
-
-                                        // Back text
-                                        Text(flashcardCache[index].native)
-                                            .font(.system(size: 30, weight: .medium))
-                                            .foregroundColor(.white)
-                                            .opacity(isFlipped && index == currentIndex ? 1 : 0)
-                                            .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-                                    }
-                                    .animation(nil, value: isFlipped)
+            VStack {
+                HStack {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                Color(
+                                    red: 35 / 255,
+                                    green: 35 / 255,
+                                    blue: 35 / 255
                                 )
+                            )  // Background fill
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.red, lineWidth: 1.5)
+                            )
+                            .frame(width: 40, height: 35)
 
-
-
-
-                                .offset(
-                                    x: visibleIndex == 0 ? dragOffset.width : CGFloat(-visibleIndex * 8),
-                                    y: CGFloat(-visibleIndex * 8)
+                        Text("\(unknownWordsCount)")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(Color.red)
+                    }
+                    Spacer()
+                    Text("Swipe")
+                        .font(.system(size: 26, weight: .bold))
+                    Spacer()
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                Color(
+                                    red: 15 / 255,
+                                    green: 15 / 255,
+                                    blue: 15 / 255
                                 )
-                                .zIndex(Double(maxVisibleCards - visibleIndex))
-                                .rotation3DEffect(
-                                    .degrees(isFlipped && index == currentIndex ? 180 : 0),
-                                    axis: (x: 0, y: 1, z: 0)
-                                )
-                                .animation(.spring(), value: currentIndex)
-                                .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 2)
-                        }
+                            )  // Background fill
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.green, lineWidth: 1.5)
+                            )
+                            .frame(width: 40, height: 35)
+
+                        Text("\(knownWordsCount)")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(Color.green)
                     }
                 }
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                                dragOffset = isFlipped ? CGSize(width: -value.translation.width, height: value.translation.height) : value.translation
-                            }
-                        .onEnded { _ in handleSwipe() }
-                )
-                .onTapGesture {
-                    withAnimation { isFlipped.toggle() }
-                }
-
-                if currentIndex < flashcardCache.count {
-                    Text("Tap to flip")
-                        .foregroundColor(.white)
-                }
+                .padding(20)
             }
-            .frame(maxWidth: .infinity)
+
+            Spacer()
+
+            VStack(spacing: 20) {
+
+                flashcardStack()
+
+                progressText.padding(.bottom)
+
+            }
             .multilineTextAlignment(.center)
 
-        } 
+            Spacer()
+
+        }
+        .frame(maxHeight: .infinity)
+        .navigationTitle("FLASHCARDS")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("FLASHCARDS")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.white)
+            }
+        }
         .padding()
         .background(Color.black)
-        .task {
-            flashcardCache = savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?.savedWords.unknownWords ?? []
+        .onAppear {
+            flashcardCache =
+                savedWordsViewModel.languageData[
+                    savedWordsViewModel.selectedLanguage
+                ]?.savedWords.unknownWords ?? []
         }
 
     }
 
+    private func flashcardStack() -> some View {
+        ZStack {
+            ForEach(Array(flashcardCache.enumerated()), id: \.offset) {
+                index,
+                word in
+                let visibleIndex = index - currentIndex
+                if visibleIndex >= 0 && visibleIndex < maxVisibleCards {
+                    flashcardView(
+                        for: word,
+                        at: index,
+                        visibleIndex: visibleIndex
+                    )
+                }
+            }
+        }
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    dragOffset =
+                        isFlipped
+                        ? CGSize(
+                            width: -value.translation.width,
+                            height: value.translation.height
+                        ) : value.translation
+                }
+                .onEnded { _ in handleSwipe() }
+        )
+        .onTapGesture {
+            withAnimation { isFlipped.toggle() }
+        }
+    }
+
+    private func flashcardView(
+        for word: WordPair,
+        at index: Int,
+        visibleIndex: Int
+    ) -> some View {
+        RoundedRectangle(cornerRadius: 20)
+            .stroke(Color.black, lineWidth: 2)
+            .fill(
+                isFlipped && index == currentIndex
+                    ? Color.appSecondaryColor : Color.appPrimaryColor
+            )
+            .frame(width: 300, height: 500)
+            .overlay(
+                ZStack {
+                    Text(word.target)
+                        .font(.system(size: 40, weight: .bold))
+                        .foregroundColor(.white)
+                        .opacity(!isFlipped || index != currentIndex ? 1 : 0)
+
+                    Text(word.native)
+                        .font(.system(size: 30, weight: .medium))
+                        .foregroundColor(.white)
+                        .opacity(isFlipped && index == currentIndex ? 1 : 0)
+                        .rotation3DEffect(
+                            .degrees(180),
+                            axis: (x: 0, y: 1, z: 0)
+                        )
+                }
+                .animation(nil, value: isFlipped)
+            )
+            .offset(
+                x: visibleIndex == 0
+                    ? dragOffset.width : CGFloat(-visibleIndex * 8),
+                y: CGFloat(-visibleIndex * 8)
+            )
+            .zIndex(Double(maxVisibleCards - visibleIndex))
+            .rotation3DEffect(
+                .degrees(isFlipped && index == currentIndex ? 180 : 0),
+                axis: (x: 0, y: 1, z: 0)
+            )
+            .animation(.spring(), value: currentIndex)
+            .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 2)
+    }
+
     var progressText: some View {
         if currentIndex == flashcardCache.count {
-            return Text("Congratulations!")
-                .font(.title)
-                .foregroundColor(.white)
+
+            if unknownWordsCount == 0 {
+                return AnyView(
+                    Text("Congratulations!")
+                        .font(.title)
+                        .foregroundColor(.white)
+                )
+            } else {
+                return AnyView(
+                    VStack(spacing: 20) {
+                        Text("Well Done!")
+                            .font(.title)
+                            .foregroundColor(.white)
+
+                        Text(
+                            "You have \(unknownWordsCount) unknown words left.\nKeep practicing!"
+                        )
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(.white)
+                    }
+                )
+            }
+
         } else {
-            return Text("\(currentIndex)/\(flashcardCache.count)")
-                .font(.subheadline)
-                .foregroundColor(.white)
+            return AnyView(
+                Text("Card \(currentIndex+1) of \(flashcardCache.count)")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.white)
+            )
         }
     }
 
@@ -150,25 +243,15 @@ struct PracticeWordView: View {
             savedWordsViewModel.moveToKnown(word: currentWord)
             advance()
         } else if swipingLeft {
-            advance() // stay in unknown list
+            advance()  // stay in unknown list
         } else {
             dragOffset = .zero
         }
     }
 
-
-
-
-
     func advance() {
         dragOffset = .zero
         isFlipped = false
         currentIndex += 1
-    }
-}
-
-struct PracticeWordView_Previews: PreviewProvider {
-    static var previews: some View {
-        PracticeWordView(savedWordsViewModel: SavedWordViewModel())
     }
 }

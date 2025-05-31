@@ -17,6 +17,8 @@ enum WordType {
 
 @MainActor
 class SavedWordViewModel: ObservableObject {
+    
+    
 
     @Published var languageData: [String: LanguageEntry] = [:]
     @Published var selectedLanguage: String = "de"  // or "de"
@@ -59,5 +61,7 @@ class SavedWordViewModel: ObservableObject {
         try? docRef.setData(from: FirestoreLanguageData(languageData: languageData), merge: true)
 
     }
+    
+    
 
 }
