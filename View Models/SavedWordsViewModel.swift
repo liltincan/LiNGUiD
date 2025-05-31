@@ -8,6 +8,7 @@
 import Combine
 import FirebaseFirestore
 import Foundation
+import FirebaseAuth
 
 enum WordType {
     case known
@@ -15,7 +16,7 @@ enum WordType {
 }
 
 @MainActor
-class SavedLangViewModel: ObservableObject {
+class SavedWordViewModel: ObservableObject {
 
     @Published var languageData: [String: LanguageEntry] = [:]
     @Published var selectedLanguage: String = "de"  // or "de"
@@ -23,6 +24,9 @@ class SavedLangViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let db = Firestore.firestore()
+    
+    @Published var userId = Auth.auth().currentUser?.uid
+
 
     func fetchLanguageData(for userID: String) async {
         let docRef = db.collection("users").document(userID)
@@ -37,4 +41,24 @@ class SavedLangViewModel: ObservableObject {
         }
 
     }
+    
+    func moveToKnown(word: WordPair) {
+        guard var saved = languageData[selectedLanguage]?.savedWords else { return }
+
+        saved.unknownWords.removeAll(where: { $0.target == word.target && $0.native == word.native })
+        
+        // Avoid duplication
+        if !saved.knownWords.contains(where: { $0.target == word.target && $0.native == word.native }) {
+            saved.knownWords.append(word)
+        }
+        
+
+
+        languageData[selectedLanguage]?.savedWords = saved
+        
+        let docRef = Firestore.firestore().collection("users").document(userId ?? "")
+        try? docRef.setData(from: FirestoreLanguageData(languageData: languageData), merge: true)
+
+    }
+
 }

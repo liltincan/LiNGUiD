@@ -2,7 +2,7 @@ import SwiftUI
 import FirebaseFirestore
 
 struct PracticeView: View {
-    @StateObject private var viewModel = SavedLangViewModel()
+    @StateObject private var viewModel = SavedWordViewModel()
     
     @State private var selectedSegment: Int = 0
     @State private var isActive: Bool = false
@@ -70,7 +70,7 @@ struct PracticeView: View {
                     isActive = true
                 }
                 .navigationDestination(isPresented: $isActive) {
-                        PracticeWordView()
+                        PracticeWordView(savedWordsViewModel: viewModel)
                     }
 
                 
@@ -91,8 +91,12 @@ struct PracticeView: View {
 //                                            ["target": "katze", "native": "cat"]
 //                                        ],
 //                                        "unknownWords": [
-//                                            ["target": "hund", "native": "dog"],
-//                                            ["target": "apfel", "native": "apple"]
+//                                            ["target": "tisch", "native": "table"],
+//                                            ["target": "buch", "native": "book"],
+//                                            ["target": "mädchen", "native": "girl"],
+//                                            ["target": "junge", "native": "boy"],
+//                                            ["target": "lehrer", "native": "teacher"],
+//                                            ["target": "schule", "native": "school"],
 //                                        ]
 //                                    ]
 //                                ]
@@ -101,7 +105,7 @@ struct PracticeView: View {
 //
 //
 //                        let db = Firestore.firestore()
-//                         db.collection("users").document("dkmJGqUodRZXhSViPYWPCxfIBzC2").setData(data, merge: true)
+//                        db.collection("users").document("ZzQKRM0coDg7yl4CIyfeHp5wLVv1").setData(data, merge: true)
 //
 //                    }, label: {
 //                        Text("save words")
@@ -199,7 +203,7 @@ struct PracticeView: View {
             }
             .padding()
             .task {
-                await viewModel.fetchLanguageData(for: "dkmJGqUodRZXhSViPYWPCxfIBzC2")
+                await viewModel.fetchLanguageData(for: viewModel.userId ?? "")
             }
         }
     }

@@ -13,21 +13,33 @@ struct PracticeWordView: View {
     @State private var dragOffset: CGSize = .zero
 
     let maxVisibleCards = 3
-    let words = ["fraîche", "bonjour", "merci", "chat", "voiture"]
-    let translations = ["fresh", "hello", "thank you", "cat", "car"]
 
     @State private var knownWords: [String] = []
     @State private var unknownWords: [String] = []
+    @State private var flashcardCache: [WordPair] = []
+    
+    @ObservedObject var savedWordsViewModel: SavedWordViewModel
+
+    var knownWordsCount: Int {
+        savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?.savedWords.knownWords.count ?? 0
+    }
+
+    var unknownWordsCount: Int {
+        savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?.savedWords.unknownWords.count ?? 0
+    }
+    
+    
+
 
     var body: some View {
         VStack(spacing: 20) {
             
             VStack(alignment: .leading, spacing: 8) {
-                Text("Known words: \(knownWords.count)")
+                Text("Known words: \(knownWordsCount)")
                     .font(.system(size: 20, weight: .bold))
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text("Unknown words: \(unknownWords.count)")
+                Text("Unknown words: \(unknownWordsCount)")
                     .font(.system(size: 20, weight: .bold))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -38,7 +50,7 @@ struct PracticeWordView: View {
                 progressText.padding(.bottom)
 
                 ZStack {
-                    ForEach(Array(words.enumerated()), id: \.0) { index, word in
+                    ForEach(Array(flashcardCache.enumerated()), id: \.offset) { index, word in
                         let visibleIndex = index - currentIndex
                         if visibleIndex >= 0 && visibleIndex < maxVisibleCards {
                             RoundedRectangle(cornerRadius: 20)
@@ -49,13 +61,13 @@ struct PracticeWordView: View {
                                 .overlay(
                                     ZStack {
                                         // Front text
-                                        Text(words[index])
+                                        Text(flashcardCache[index].target)
                                             .font(.system(size: 40, weight: .bold))
                                             .foregroundColor(.white)
                                             .opacity(!isFlipped || index != currentIndex ? 1 : 0)
 
                                         // Back text
-                                        Text(translations[index])
+                                        Text(flashcardCache[index].native)
                                             .font(.system(size: 30, weight: .medium))
                                             .foregroundColor(.white)
                                             .opacity(isFlipped && index == currentIndex ? 1 : 0)
@@ -92,7 +104,7 @@ struct PracticeWordView: View {
                     withAnimation { isFlipped.toggle() }
                 }
 
-                if currentIndex < words.count {
+                if currentIndex < flashcardCache.count {
                     Text("Tap to flip")
                         .foregroundColor(.white)
                 }
@@ -103,15 +115,19 @@ struct PracticeWordView: View {
         } 
         .padding()
         .background(Color.black)
+        .task {
+            flashcardCache = savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?.savedWords.unknownWords ?? []
+        }
+
     }
 
     var progressText: some View {
-        if currentIndex == words.count {
+        if currentIndex == flashcardCache.count {
             return Text("Congratulations!")
                 .font(.title)
                 .foregroundColor(.white)
         } else {
-            return Text("\(currentIndex)/\(words.count)")
+            return Text("\(currentIndex)/\(flashcardCache.count)")
                 .font(.subheadline)
                 .foregroundColor(.white)
         }
@@ -122,28 +138,21 @@ struct PracticeWordView: View {
         let swipingRight = dragOffset.width > threshold
         let swipingLeft = dragOffset.width < -threshold
 
-        if isFlipped {
-            if swipingLeft {
-                knownWords.append(words[currentIndex])
-                advance()
-            } else if swipingRight {
-                unknownWords.append(words[currentIndex])
-                advance()
-            } else {
-                dragOffset = .zero
-            }
+        guard currentIndex < flashcardCache.count else { return }
+
+        let currentWord = flashcardCache[currentIndex]
+
+        if swipingRight {
+            savedWordsViewModel.moveToKnown(word: currentWord)
+            advance()
+        } else if swipingLeft {
+            // Word stays in unknown list
+            advance()
         } else {
-            if swipingRight {
-                knownWords.append(words[currentIndex])
-                advance()
-            } else if swipingLeft {
-                unknownWords.append(words[currentIndex])
-                advance()
-            } else {
-                dragOffset = .zero
-            }
+            dragOffset = .zero
         }
     }
+
 
 
 
@@ -156,6 +165,6 @@ struct PracticeWordView: View {
 
 struct PracticeWordView_Previews: PreviewProvider {
     static var previews: some View {
-        PracticeWordView()
+        PracticeWordView(savedWordsViewModel: SavedWordViewModel())
     }
 }
