@@ -1,5 +1,5 @@
-import FirebaseFirestore
 import FirebaseAuth
+import FirebaseFirestore
 import SwiftUI
 
 struct PracticeView: View {
@@ -7,337 +7,500 @@ struct PracticeView: View {
 
     @State private var selectedSegment: Int = 0
     @State private var isActive: Bool = false
+    @State private var isLoading = false
     @Environment(\.colorScheme) var colorScheme
 
     var unKnownWords: [WordPair] {
         viewModel.languageData[viewModel.selectedLanguage]?.savedWords
             .unknownWords ?? []
     }
-    
-    var knownWords : [WordPair] {
-        viewModel.languageData[viewModel.selectedLanguage]?.savedWords.knownWords ?? []
+
+    var knownWords: [WordPair] {
+        viewModel.languageData[viewModel.selectedLanguage]?.savedWords
+            .knownWords ?? []
     }
-    
 
     var body: some View {
+        if isLoading {
+            VStack {
+                ProgressView("Refreshing...")
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .font(.headline)
+            }
+        } else {
+            VStack {
+                if knownWords.isEmpty && unKnownWords.isEmpty {
+                    VStack(spacing: 8) {
+                        Text("No saved words yet.")
+                            .font(.title)
+                            .foregroundColor(.white)
 
-        VStack{
-            if (knownWords.isEmpty && unKnownWords.isEmpty) {
-                VStack(spacing: 8) {
-                    Text("No saved words yet.")
-                        .font(.title)
-                        .foregroundColor(.white)
-
-                    Text("Start saving words to practice and track your progress.")
+                        Text(
+                            "Start saving words to practice and track your progress."
+                        )
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
-                }
-                .padding()
-
-            } else {
-                NavigationStack {
-                    VStack(spacing: 20) {
-                        AppTitleText(title: "PRACTICE")
-
-                        if unKnownWords.isEmpty {
-                            Spacer()
-                                .frame(height: 30)
-                        } else {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.black, lineWidth: 2)
-                                    .fill(Color.appPrimaryColor)
-                                    .frame(width: 300, height: 150)
-                                    .offset(x: -20, y: -20)
-                                    .shadow(
-                                        color: .black.opacity(0.5),
-                                        radius: 2,
-                                        x: 0,
-                                        y: 2
-                                    )
-
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.black, lineWidth: 2)
-                                    .fill(Color.appPrimaryColor)
-                                    .frame(width: 300, height: 150)
-                                    .offset(x: -10, y: -10)
-                                    .shadow(
-                                        color: .black.opacity(0.5),
-                                        radius: 2,
-                                        x: 0,
-                                        y: 2
-                                    )
-
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.black, lineWidth: 2)
-                                    .fill(Color.appPrimaryColor)
-                                    .frame(width: 300, height: 150)
-                                    .shadow(
-                                        color: .black.opacity(0.5),
-                                        radius: 2,
-                                        x: 1,
-                                        y: 3
-                                    )
-                                    .overlay(
-                                        VStack(spacing: 0) {
-                                            Text(
-                                                "\(unKnownWords.first?.target ?? "Loading...")"
-                                            )
-                                            .font(.system(size: 40, weight: .bold))
-                                            .foregroundColor(.white)
-
-                                            Text("Tap to practice")
-                                                .font(
-                                                    .system(
-                                                        size: 12,
-                                                        weight: .regular
-                                                    )
-                                                )
-                                                .foregroundStyle(
-                                                    .white.opacity(0.5)
-                                                )
-                                                .underline(true)
-                                        }
-                                    )
-                            }
-                            .padding(.top, 40)
-                            .padding(.bottom, 10)
-                            .padding(.leading, 30)
-                            .onTapGesture {
-                                isActive = true
-                            }
-                            .navigationDestination(isPresented: $isActive) {
-                                PracticeWordView(savedWordsViewModel: viewModel)
-                            }
-                        }
-
-                        HStack(spacing: 20) {
-                            Text("Saved Words")
-                                .font(.system(size: 20, weight: .semibold))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-
-                            //                    Button(action: {
-                            //                        let data: [String: Any] = [
-                            //                            "languageData": [
-                            //                                "de": [
-                            //                                    "savedWords": [
-                            //                                        "knownWords": [
-                            //                                            ["target": "hallo", "native": "hello"],
-                            //                                            ["target": "katze", "native": "cat"]
-                            //                                        ],
-                            //                                        "unknownWords": [
-                            //                                            ["target": "tisch", "native": "table"],
-                            //                                            ["target": "buch", "native": "book"],
-                            //                                            ["target": "mädchen", "native": "girl"],
-                            //                                            ["target": "junge", "native": "boy"],
-                            //                                            ["target": "lehrer", "native": "teacher"],
-                            //                                            ["target": "schule", "native": "school"],
-                            //                                            ["target": "fenster", "native": "window"],
-                            //                                            ["target": "stuhl", "native": "chair"],
-                            //                                            ["target": "uhr", "native": "clock"],
-                            //                                            ["target": "apfel", "native": "apple"],
-                            //                                            ["target": "wasser", "native": "water"],
-                            //                                            ["target": "brot", "native": "bread"],
-                            //                                            ["target": "milch", "native": "milk"],
-                            //                                            ["target": "kaffee", "native": "coffee"],
-                            //                                            ["target": "essen", "native": "food"],
-                            //                                            ["target": "freund", "native": "friend"],
-                            //                                            ["target": "freundin", "native": "female friend"],
-                            //                                            ["target": "auto", "native": "car"],
-                            //                                            ["target": "stadt", "native": "city"],
-                            //                                            ["target": "haus", "native": "house"],
-                            //                                            ["target": "baum", "native": "tree"],
-                            //                                            ["target": "blume", "native": "flower"],
-                            //                                            ["target": "vogel", "native": "bird"],
-                            //                                            ["target": "hund", "native": "dog"],
-                            //                                            ["target": "katze", "native": "cat"],
-                            //                                            ["target": "sonne", "native": "sun"],
-                            //                                            ["target": "mond", "native": "moon"],
-                            //                                            ["target": "stern", "native": "star"],
-                            //                                            ["target": "himmel", "native": "sky"],
-                            //                                            ["target": "regen", "native": "rain"],
-                            //                                        ]
-                            //
-                            //                                    ]
-                            //                                ]
-                            //                            ]
-                            //                        ]
-                            //
-                            //
-                            //                        let db = Firestore.firestore()
-                            //                        db.collection("users").document("ZzQKRM0coDg7yl4CIyfeHp5wLVv1").setData(data, merge: true)
-                            //
-                            //                    }, label: {
-                            //                        Text("save words")
-                            //                    })
-                        }
-
-                        VStack(spacing: 10) {
-                            SegmentedControlView(selectedSegment: $selectedSegment)
-
-                            if selectedSegment == 0 {
-
-                                ScrollView {
-                                    ForEach(
-                                        Array(getWords().enumerated()),
-                                        id: \.offset
-                                    ) { index, word in
-                                        VStack {
-                                            HStack(spacing: 20) {
-                                                ZStack {
-                                                    Circle()
-                                                        .fill(
-                                                            Color.gray.opacity(0.1)
-                                                        )
-                                                        .frame(
-                                                            width: 30,
-                                                            height: 30
-                                                        )
-
-                                                    Text("\(index + 1)")
-                                                        .font(
-                                                            .system(
-                                                                size: 16,
-                                                                weight: .medium
-                                                            )
-                                                        )
-                                                        .foregroundColor(.black)
-                                                }
-
-                                                VStack(spacing: 3) {
-                                                    Text(word.target)
-                                                        .font(
-                                                            .system(
-                                                                size: 16,
-                                                                weight: .medium
-                                                            )
-                                                        )
-                                                        .foregroundStyle(.black)
-                                                        .frame(
-                                                            maxWidth: .infinity,
-                                                            alignment: .leading
-                                                        )
-
-                                                    Text(word.native)
-                                                        .font(
-                                                            .system(
-                                                                size: 14,
-                                                                weight: .regular
-                                                            )
-                                                        )
-                                                        .foregroundStyle(Color.gray)
-                                                        .multilineTextAlignment(
-                                                            .leading
-                                                        )
-                                                        .frame(
-                                                            maxWidth: .infinity,
-                                                            alignment: .leading
-                                                        )
-                                                }
-
-                                            }.padding(.top, 3)
-                                                .frame(
-                                                    maxWidth: .infinity,
-                                                    alignment: .leading
-                                                )
-
-                                            if index < getWords().count - 1 {
-                                                Divider()
-                                            }
-                                        }
-                                    }
-                                }
-
-                            } else {
-                                ScrollView {
-                                    ForEach(
-                                        Array(getWords().enumerated()),
-                                        id: \.offset
-                                    ) { index, word in
-                                        VStack {
-                                            HStack(spacing: 20) {
-                                                ZStack {
-                                                    Circle()
-                                                        .fill(
-                                                            Color.gray.opacity(0.1)
-                                                        )
-                                                        .frame(
-                                                            width: 30,
-                                                            height: 30
-                                                        )
-
-                                                    Text("\(index + 1)")
-                                                        .font(
-                                                            .system(
-                                                                size: 16,
-                                                                weight: .medium
-                                                            )
-                                                        )
-                                                        .foregroundColor(.black)
-                                                }
-
-                                                VStack(spacing: 3) {
-                                                    Text(word.target)
-                                                        .font(
-                                                            .system(
-                                                                size: 16,
-                                                                weight: .medium
-                                                            )
-                                                        )
-                                                        .foregroundStyle(.black)
-                                                        .frame(
-                                                            maxWidth: .infinity,
-                                                            alignment: .leading
-                                                        )
-
-                                                    Text(word.native)
-                                                        .font(
-                                                            .system(
-                                                                size: 14,
-                                                                weight: .regular
-                                                            )
-                                                        )
-                                                        .foregroundStyle(Color.gray)
-                                                        .multilineTextAlignment(
-                                                            .leading
-                                                        )
-                                                        .frame(
-                                                            maxWidth: .infinity,
-                                                            alignment: .leading
-                                                        )
-                                                }
-
-                                            }.padding(.top, 3)
-                                                .frame(
-                                                    maxWidth: .infinity,
-                                                    alignment: .leading
-                                                )
-
-                                            if index < getWords().count - 1 {
-                                                Divider()
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(
-                            colorScheme == .dark
-                                ? Color.white : Color.gray.opacity(0.1)
-                        )
-                        .cornerRadius(12)
-
                     }
                     .padding()
-                    
+
+                } else {
+                    NavigationStack {
+                        VStack(spacing: 20) {
+                            AppTitleText(title: "PRACTICE")
+
+                            if unKnownWords.isEmpty {
+                                Spacer()
+                                    .frame(height: 30)
+                            } else {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.black, lineWidth: 2)
+                                        .fill(Color.appPrimaryColor)
+                                        .frame(width: 300, height: 150)
+                                        .offset(x: -20, y: -20)
+                                        .shadow(
+                                            color: .black.opacity(0.5),
+                                            radius: 2,
+                                            x: 0,
+                                            y: 2
+                                        )
+
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.black, lineWidth: 2)
+                                        .fill(Color.appPrimaryColor)
+                                        .frame(width: 300, height: 150)
+                                        .offset(x: -10, y: -10)
+                                        .shadow(
+                                            color: .black.opacity(0.5),
+                                            radius: 2,
+                                            x: 0,
+                                            y: 2
+                                        )
+
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.black, lineWidth: 2)
+                                        .fill(Color.appPrimaryColor)
+                                        .frame(width: 300, height: 150)
+                                        .shadow(
+                                            color: .black.opacity(0.5),
+                                            radius: 2,
+                                            x: 1,
+                                            y: 3
+                                        )
+                                        .overlay(
+                                            VStack(spacing: 0) {
+                                                Text(
+                                                    "\(unKnownWords.first?.target ?? "Loading...")"
+                                                )
+                                                .font(
+                                                    .system(
+                                                        size: 40,
+                                                        weight: .bold
+                                                    )
+                                                )
+                                                .foregroundColor(.white)
+
+                                                Text("Tap to practice")
+                                                    .font(
+                                                        .system(
+                                                            size: 12,
+                                                            weight: .regular
+                                                        )
+                                                    )
+                                                    .foregroundStyle(
+                                                        .white.opacity(0.5)
+                                                    )
+                                                    .underline(true)
+                                            }
+                                        )
+                                }
+                                .padding(.top, 40)
+                                .padding(.bottom, 10)
+                                .padding(.leading, 30)
+                                .onTapGesture {
+                                    isActive = true
+                                }
+                                .navigationDestination(isPresented: $isActive) {
+                                    PracticeWordView(
+                                        savedWordsViewModel: viewModel
+                                    )
+                                }
+                            }
+
+                            HStack(spacing: 20) {
+                                Text("Saved Words")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .frame(
+                                        maxWidth: .infinity,
+                                        alignment: .leading
+                                    )
+
+                                Button("load words") {
+                                    let data: [String: Any] = [
+                                        "languageData": [
+                                            "de": [
+                                                "savedWords": [
+                                                    "knownWords": [
+                                                        [
+                                                            "target": "hallo",
+                                                            "native": "hello",
+                                                        ],
+                                                        [
+                                                            "target": "katze",
+                                                            "native": "cat",
+                                                        ],
+                                                    ],
+                                                    "unknownWords": [
+                                                        [
+                                                            "target": "tisch",
+                                                            "native": "table",
+                                                        ],
+                                                        [
+                                                            "target": "buch",
+                                                            "native": "book",
+                                                        ],
+                                                        [
+                                                            "target": "mädchen",
+                                                            "native": "girl",
+                                                        ],
+                                                        [
+                                                            "target": "junge",
+                                                            "native": "boy",
+                                                        ],
+                                                        [
+                                                            "target": "lehrer",
+                                                            "native": "teacher",
+                                                        ],
+                                                        [
+                                                            "target": "schule",
+                                                            "native": "school",
+                                                        ],
+                                                        [
+                                                            "target": "fenster",
+                                                            "native": "window",
+                                                        ],
+                                                        [
+                                                            "target": "stuhl",
+                                                            "native": "chair",
+                                                        ],
+                                                        [
+                                                            "target": "uhr",
+                                                            "native": "clock",
+                                                        ],
+                                                        [
+                                                            "target": "apfel",
+                                                            "native": "apple",
+                                                        ],
+                                                        [
+                                                            "target": "wasser",
+                                                            "native": "water",
+                                                        ],
+                                                        [
+                                                            "target": "brot",
+                                                            "native": "bread",
+                                                        ],
+                                                        [
+                                                            "target": "milch",
+                                                            "native": "milk",
+                                                        ],
+                                                        [
+                                                            "target": "kaffee",
+                                                            "native": "coffee",
+                                                        ],
+                                                        [
+                                                            "target": "essen",
+                                                            "native": "food",
+                                                        ],
+                                                        [
+                                                            "target": "freund",
+                                                            "native": "friend",
+                                                        ],
+                                                        [
+                                                            "target":
+                                                                "freundin",
+                                                            "native":
+                                                                "female friend",
+                                                        ],
+                                                        [
+                                                            "target": "auto",
+                                                            "native": "car",
+                                                        ],
+                                                        [
+                                                            "target": "stadt",
+                                                            "native": "city",
+                                                        ],
+                                                        [
+                                                            "target": "haus",
+                                                            "native": "house",
+                                                        ],
+                                                        [
+                                                            "target": "baum",
+                                                            "native": "tree",
+                                                        ],
+                                                        [
+                                                            "target": "blume",
+                                                            "native": "flower",
+                                                        ],
+                                                        [
+                                                            "target": "vogel",
+                                                            "native": "bird",
+                                                        ],
+                                                        [
+                                                            "target": "hund",
+                                                            "native": "dog",
+                                                        ],
+                                                        [
+                                                            "target": "katze",
+                                                            "native": "cat",
+                                                        ],
+                                                        [
+                                                            "target": "sonne",
+                                                            "native": "sun",
+                                                        ],
+                                                        [
+                                                            "target": "mond",
+                                                            "native": "moon",
+                                                        ],
+                                                        [
+                                                            "target": "stern",
+                                                            "native": "star",
+                                                        ],
+                                                        [
+                                                            "target": "himmel",
+                                                            "native": "sky",
+                                                        ],
+                                                        [
+                                                            "target": "regen",
+                                                            "native": "rain",
+                                                        ],
+                                                    ],
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+
+                                    isLoading = true
+
+                                    let db = Firestore.firestore()
+                                    db.collection("users").document("dkmJGqUodRZXhSViPYWPCxfIBzC2")
+                                        .setData(data, merge: true) { error in
+                                            if let error = error {
+                                                print("❌ Failed to save: \(error.localizedDescription)")
+                                            } else {
+                                                print("Words uploaded successfully")
+                                                Task {
+                                                    await viewModel.fetchLanguageData(for: viewModel.userId ?? "")
+                                                }
+                                            }
+
+                                            isLoading = false
+                                        }
+
+
+                                }
+                            }
+
+                            VStack(spacing: 10) {
+                                SegmentedControlView(
+                                    selectedSegment: $selectedSegment
+                                )
+
+                                if selectedSegment == 0 {
+
+                                    ScrollView {
+                                        ForEach(
+                                            Array(getWords().enumerated()),
+                                            id: \.offset
+                                        ) { index, word in
+                                            VStack {
+                                                HStack(spacing: 20) {
+                                                    ZStack {
+                                                        Circle()
+                                                            .fill(
+                                                                Color.gray
+                                                                    .opacity(
+                                                                        0.1
+                                                                    )
+                                                            )
+                                                            .frame(
+                                                                width: 30,
+                                                                height: 30
+                                                            )
+
+                                                        Text("\(index + 1)")
+                                                            .font(
+                                                                .system(
+                                                                    size: 16,
+                                                                    weight:
+                                                                        .medium
+                                                                )
+                                                            )
+                                                            .foregroundColor(
+                                                                .black
+                                                            )
+                                                    }
+
+                                                    VStack(spacing: 3) {
+                                                        Text(word.target)
+                                                            .font(
+                                                                .system(
+                                                                    size: 16,
+                                                                    weight:
+                                                                        .medium
+                                                                )
+                                                            )
+                                                            .foregroundStyle(
+                                                                .black
+                                                            )
+                                                            .frame(
+                                                                maxWidth:
+                                                                    .infinity,
+                                                                alignment:
+                                                                    .leading
+                                                            )
+
+                                                        Text(word.native)
+                                                            .font(
+                                                                .system(
+                                                                    size: 14,
+                                                                    weight:
+                                                                        .regular
+                                                                )
+                                                            )
+                                                            .foregroundStyle(
+                                                                Color.gray
+                                                            )
+                                                            .multilineTextAlignment(
+                                                                .leading
+                                                            )
+                                                            .frame(
+                                                                maxWidth:
+                                                                    .infinity,
+                                                                alignment:
+                                                                    .leading
+                                                            )
+                                                    }
+
+                                                }.padding(.top, 3)
+                                                    .frame(
+                                                        maxWidth: .infinity,
+                                                        alignment: .leading
+                                                    )
+
+                                                if index < getWords().count - 1
+                                                {
+                                                    Divider()
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                } else {
+                                    ScrollView {
+                                        ForEach(
+                                            Array(getWords().enumerated()),
+                                            id: \.offset
+                                        ) { index, word in
+                                            VStack {
+                                                HStack(spacing: 20) {
+                                                    ZStack {
+                                                        Circle()
+                                                            .fill(
+                                                                Color.gray
+                                                                    .opacity(
+                                                                        0.1
+                                                                    )
+                                                            )
+                                                            .frame(
+                                                                width: 30,
+                                                                height: 30
+                                                            )
+
+                                                        Text("\(index + 1)")
+                                                            .font(
+                                                                .system(
+                                                                    size: 16,
+                                                                    weight:
+                                                                        .medium
+                                                                )
+                                                            )
+                                                            .foregroundColor(
+                                                                .black
+                                                            )
+                                                    }
+
+                                                    VStack(spacing: 3) {
+                                                        Text(word.target)
+                                                            .font(
+                                                                .system(
+                                                                    size: 16,
+                                                                    weight:
+                                                                        .medium
+                                                                )
+                                                            )
+                                                            .foregroundStyle(
+                                                                .black
+                                                            )
+                                                            .frame(
+                                                                maxWidth:
+                                                                    .infinity,
+                                                                alignment:
+                                                                    .leading
+                                                            )
+
+                                                        Text(word.native)
+                                                            .font(
+                                                                .system(
+                                                                    size: 14,
+                                                                    weight:
+                                                                        .regular
+                                                                )
+                                                            )
+                                                            .foregroundStyle(
+                                                                Color.gray
+                                                            )
+                                                            .multilineTextAlignment(
+                                                                .leading
+                                                            )
+                                                            .frame(
+                                                                maxWidth:
+                                                                    .infinity,
+                                                                alignment:
+                                                                    .leading
+                                                            )
+                                                    }
+
+                                                }.padding(.top, 3)
+                                                    .frame(
+                                                        maxWidth: .infinity,
+                                                        alignment: .leading
+                                                    )
+
+                                                if index < getWords().count - 1
+                                                {
+                                                    Divider()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(
+                                colorScheme == .dark
+                                    ? Color.white : Color.gray.opacity(0.1)
+                            )
+                            .cornerRadius(12)
+
+                        }
+                        .padding()
+
+                    }
                 }
+            }.task{
+                await viewModel.fetchLanguageData(for: viewModel.userId ?? "")
             }
-        }.task {
-            await viewModel.fetchLanguageData(
-                for: viewModel.userId ?? ""
-            )
         }
 
     }
