@@ -1,35 +1,13 @@
 import SwiftUI
+import FirebaseFirestore
 
 struct PracticeView: View {
+    @StateObject private var viewModel = SavedLangViewModel()
+    
     @State private var selectedSegment: Int = 0
     @State private var isActive: Bool = false
     @Environment(\.colorScheme) var colorScheme
 
-    let germanWords = [
-        "Hallo",
-        "Tschüss",
-        "Danke",
-        "Bitte",
-        "Wasser",
-        "Buch",
-        "Haus",
-        "Freund",
-        "Katze",
-        "Essen",
-    ]
-
-    let englishTranslations = [
-        "Hello",
-        "Goodbye",
-        "Thank you",
-        "Please / You're welcome",
-        "Water",
-        "Book",
-        "House",
-        "Friend",
-        "Cat",
-        "Food",
-    ]
 
     var body: some View {
         NavigationStack {
@@ -74,7 +52,7 @@ struct PracticeView: View {
                         )
                         .overlay(
                             VStack(spacing:0){
-                                Text("Tschüss")
+                                Text("\(viewModel.languageData[viewModel.selectedLanguage]?.savedWords.unknownWords.first?.target ?? "Loading")")
                                     .font(.system(size: 40, weight: .bold))
                                     .foregroundColor(.white)
                                 
@@ -97,9 +75,38 @@ struct PracticeView: View {
 
                 
                 
-                Text("Saved Words")
-                    .font(.system(size: 20, weight: .semibold))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 20){
+                    Text("Saved Words")
+                        .font(.system(size: 20, weight: .semibold))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    
+//                    Button(action: {
+//                        let data: [String: Any] = [
+//                            "languageData": [
+//                                "de": [
+//                                    "savedWords": [
+//                                        "knownWords": [
+//                                            ["target": "hallo", "native": "hello"],
+//                                            ["target": "katze", "native": "cat"]
+//                                        ],
+//                                        "unknownWords": [
+//                                            ["target": "hund", "native": "dog"],
+//                                            ["target": "apfel", "native": "apple"]
+//                                        ]
+//                                    ]
+//                                ]
+//                            ]
+//                        ]	
+//
+//
+//                        let db = Firestore.firestore()
+//                         db.collection("users").document("dkmJGqUodRZXhSViPYWPCxfIBzC2").setData(data, merge: true)
+//
+//                    }, label: {
+//                        Text("save words")
+//                    })
+                }
 
                 VStack(spacing: 10) {
                     SegmentedControlView(selectedSegment: $selectedSegment)
@@ -107,9 +114,7 @@ struct PracticeView: View {
                     if selectedSegment == 0 {
 
                         ScrollView {
-                            ForEach(Array(germanWords.enumerated()), id: \.1) {
-                                index,
-                                word in
+                            ForEach(Array(getWords().enumerated()), id: \.offset) { index, word in
                                 VStack {
                                     HStack(spacing: 20) {
                                         ZStack {
@@ -118,63 +123,70 @@ struct PracticeView: View {
                                                 .frame(width: 30, height: 30)
 
                                             Text("\(index + 1)")
-                                                .font(
-                                                    .system(
-                                                        size: 16,
-                                                        weight: .medium
-                                                    )
-                                                )
+                                                .font(.system(size: 16, weight: .medium))
                                                 .foregroundColor(.black)
                                         }
-                                        VStack(spacing: 3) {
-                                            Text(word)
-                                                .font(
-                                                    .system(
-                                                        size: 16,
-                                                        weight: .medium
-                                                    )
-                                                )
-                                                .foregroundStyle(.black)
-                                                .frame(
-                                                    maxWidth: .infinity,
-                                                    alignment: .leading
-                                                )
 
-                                            Text("\(englishTranslations[index])")
-                                                .font(
-                                                    .system(
-                                                        size: 14,
-                                                        weight: .regular
-                                                    )
-                                                )
+                                        VStack(spacing: 3) {
+                                            Text(word.target)
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundStyle(.black)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                                            Text(word.native)
+                                                .font(.system(size: 14, weight: .regular))
                                                 .foregroundStyle(Color.gray)
                                                 .multilineTextAlignment(.leading)
-                                                .frame(
-                                                    maxWidth: .infinity,
-                                                    alignment: .leading
-                                                )
+                                                .frame(maxWidth: .infinity, alignment: .leading)
                                         }
 
                                     }.padding(.top, 3)
-                                    .frame(
-                                        maxWidth: .infinity,
-                                        alignment: .leading
-                                    )
-                                    if index < germanWords.count - 1 {
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                                    if index < getWords().count - 1 {
                                         Divider()
                                     }
                                 }
-
                             }
                         }
 
+
                     } else {
                         ScrollView {
-                            Text("Unknown Words")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(Color.black)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 20)
+                            ForEach(Array(getWords().enumerated()), id: \.offset) { index, word in
+                                VStack {
+                                    HStack(spacing: 20) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.gray.opacity(0.1))
+                                                .frame(width: 30, height: 30)
+
+                                            Text("\(index + 1)")
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundColor(.black)
+                                        }
+
+                                        VStack(spacing: 3) {
+                                            Text(word.target)
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundStyle(.black)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                                            Text(word.native)
+                                                .font(.system(size: 14, weight: .regular))
+                                                .foregroundStyle(Color.gray)
+                                                .multilineTextAlignment(.leading)
+                                                .frame(maxWidth: .infinity, alignment: .leading)
+                                        }
+
+                                    }.padding(.top, 3)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                                    if index < getWords().count - 1 {
+                                        Divider()
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -186,10 +198,22 @@ struct PracticeView: View {
 
             }
             .padding()
+            .task {
+                await viewModel.fetchLanguageData(for: "dkmJGqUodRZXhSViPYWPCxfIBzC2")
+            }
         }
     }
+    
+    private func getWords() -> [WordPair] {
+        guard let lang = viewModel.languageData[viewModel.selectedLanguage] else {
+            return []
+        }
 
+        return selectedSegment == 0 ? lang.savedWords.knownWords : lang.savedWords.unknownWords
+    }
 }
+
+
 
 struct SegmentedControlView: View {
     @Binding var selectedSegment: Int

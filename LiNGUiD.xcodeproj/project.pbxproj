@@ -21,6 +21,8 @@
 		60C7E5BD2DE2C0C500C1AAF2 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 60C7E5BC2DE2C0C500C1AAF2 /* GoogleSignInSwift */; };
 		60DAC59C2DE2F770002C5410 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */; };
 		60F930802DE98E3100E37156 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F9307F2DE98E2A00E37156 /* User.swift */; };
+		60F930CC2DEA80E700E37156 /* SavedWords.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F930CB2DEA80DC00E37156 /* SavedWords.swift */; };
+		60F930CE2DEA83F300E37156 /* SavedWordsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */; };
 		8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F1FE2DE0183300397726 /* LiNGUiDApp.swift */; };
 		8F51F2042DE0183300397726 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F1F82DE0183300397726 /* GoogleService-Info.plist */; };
 		8F51F2052DE0183300397726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F1F62DE0183300397726 /* Assets.xcassets */; };
@@ -92,6 +94,8 @@
 		60C7E5B72DE2B51B00C1AAF2 /* AppSocialLoginButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSocialLoginButton.swift; sourceTree = "<group>"; };
 		60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
 		60F9307F2DE98E2A00E37156 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		60F930CB2DEA80DC00E37156 /* SavedWords.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWords.swift; sourceTree = "<group>"; };
+		60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWordsViewModel.swift; sourceTree = "<group>"; };
 		8F51F1F62DE0183300397726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F51F1F82DE0183300397726 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		8F51F1FC2DE0183300397726 /* LiNGUiD.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiNGUiD.entitlements; sourceTree = "<group>"; };
@@ -193,6 +197,7 @@
 		8F51F2172DE01C0D00397726 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				60F930CB2DEA80DC00E37156 /* SavedWords.swift */,
 				60F9307F2DE98E2A00E37156 /* User.swift */,
 				8F51F22F2DE0236100397726 /* Video.swift */,
 			);
@@ -214,6 +219,7 @@
 		8F51F21C2DE01C6900397726 /* View Models */ = {
 			isa = PBXGroup;
 			children = (
+				60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */,
 				60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */,
 				8F51F2352DE0241E00397726 /* VideoFeedViewModel.swift */,
 				8F51F2342DE023FB00397726 /* LoginViewModel.swift */,
@@ -500,6 +506,7 @@
 				D69E53EE2DEA4C5E00329D64 /* FirestoreService.swift in Sources */,
 				8FB929542DE02A790020AFCD /* FirestoreVideoRepository.swift in Sources */,
 				8FB929552DE02A790020AFCD /* AuthService.swift in Sources */,
+				60F930CE2DEA83F300E37156 /* SavedWordsViewModel.swift in Sources */,
 				60974D882DE79D130075CAAE /* AppColors.swift in Sources */,
 				8FB929672DE116370020AFCD /* MainTabView.swift in Sources */,
 				D69E51FF2DE6C0F600329D64 /* VideoPlayerLayerView.swift in Sources */,
@@ -519,6 +526,7 @@
 				8FB929532DE02A650020AFCD /* AuthCoordinatorView.swift in Sources */,
 				60C7E5B82DE2B52600C1AAF2 /* AppSocialLoginButton.swift in Sources */,
 				60F930802DE98E3100E37156 /* User.swift in Sources */,
+				60F930CC2DEA80E700E37156 /* SavedWords.swift in Sources */,
 				60C7E5B62DE1B0BD00C1AAF2 /* AppTextField.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
