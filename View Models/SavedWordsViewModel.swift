@@ -29,7 +29,7 @@ class SavedWordViewModel: ObservableObject {
 
 
     func fetchLanguageData(for userID: String) async {
-        let docRef = db.collection("users").document(userID)
+        let docRef = db.collection("users").document(userId ?? "")
 
         do {
             let snapshot = try await docRef.getDocument()
@@ -39,7 +39,6 @@ class SavedWordViewModel: ObservableObject {
             self.errorMessage =
                 "Failed to fetch data: \(error.localizedDescription)"
         }
-
     }
     
     func moveToKnown(word: WordPair) {
