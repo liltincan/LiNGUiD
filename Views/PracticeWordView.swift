@@ -11,12 +11,16 @@ struct PracticeWordView: View {
     @State private var currentIndex = 0
     @State private var isFlipped = false
     @State private var dragOffset: CGSize = .zero
-
+    @State private var reload: Bool = false
+    @State private var totalUnknownWords: Int = 0
+    
     let maxVisibleCards = 3
+    
 
     @State private var knownWords: [String] = []
     @State private var unknownWords: [String] = []
     @State private var flashcardCache: [WordPair] = []
+    @State private var viewID = UUID()
 
     @ObservedObject var savedWordsViewModel: SavedWordViewModel
 
@@ -29,9 +33,10 @@ struct PracticeWordView: View {
         savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
             .savedWords.unknownWords.count ?? 0
     }
+    
 
     var body: some View {
-        
+
         VStack(spacing: 20) {
 
             VStack {
@@ -88,7 +93,8 @@ struct PracticeWordView: View {
 
                 flashcardStack()
 
-                progressText.padding(.bottom)
+                progressText(with: UUID())
+                    .padding(.bottom)
 
             }
             .multilineTextAlignment(.center)
@@ -113,6 +119,10 @@ struct PracticeWordView: View {
                 savedWordsViewModel.languageData[
                     savedWordsViewModel.selectedLanguage
                 ]?.savedWords.unknownWords ?? []
+            
+            totalUnknownWords = savedWordsViewModel.languageData[
+                savedWordsViewModel.selectedLanguage
+            ]?.savedWords.unknownWords.count ?? 0
         }
 
     }
@@ -193,27 +203,56 @@ struct PracticeWordView: View {
             .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 2)
     }
 
-    var progressText: some View {
+    func progressText(with newID: UUID) -> some View {
         if currentIndex == flashcardCache.count {
 
             if unknownWordsCount == 0 {
                 return AnyView(
-                    Text("Congratulations!")
-                        .font(.title)
+                    VStack(spacing: 0){
+                        Text("Congratulations!")
+                            .font(.title)
+                            .foregroundColor(.white)
+                        
+                        Text(
+                            "You have learned \(totalUnknownWords) new words!"
+                        )
+                        .font(.system(size: 14, weight: .regular))
                         .foregroundColor(.white)
+                    }
                 )
             } else {
                 return AnyView(
                     VStack(spacing: 20) {
-                        Text("Well Done!")
-                            .font(.title)
-                            .foregroundColor(.white)
+                        VStack(spacing: 0) {
+                            Text("Well Done!")
+                                .font(.title)
+                                .foregroundColor(.white)
 
-                        Text(
-                            "You have \(unknownWordsCount) unknown words left.\nKeep practicing!"
-                        )
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.white)
+                            Text(
+                                "You have \(unknownWordsCount) unknown words left!"
+                            )
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(.white)
+                        }
+
+                        Button(action: {
+                            viewID = newID
+                            currentIndex = 0
+                            isFlipped = false
+                            dragOffset = .zero
+                            flashcardCache =
+                                savedWordsViewModel.languageData[
+                                    savedWordsViewModel.selectedLanguage
+                                ]?.savedWords.unknownWords ?? []
+                        }) {
+                            Text("Keep practicing")
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 30)
+                                .padding(.vertical, 10)
+                                .background(Color.appPrimaryColor)
+                                .cornerRadius(10)
+                        }
                     }
                 )
             }
