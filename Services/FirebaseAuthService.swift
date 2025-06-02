@@ -21,15 +21,29 @@ final class FirebaseAuthService: AuthService {
         let email = user.email ?? ""
         let username = email.components(separatedBy: "@").first ?? "user"
 
-        let userData: [String: Any] = [
-            "uid": user.uid,
-            "email": email,
-            "userName": username,
-            "loginWith": loginMethod,
-            "createdAt": FieldValue.serverTimestamp()
-        ]
+        let newUser = User(
+            id: user.uid,
+            email: email,
+            username: username,
+            uploadedVideos: [],
+            savedVideos: [],
+            watchedVideos: [],
+            likedVideos: [],
+            chats: [],
+            savedWords: [],
+            followers: [],
+            following: [],
+            country: "",
+            nativeLanguages: [],
+            targetLanguages: []
+        )
 
-        db.collection("users").document(user.uid).setData(userData, merge: true)
+        do {
+            try db.collection("users").document(user.uid).setData(from: newUser)
+        } catch {
+            print("Failed to save user: \(error.localizedDescription)")
+        }
+
     }
 
 
