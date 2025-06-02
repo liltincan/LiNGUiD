@@ -31,6 +31,7 @@ struct PracticeWordView: View {
     }
 
     var body: some View {
+        
         VStack(spacing: 20) {
 
             VStack {
