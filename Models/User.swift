@@ -10,22 +10,28 @@ import FirebaseFirestore
 
 struct User: Codable, Identifiable {
     @DocumentID var id: String?
-    var email: String
-    var username: String
-    var uploadedVideos: [String]?
-    var savedVideos: [String]?
-    var watchedVideos: [String]?
+    var email: String?
+    var username: String?
+    var createdAt: Date?
+    var flameDate: Date?
+    var flameStatus: String?
+    var globalWatchTime: Double?
+    var interests: [String]?
+    var languagesData: [String: LanguageData]?
     var likedVideos: [String]?
-    var chats: [String]?
-    var savedWords: [String]?
-    var followers: [String] = []
-    var following: [String] = []
-    var country: String
-    var nativeLanguages: [String] = []
-    var targetLanguages: [TargetLanguage] = []
+    var streak: Int?
 }
 
-struct TargetLanguage: Codable {
-    var language: String
-    var level: Int
+struct LanguageData: Codable {
+    var comprehensionLevel: Int?
+    var dailyGoal: String?
+    var isBeginnerLevel: Bool?
+    var motivation: String?
+    var timestamp: Date?
+    var watchTime: WatchTime?
+}
+
+struct WatchTime: Codable {
+    var daily: [String: Double]?
+    var total: Double?
 }
