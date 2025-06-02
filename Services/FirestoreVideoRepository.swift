@@ -17,8 +17,13 @@ final class FirestoreVideoRepository: VideoRepository {
 //        }
         
         let userLevel = user.languagesData?[selectedLanguage]?.comprehensionLevel ?? 2
+        
+        //print("User level for \(selectedLanguage):", userLevel) // debugging code
+        //print("Looking for videos in: videos/\(afterID ?? "")/items") // debugging code
+        
         let snapshot = try await db.collection(videosCollection).document(afterID ?? "").collection("items").getDocuments()
         print("snapshot", snapshot)
+        //print("Total documents found:", snapshot.documents.count) // debugging code
         return snapshot.documents.compactMap { document in
             guard let urlString = document.data()["video_url"] as? String,
                   let url = URL(string: urlString),
@@ -27,9 +32,11 @@ final class FirestoreVideoRepository: VideoRepository {
             }
             
             let detectedLevel = document.data()["detected_level"] as? Int ?? 2
+            //print("Video '\(title)' has level \(detectedLevel), user level \(userLevel)") // debugging code
             
             // Filter: only include videos within ±1 of user's level - Gerardo De La Torre
             guard detectedLevel >= (userLevel - 1) && detectedLevel <= (userLevel + 1) else {
+                //print("Video '\(title)' has level \(detectedLevel), user level \(userLevel)") // debugging code
                 return nil
             }
             

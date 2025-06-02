@@ -6,6 +6,7 @@ import FirebaseFirestore
 class VideoFeedViewModel: ObservableObject {
     @Published var videos: [Video] = []
     @Published var isLoading = false
+    @Published var selectedLanguage: String?
     
     private let repository: VideoRepository
     private let authService: AuthService
@@ -17,11 +18,18 @@ class VideoFeedViewModel: ObservableObject {
         self.repository = repository
         self.authService = authService
     }
+    
+    func getAvailableLanguages(for user: User) -> [String] {
+        guard let languagesData = user.languagesData else { return [] }
+        return Array(languagesData.keys)
+    }
 
-    func fetchInitialVideos() async {
+    func fetchInitialVideos(for language: String? = nil) async {
         guard !isLoading else { return }
         
         guard let userID = authService.currentUserID else { return }
+        print("Current user ID:", authService.currentUserID ?? "nil") // checking user is actually logged in
+        
         
         isLoading = true
         defer { isLoading = false }
@@ -32,23 +40,39 @@ class VideoFeedViewModel: ObservableObject {
             let user = try userDoc.data(as: User.self)
             
             
+            // Determine which language to use
+            let targetLanguage : String
+            if let language = language {
+                targetLanguage = language
+            } else if let firstLanguage = user.languagesData?.keys.first {
+                targetLanguage = firstLanguage.lowercased()
+            } else {
+                print("User has no target languages, using 'russian' as fallback")
+                targetLanguage = "russian"
+            }
+            selectedLanguage = targetLanguage // stores the language for future use.
+            
+            print("User languages:", user.languagesData?.keys ?? []) // check if user has language data
+            
             let newVideos = try await repository.fetchVideos(
-                afterID: "russian",
+                afterID: targetLanguage,
                 limit: pageSize,
                 user: user,
-                selectedLanguage: "russian"
+                selectedLanguage: targetLanguage
             )
             videos = newVideos
             lastID = newVideos.last?.id
         } catch {
             print("Error loading initial videos: \(error)")
         }
+
     }
 
     func fetchMoreVideos() async {
-        guard !isLoading else { return }
-        
-        guard let userID = authService.currentUserID else { return }
+        guard !isLoading,
+            let lastID = lastID,
+            let userID = authService.currentUserID,
+            let currentLanguage = selectedLanguage else { return }
         
         isLoading = true
         defer { isLoading = false }
@@ -58,10 +82,10 @@ class VideoFeedViewModel: ObservableObject {
             let userDoc = try await db.collection("users").document(userID).getDocument()
             let user = try userDoc.data(as: User.self)
             let newVideos = try await repository.fetchVideos(
-                afterID: "russian",
+                afterID: lastID,
                 limit: pageSize,
                 user: user,
-                selectedLanguage: "russian"
+                selectedLanguage: currentLanguage // Use stored language
             )
             videos.append(contentsOf: newVideos)
             self.lastID = newVideos.last?.id
