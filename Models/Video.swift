@@ -5,5 +5,6 @@ struct Video: Identifiable, Codable {
     let url: URL
     let title: String
     // TODO: add other metadata (duration, thumbnailURL, etc.)
+    let detectedLevel: Int // detected difficulty level
 }
 
