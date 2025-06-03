@@ -33,6 +33,16 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             }
         }
     }
+    
+    func updateLikedVideos(forUserId uid: String, likedVideos: [String], completion: @escaping (Result<Void, Error>) -> Void) {
+        db.collection("users").document(uid).updateData(["likedVideos": likedVideos])
+    }
+    
+    func updateSavedVideos(forUserId uid: String, savedVideos: [String], completion: @escaping (Result<Void, Error>) -> Void) {
+        db.collection("users").document(uid).updateData(["savedVideos": savedVideos])
+    }
+    
+    
 }
 
 
