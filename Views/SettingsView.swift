@@ -3,6 +3,9 @@ import SwiftUI
 struct SettingsView: View {
     var likedVideos: [String]
     var savedVideos: [String]
+    @StateObject private var vm = LoginViewModel()
+    @EnvironmentObject var state: AppState
+    @State private var showLogoutAlert = false
 
     var body: some View {
         NavigationStack {
@@ -10,25 +13,37 @@ struct SettingsView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         SettingsSection(title: "Your activity") {
-                            SettingsRow(title: "Liked", icon: "heart", destination: LikedView(videoThumnails: likedVideos))
-                            SettingsRow(title: "Saved", icon: "bookmark", destination: SavedView(videoThumnails: savedVideos))
+                            SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumnails: likedVideos))
+                            SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumnails: savedVideos))
                         }
 
                         DividerLine()
 
                         SettingsSection(title: "Content") {
-                            SettingsRow(title: "Change Level", destination: ChangeLevelView())
-                            SettingsRow(title: "Change Languague", destination: ChangeLanguageView()) 
+                            SettingsRowLink(title: "Change Level", destination: ChangeLevelView())
+                            SettingsRowLink(title: "Change Language", destination: ChangeLanguageView())
                         }
 
                         DividerLine()
+                        
+                        SettingsSection(title: "Information") {
+                            SettingsRowLink(title: "About", destination: AboutView())
+                            SettingsRowLink(title: "Privacy", destination: PrivacyView())
+                            SettingsRowLink(title: "Help", destination: HelpView())
+                            SettingsRowLink(title: "Request a Feature", destination: RequestFeatureView())
+                        }
+                        
+                        DividerLine()
 
                         SettingsSection(title: "Account") {
-                            SettingsRow(title: "Change password", destination: ChangePasswordView())
-                            SettingsRow(title: "Change email", destination: ChangeEmailView())
-                            SettingsRow(title: "Log out", destination: LogoutConfirmationView(), isDestructive: true)
-                            SettingsRow(title: "Delete account", destination: DeleteAccountConfirmationView(), isDestructive: true)
+                            SettingsRowLink(title: "Change password", destination: ChangePasswordView())
+                            SettingsRowLink(title: "Change email", destination: ChangeEmailView())
+                            SettingsRowButton(title: "Log out", isDestructive: true) {
+                                showLogoutAlert = true
+                            }
+                            SettingsRowLink(title: "Delete account", destination: DeleteAccountConfirmationView(), isDestructive: true)
                         }
+                        
                     }
                     .padding(.top, 32)
                     .padding(.horizontal, 16)
@@ -37,6 +52,20 @@ struct SettingsView: View {
             .background(Color.black.ignoresSafeArea())
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .tabBar)
+            .alert("Are you sure you want to log out?", isPresented: $showLogoutAlert) {
+                Button("Log out", role: .destructive) {
+                    logout()
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+        }
+    }
+
+    func logout() {
+        let result = vm.logout()
+        if (result){
+            state.isSignedIn = false
         }
     }
 }
@@ -66,7 +95,9 @@ struct SettingsSection<Content: View>: View {
     }
 }
 
-struct SettingsRow<Destination: View>: View {
+// MARK: - Row for Navigation
+
+struct SettingsRowLink<Destination: View>: View {
     var title: String
     var icon: String? = nil
     var destination: Destination
@@ -74,28 +105,56 @@ struct SettingsRow<Destination: View>: View {
 
     var body: some View {
         NavigationLink(destination: destination) {
-            HStack {
-                if let icon = icon {
-                    Image(systemName: icon)
-                        .font(.system(size: UIConstants.iconSize))
-                        .foregroundColor(isDestructive ? UIConstants.redColor : .white)
-                        .frame(width: 24)
-                }
-
-                Text(title)
-                    .font(UIConstants.rowFont)
-                    .foregroundColor(isDestructive ? UIConstants.redColor : .white)
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.gray)
-                    .font(.system(size: 14, weight: .medium))
-            }
-            .frame(height: UIConstants.rowHeight)
-            .contentShape(Rectangle())
+            SettingsRowContent(title: title, icon: icon, isDestructive: isDestructive)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Row for Button Action
+
+struct SettingsRowButton: View {
+    var title: String
+    var icon: String? = nil
+    var isDestructive: Bool = false
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            SettingsRowContent(title: title, icon: icon, isDestructive: isDestructive)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Reusable Row Content
+
+struct SettingsRowContent: View {
+    var title: String
+    var icon: String? = nil
+    var isDestructive: Bool = false
+
+    var body: some View {
+        HStack {
+            if let icon = icon {
+                Image(systemName: icon)
+                    .font(.system(size: UIConstants.iconSize))
+                    .foregroundColor(isDestructive ? UIConstants.redColor : .white)
+                    .frame(width: 24)
+            }
+
+            Text(title)
+                .font(UIConstants.rowFont)
+                .foregroundColor(isDestructive ? UIConstants.redColor : .white)
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .foregroundColor(.gray)
+                .font(.system(size: 14, weight: .medium))
+        }
+        .frame(height: UIConstants.rowHeight)
+        .contentShape(Rectangle())
     }
 }
 
@@ -103,7 +162,7 @@ struct DividerLine: View {
     var body: some View {
         Rectangle()
             .fill(Color(white: 0.25)) // Match the divider gray tone in Figma
-            .frame(height: 5)
+            .frame(height: 2)
             .padding(.vertical, 20)
     }
 }
@@ -117,20 +176,21 @@ struct UIConstants {
     static let redColor = Color(red: 255/255, green: 69/255, blue: 58/255)
 }
 
-
 // MARK: - Destination Views (Examples)
 
 struct LikedView: View {
     var videoThumnails: [String] = []
     var body: some View {
-        VideoGridSection(videoThumbnails: videoThumnails, emptyMsg: "No videos liked yet.")
+        Text("Liked Videos")
+            .navigationTitle(Text("Liked Videos"))
     }
 }
 
 struct SavedView: View {
     var videoThumnails: [String] = []
     var body: some View {
-        VideoGridSection(videoThumbnails: videoThumnails, emptyMsg: "No videos saved yet.")
+        Text("Saved Videos")
+            .navigationTitle(Text("Saved Videos"))
     }
 }
 
@@ -162,16 +222,37 @@ struct ChangeEmailView: View {
     }
 }
 
-struct LogoutConfirmationView: View {
-    var body: some View {
-        Text("Are you sure you want to log out?")
-            .navigationTitle("Log Out")
-    }
-}
-
 struct DeleteAccountConfirmationView: View {
     var body: some View {
         Text("Are you sure you want to delete your account?")
             .navigationTitle("Delete Account")
+    }
+}
+
+struct AboutView: View {
+    var body: some View {
+        Text("About")
+            .navigationTitle("About")
+    }
+}
+
+struct PrivacyView: View {
+    var body: some View {
+        Text("Privacy Policy")
+            .navigationTitle("Privacy")
+    }
+}
+
+struct HelpView: View {
+    var body: some View {
+        Text("Help")
+            .navigationTitle("Help")
+    }
+}
+
+struct RequestFeatureView: View {
+    var body: some View {
+        Text("Request Some Feature")
+            .navigationTitle("Request a Feature")
     }
 }
