@@ -19,6 +19,13 @@ struct User: Codable, Identifiable {
     var interests: [String]?
     var languagesData: [String: LanguageData]?
     var likedVideos: [String]?
+    var savedVideos: [String]?
+    var watchedVideos: [String]?
+    var uploadedVideos: [String]?
+    var followers: [String]
+    var following: [String]
+    var chats: [String]
+    var country: String?
     var streak: Int?
 }
 

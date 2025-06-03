@@ -11,12 +11,16 @@ import AVFoundation
 struct VideoPlayerView: View {
     
     let url: URL //url of the video we want to play
+    let videoId: String
     
     @State private var isPlaying = true //video should start by playing
     @State private var player: AVQueuePlayer = .init() //used to queue up videos for looping
     @State private var looper: AVPlayerLooper? //used to loop the video
     @State private var isLiked: Bool = false
     @State private var isSaved: Bool = false
+    
+    @EnvironmentObject var userSession: UserSessionViewModel
+    @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
 
     var body: some View {
         ZStack {
@@ -52,6 +56,15 @@ struct VideoPlayerView: View {
                 VStack(spacing: 40) {
                     Button(action: {
                         isLiked.toggle()
+                        if let user = userSession.currentUser,
+                           let userId = user.id {
+                            videoPlayerViewModel.toggleLike(
+                                for: videoId,
+                                userId: userId,
+                                currentLikes: user.likedVideos ?? []
+                            )
+                        }
+
                     }) {
                         Image(systemName: isLiked ? "heart.fill" : "heart")
                             .resizable()
@@ -76,6 +89,7 @@ struct VideoPlayerView: View {
 
                     Button(action: {
                         isSaved.toggle()
+                        
                     }) {
                         Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                             .resizable()
@@ -111,7 +125,7 @@ struct VideoPlayerView: View {
 }
 
 
-#Preview {
-    VideoPlayerView(url: URL(string: "https://www.w3schools.com/html/mov_bbb.mp4")!)
-}
+//#Preview {
+    //VideoPlayerView(url: URL(string: //"https://www.youtube.com/embed/gMr8VMsRsz8")!, videoId: "gMr8VMsRsz8", //videoPlayerViewModel: VideoPlayerViewModel())
+//}
 

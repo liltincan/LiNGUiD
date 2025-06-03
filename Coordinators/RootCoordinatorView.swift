@@ -28,6 +28,7 @@ struct RootCoordinatorView: View {
                     .environmentObject(userSession)
             }
         }
+        .environmentObject(userSession)
     }
 }
 
