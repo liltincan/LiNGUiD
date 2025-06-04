@@ -22,7 +22,7 @@ struct VideoFeedView: View {
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
 //            .rotationEffect(.degrees(-90)) // vertical scroll illusion
             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-            .rotationEffect(.degrees(90))
+            //.rotationEffect(.degrees(90))
 //            .offset(x: UIScreen.main.bounds.width)
             .onAppear {
                 Task { await vm.fetchInitialVideos() }
