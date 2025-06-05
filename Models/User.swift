@@ -14,23 +14,24 @@ struct User: Codable, Identifiable {
     var username: String?
     var createdAt: Date?
     var flameDate: Date?
+    var targetLanguage: String = ""
     var flameStatus: String?
     var globalWatchTime: Double?
     var interests: [String]?
-    var languagesData: [String: LanguageData]?
-    var likedVideos: [String]
-    var savedVideos: [String]
-    var watchedVideos: [String]
-    var uploadedVideos: [String]
-    var followers: [String]
-    var following: [String]
-    var chats: [String]
+    var languagesData: [String: LanguagesData]?
+    var likedVideos: [String]?
+    var savedVideos: [String]?
+    var watchedVideos: [String]?
+    var uploadedVideos: [String]?
+    var followers: [String]?
+    var following: [String]?
+    var chats: [String]?
     var country: String?
     var streak: Int?
 
     enum CodingKeys: CodingKey {
-        case id, email, username, createdAt, flameDate, flameStatus,
-             globalWatchTime, interests, languagesData,
+        case id,email, username, createdAt, flameDate, flameStatus,
+             globalWatchTime, interests,targetLanguage ,languagesData,
              likedVideos, savedVideos, watchedVideos, uploadedVideos,
              followers, following, chats, country, streak
     }
@@ -46,7 +47,9 @@ struct User: Codable, Identifiable {
         flameStatus = try container.decodeIfPresent(String.self, forKey: .flameStatus)
         globalWatchTime = try container.decodeIfPresent(Double.self, forKey: .globalWatchTime)
         interests = try container.decodeIfPresent([String].self, forKey: .interests)
-        languagesData = try container.decodeIfPresent([String: LanguageData].self, forKey: .languagesData)
+        targetLanguage = try container.decodeIfPresent(String.self, forKey: .targetLanguage) ?? ""
+        languagesData = try container.decodeIfPresent([String: LanguagesData].self, forKey: .languagesData)
+        
 
         likedVideos = try container.decodeIfPresent([String].self, forKey: .likedVideos) ?? []
         savedVideos = try container.decodeIfPresent([String].self, forKey: .savedVideos) ?? []
@@ -60,17 +63,68 @@ struct User: Codable, Identifiable {
     }
 }
 
+struct FirestoreUserPatch: Codable {
+    let languagesData: [String: LanguagesData]
+}
 
-struct LanguageData: Codable {
+
+
+struct LanguagesData: Codable {
+    var savedWords: WordLists?
     var comprehensionLevel: Int?
     var dailyGoal: String?
     var isBeginnerLevel: Bool?
     var motivation: String?
     var timestamp: Date?
     var watchTime: WatchTime?
+    
+    enum CodingKeys: String, CodingKey {
+        case savedWords
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        savedWords = try container.decodeIfPresent(WordLists.self, forKey: .savedWords)
+    }
+    
+    init(savedWords: WordLists) {
+           self.savedWords = savedWords
+       }
+}
+
+struct WrappedSavedWords: Codable {
+    let savedWords: WordLists
+}
+
+
+struct WordLists: Codable {
+    var knownWords: [WordPair] = []
+    var unknownWords: [WordPair] = []
+    
+    init(knownWords: [WordPair], unknownWords: [WordPair]) {
+           self.knownWords = knownWords
+           self.unknownWords = unknownWords
+       }
+
+    enum CodingKeys: String, CodingKey {
+        case knownWords, unknownWords
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        knownWords = try container.decodeIfPresent([WordPair].self, forKey: .knownWords) ?? []
+        unknownWords = try container.decodeIfPresent([WordPair].self, forKey: .unknownWords) ?? []
+    }
+}
+
+struct WordPair: Codable {
+    var target: String  // the foreign word
+    var native: String  // the translation
 }
 
 struct WatchTime: Codable {
     var daily: [String: Double]?
     var total: Double?
 }
+
+

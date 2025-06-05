@@ -2,6 +2,8 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selection = 0
+    @EnvironmentObject var userSession: UserSessionViewModel
+
 
     var body: some View {
         TabView(selection: $selection) {
@@ -17,7 +19,7 @@ struct MainTabView: View {
                 .tabItem { Label("Stats", systemImage: "chart.bar.fill") }
                 .tag(2)
 
-            PracticeView()
+            PracticeView(userSession:  userSession)
                 .tabItem { Label("Practice", systemImage: "rectangle.3.offgrid.fill") }
                 .tag(3)
 

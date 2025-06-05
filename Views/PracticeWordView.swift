@@ -25,13 +25,11 @@ struct PracticeWordView: View {
     @State private var viewID = UUID()
 
     var knownWordsCount: Int {
-        savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
-            .savedWords.knownWords.count ?? 0
+        savedWordsViewModel.savedWords?.knownWords.count ?? 0
     }
 
     var unknownWordsCount: Int {
-        savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
-            .savedWords.unknownWords.count ?? 0
+        savedWordsViewModel.savedWords?.unknownWords.count ?? 0
     }
 
     var body: some View {
@@ -96,12 +94,10 @@ struct PracticeWordView: View {
         .background(Color.black)
         .onAppear {
             flashcardCache =
-                savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
-                    .savedWords.unknownWords ?? []
+                savedWordsViewModel.savedWords?.unknownWords ?? []
 
             totalUnknownWords =
-                savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
-                    .savedWords.unknownWords.count ?? 0
+                savedWordsViewModel.savedWords?.unknownWords.count ?? 0
         }
     }
 
@@ -194,8 +190,7 @@ struct PracticeWordView: View {
                             isFlipped = false
                             dragOffset = .zero
                             flashcardCache =
-                                savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
-                                    .savedWords.unknownWords ?? []
+                                savedWordsViewModel.savedWords?.unknownWords ?? []
                         }) {
                             Text("Keep practicing")
                                 .fontWeight(.semibold)

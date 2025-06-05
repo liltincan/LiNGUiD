@@ -2,7 +2,8 @@ import SwiftUI
 
 struct RootCoordinatorView: View {
     @EnvironmentObject var appState: AppState
-    @StateObject var userSession = UserSessionViewModel()
+    @EnvironmentObject var userSession: UserSessionViewModel 
+
     var body: some View {
         Group {
             if !appState.isSignedIn {
