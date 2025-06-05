@@ -2,7 +2,7 @@ import SwiftUI
 
 struct RootCoordinatorView: View {
     @EnvironmentObject var appState: AppState
-    @EnvironmentObject var userSession: UserSessionViewModel 
+    @StateObject var userSession = UserSessionViewModel()
 
     var body: some View {
         Group {

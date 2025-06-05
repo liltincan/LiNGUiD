@@ -23,7 +23,6 @@
 		60C7E5BD2DE2C0C500C1AAF2 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 60C7E5BC2DE2C0C500C1AAF2 /* GoogleSignInSwift */; };
 		60DAC59C2DE2F770002C5410 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */; };
 		60F930802DE98E3100E37156 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F9307F2DE98E2A00E37156 /* User.swift */; };
-		60F930CC2DEA80E700E37156 /* SavedWords.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F930CB2DEA80DC00E37156 /* SavedWords.swift */; };
 		60F930CE2DEA83F300E37156 /* SavedWordsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */; };
 		8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F1FE2DE0183300397726 /* LiNGUiDApp.swift */; };
 		8F51F2042DE0183300397726 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F1F82DE0183300397726 /* GoogleService-Info.plist */; };
@@ -99,7 +98,6 @@
 		60C7E5B72DE2B51B00C1AAF2 /* AppSocialLoginButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSocialLoginButton.swift; sourceTree = "<group>"; };
 		60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
 		60F9307F2DE98E2A00E37156 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
-		60F930CB2DEA80DC00E37156 /* SavedWords.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWords.swift; sourceTree = "<group>"; };
 		60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWordsViewModel.swift; sourceTree = "<group>"; };
 		8F51F1F62DE0183300397726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F51F1F82DE0183300397726 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -203,7 +201,6 @@
 		8F51F2172DE01C0D00397726 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				60F930CB2DEA80DC00E37156 /* SavedWords.swift */,
 				60F9307F2DE98E2A00E37156 /* User.swift */,
 				8F51F22F2DE0236100397726 /* Video.swift */,
 			);
@@ -538,7 +535,6 @@
 				8FB929532DE02A650020AFCD /* AuthCoordinatorView.swift in Sources */,
 				60C7E5B82DE2B52600C1AAF2 /* AppSocialLoginButton.swift in Sources */,
 				60F930802DE98E3100E37156 /* User.swift in Sources */,
-				60F930CC2DEA80E700E37156 /* SavedWords.swift in Sources */,
 				60C7E5B62DE1B0BD00C1AAF2 /* AppTextField.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -721,7 +717,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.julian.LiNGUiD;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dev.LiNGUiD;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -766,7 +762,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.julian.LiNGUiD;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dev.LiNGUiD;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;

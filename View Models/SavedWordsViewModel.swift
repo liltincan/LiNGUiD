@@ -34,7 +34,7 @@ class SavedWordViewModel: ObservableObject {
 
 
     func fetchLanguageData() async {
-        userSession.getCurrentUser()
+        await userSession.refreshUser()
         if let languageKey = userSession.currentUser?.targetLanguage,
            let savedWords = userSession.currentUser?.languagesData?[languageKey]?.savedWords {
             self.savedWords = savedWords

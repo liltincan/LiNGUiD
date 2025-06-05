@@ -6,8 +6,8 @@ import FirebaseFirestore
 import SwiftUI
 
 struct PracticeView: View {
-    @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject private var viewModel: SavedWordViewModel
+    @StateObject var userSession = UserSessionViewModel()
 
 
 
@@ -132,7 +132,7 @@ struct PracticeView: View {
                         "de": [
                             "savedWords": [
                                 "knownWords": [["target": "hallo", "native": "hello"]],
-                                "unknownWords": [["target": "buch", "native": "book"], ["target": "tisch", "native": "table"]]
+                                "unknownWords": [["target": "buch", "native": "book"], ["target": "tisch", "native": "table"],["target": "milch", "native": "milk"]]
                             ]
                         ]
                     ]
