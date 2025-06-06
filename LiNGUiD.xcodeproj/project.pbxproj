@@ -8,8 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1320204F2DE8D07100DD8AF1 /* SettingsView.swift */; };
+		138018E52DF0AD01003FC3D6 /* ChangeEmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138018E42DF0ACFB003FC3D6 /* ChangeEmailView.swift */; };
 		138F1B962DEE0DF700F3B31B /* VideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B952DEE0DF300F3B31B /* VideoView.swift */; };
 		138F1B982DEF6D2F00F3B31B /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B972DEF6D2900F3B31B /* EditProfileView.swift */; };
+		139ABECE2DF2271100EB45FD /* ChangeEmailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139ABECD2DF2270C00EB45FD /* ChangeEmailViewModel.swift */; };
 		604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */; };
 		60974D5F2DE6561A0075CAAE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60974D5E2DE656130075CAAE /* AppDelegate.swift */; };
 		60974D862DE79BE70075CAAE /* AppTitleText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60974D852DE79BDF0075CAAE /* AppTitleText.swift */; };
@@ -88,8 +90,10 @@
 
 /* Begin PBXFileReference section */
 		1320204F2DE8D07100DD8AF1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		138018E42DF0ACFB003FC3D6 /* ChangeEmailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeEmailView.swift; sourceTree = "<group>"; };
 		138F1B952DEE0DF300F3B31B /* VideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoView.swift; sourceTree = "<group>"; };
 		138F1B972DEF6D2900F3B31B /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
+		139ABECD2DF2270C00EB45FD /* ChangeEmailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeEmailViewModel.swift; sourceTree = "<group>"; };
 		604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonceGenerator.swift; sourceTree = "<group>"; };
 		60974D5E2DE656130075CAAE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		60974D852DE79BDF0075CAAE /* AppTitleText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTitleText.swift; sourceTree = "<group>"; };
@@ -225,6 +229,7 @@
 		8F51F21C2DE01C6900397726 /* View Models */ = {
 			isa = PBXGroup;
 			children = (
+				139ABECD2DF2270C00EB45FD /* ChangeEmailViewModel.swift */,
 				60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */,
 				60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */,
 				8F51F2352DE0241E00397726 /* VideoFeedViewModel.swift */,
@@ -238,6 +243,7 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				138018E42DF0ACFB003FC3D6 /* ChangeEmailView.swift */,
 				138F1B972DEF6D2900F3B31B /* EditProfileView.swift */,
 				138F1B952DEE0DF300F3B31B /* VideoView.swift */,
 				60974D892DE803760075CAAE /* PracticeWordView.swift */,
@@ -533,11 +539,13 @@
 				60974D5F2DE6561A0075CAAE /* AppDelegate.swift in Sources */,
 				8FB929512DE02A590020AFCD /* LoginViewModel.swift in Sources */,
 				8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */,
+				139ABECE2DF2271100EB45FD /* ChangeEmailViewModel.swift in Sources */,
 				D69E51D42DE66EF600329D64 /* VideoPlayerView.swift in Sources */,
 				138F1B962DEE0DF700F3B31B /* VideoView.swift in Sources */,
 				8FB929532DE02A650020AFCD /* AuthCoordinatorView.swift in Sources */,
 				60C7E5B82DE2B52600C1AAF2 /* AppSocialLoginButton.swift in Sources */,
 				60F930802DE98E3100E37156 /* User.swift in Sources */,
+				138018E52DF0AD01003FC3D6 /* ChangeEmailView.swift in Sources */,
 				60F930CC2DEA80E700E37156 /* SavedWords.swift in Sources */,
 				60C7E5B62DE1B0BD00C1AAF2 /* AppTextField.swift in Sources */,
 			);
@@ -699,7 +707,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 33FYHSNXR3;
+				DEVELOPMENT_TEAM = WBXZ64TNQB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
@@ -721,7 +729,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.julian.LiNGUiD;
+				PRODUCT_BUNDLE_IDENTIFIER = com.LiNGUiD.LiNGUiD;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -744,7 +752,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 33FYHSNXR3;
+				DEVELOPMENT_TEAM = WBXZ64TNQB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
@@ -766,7 +774,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.julian.LiNGUiD;
+				PRODUCT_BUNDLE_IDENTIFIER = com.LiNGUiD.LiNGUiD;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;

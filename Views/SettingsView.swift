@@ -215,12 +215,7 @@ struct ChangePasswordView: View {
     }
 }
 
-struct ChangeEmailView: View {
-    var body: some View {
-        Text("Change Email Screen")
-            .navigationTitle("Change Email")
-    }
-}
+
 
 struct DeleteAccountConfirmationView: View {
     var body: some View {
