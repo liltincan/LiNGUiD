@@ -105,28 +105,46 @@ struct LoginView: View {
                         }
                     }
                 )
-
-                SignInWithAppleButton(
-                    .continue,
-                    onRequest: { request in
-                        vm.prepareAppleSignInRequest(request)
-                    },
-                    onCompletion: { result in
-                        switch result {
-                        case .success(let authResults):
-                            if let appleIDCredential = authResults.credential as? ASAuthorizationAppleIDCredential {
-                                vm.loginWithApple(credential: appleIDCredential) {
-                                    onSuccess()
-                                }
-                            }
-                        case .failure(let error):
-                            vm.errorMessage = error.localizedDescription
-                        }
+                
+                Button {
+                    vm.startSignInWithAppleFlow {
+                        onSuccess()
                     }
-                )
-                .signInWithAppleButtonStyle(.whiteOutline)
-                .frame(height: 55)
-                .cornerRadius(12)
+                } label: {
+                    SignInWithAppleButton(
+                        .signIn,
+                        onRequest: { _ in },
+                        onCompletion: {_ in }
+                    )
+                        .signInWithAppleButtonStyle(.whiteOutline)
+                        .frame(height: 55)
+                        .cornerRadius(12)
+                }
+
+
+//                SignInWithAppleButton(
+//                    .continue,
+//                    onRequest: { request in
+//                        vm.prepareAppleSignInRequest(request)
+//                    },
+//                    onCompletion: { result in
+//                        switch result {
+//                        case .success(let authResults):
+//                            if let appleIDCredential = authResults.credential as? ASAuthorizationAppleIDCredential {
+//                                vm.loginWithApple(credential: appleIDCredential) {
+//                                    onSuccess()
+//                                }
+//                            }
+//                        case .failure(let error):
+//                            vm.errorMessage = error.localizedDescription
+//                        }
+//                    }
+//                )
+//                .authorizationControllerContextProvider(AppleSignInContext()) // ✅ Inject here!
+//                .signInWithAppleButtonStyle(.whiteOutline)
+//                .frame(height: 55)
+//                .cornerRadius(12)
+
 
                 VStack {
                     (
