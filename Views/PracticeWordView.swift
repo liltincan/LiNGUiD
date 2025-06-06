@@ -25,13 +25,11 @@ struct PracticeWordView: View {
     @State private var viewID = UUID()
 
     var knownWordsCount: Int {
-        savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
-            .savedWords.knownWords.count ?? 0
+        savedWordsViewModel.savedWords?.knownWords.count ?? 0
     }
 
     var unknownWordsCount: Int {
-        savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
-            .savedWords.unknownWords.count ?? 0
+        savedWordsViewModel.savedWords?.unknownWords.count ?? 0
     }
 
     var body: some View {
@@ -40,7 +38,7 @@ struct PracticeWordView: View {
                 HStack {
                     ZStack {
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(red: 35 / 255, green: 35 / 255, blue: 35 / 255))
+                            .fill(Color.white.opacity(0))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
                                     .stroke(Color.red, lineWidth: 1.5)
@@ -57,7 +55,7 @@ struct PracticeWordView: View {
                     Spacer()
                     ZStack {
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(red: 15 / 255, green: 15 / 255, blue: 15 / 255))
+                            .fill(Color.white.opacity(0))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
                                     .stroke(Color.green, lineWidth: 1.5)
@@ -93,15 +91,13 @@ struct PracticeWordView: View {
             }
         }
         .padding()
-        .background(Color.black)
+//        .background(Color.black)
         .onAppear {
             flashcardCache =
-                savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
-                    .savedWords.unknownWords ?? []
+                savedWordsViewModel.savedWords?.unknownWords ?? []
 
             totalUnknownWords =
-                savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
-                    .savedWords.unknownWords.count ?? 0
+                savedWordsViewModel.savedWords?.unknownWords.count ?? 0
         }
     }
 
@@ -194,8 +190,7 @@ struct PracticeWordView: View {
                             isFlipped = false
                             dragOffset = .zero
                             flashcardCache =
-                                savedWordsViewModel.languageData[savedWordsViewModel.selectedLanguage]?
-                                    .savedWords.unknownWords ?? []
+                                savedWordsViewModel.savedWords?.unknownWords ?? []
                         }) {
                             Text("Keep practicing")
                                 .fontWeight(.semibold)
@@ -212,7 +207,7 @@ struct PracticeWordView: View {
             return AnyView(
                 Text("Card \(currentIndex + 1) of \(flashcardCache.count)")
                     .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(.white)
+//                    .foregroundColor(.white)
             )
         }
     }

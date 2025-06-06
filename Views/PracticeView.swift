@@ -6,21 +6,30 @@ import FirebaseFirestore
 import SwiftUI
 
 struct PracticeView: View {
-    @EnvironmentObject var userSession: UserSessionViewModel
-    @StateObject private var viewModel = SavedWordViewModel()
+    @StateObject private var viewModel: SavedWordViewModel
+    @StateObject var userSession = UserSessionViewModel()
+
+
 
     @State private var selectedSegment: Int = 0
     @State private var isActive: Bool = false
     @State private var isLoading = false
+    
+    init(userSession: UserSessionViewModel) {
+        _viewModel = StateObject(wrappedValue: SavedWordViewModel(userSession: userSession))
+    }
+
     @Environment(\.colorScheme) var colorScheme
 
     var unKnownWords: [WordPair] {
-        viewModel.languageData[viewModel.selectedLanguage]?.savedWords.unknownWords ?? []
+        viewModel.savedWords?.unknownWords ?? []
     }
 
     var knownWords: [WordPair] {
-        viewModel.languageData[viewModel.selectedLanguage]?.savedWords.knownWords ?? []
+        viewModel.savedWords?.knownWords ?? []
     }
+    
+    
 
     var body: some View {
         if isLoading {
@@ -65,9 +74,8 @@ struct PracticeView: View {
                 }
             }
             .task {
-                if let uid = userSession.currentUser?.id {
-                    await viewModel.fetchLanguageData(userId: uid)
-                }
+                print("isLoading")
+                await viewModel.fetchLanguageData()
             }
         }
     }
@@ -117,15 +125,14 @@ struct PracticeView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Button("Load Words") {
-                guard let uid = userSession.currentUser?.id else { return }
 
                 let db = Firestore.firestore()
                 let data: [String: Any] = [
-                    "languageData": [
+                    "languagesData": [
                         "de": [
                             "savedWords": [
                                 "knownWords": [["target": "hallo", "native": "hello"]],
-                                "unknownWords": [["target": "buch", "native": "book"], ["target": "tisch", "native": "table"]]
+                                "unknownWords": [["target": "buch", "native": "book"], ["target": "tisch", "native": "table"],["target": "milch", "native": "milk"]]
                             ]
                         ]
                     ]
@@ -133,13 +140,13 @@ struct PracticeView: View {
 
                 isLoading = true
 
-                db.collection("users").document(uid).setData(data, merge: true) { error in
+                db.collection("users").document("63gFgHkgWoOOFnfbFtSuo7rzHTS2").setData(data, merge: true) { error in
                     if let error = error {
                         print("❌ Failed to save: \(error.localizedDescription)")
                     } else {
                         print("Words uploaded successfully")
                         Task {
-                            await viewModel.fetchLanguageData(userId: uid)
+                            await viewModel.fetchLanguageData()
                         }
                     }
                     isLoading = false
@@ -163,6 +170,7 @@ struct PracticeView: View {
 
                                 Text("\(index + 1)")
                                     .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(Color.black)
                             }
 
                             VStack(alignment: .leading, spacing: 3) {
@@ -191,12 +199,9 @@ struct PracticeView: View {
     }
 
     private func getWords() -> [WordPair] {
-        guard let lang = viewModel.languageData[viewModel.selectedLanguage] else {
-            return []
-        }
         return selectedSegment == 0
-            ? lang.savedWords.knownWords
-            : lang.savedWords.unknownWords
+            ? viewModel.savedWords?.knownWords ?? []
+            : viewModel.savedWords?.unknownWords ?? []
     }
 }
 
@@ -254,8 +259,8 @@ struct SegmentedControlView: View {
     }
 }
 
-struct PracticeView_Previews: PreviewProvider {
-    static var previews: some View {
-        PracticeView()
-    }
-}
+//struct PracticeView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        PracticeView(userSession: userSession)
+//    }
+//}

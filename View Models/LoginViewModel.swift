@@ -5,7 +5,8 @@ import AuthenticationServices
 import UIKit
 
 @MainActor
-class LoginViewModel: ObservableObject {
+class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+
     @Published var email = ""
     @Published var password = ""
     @Published var errorMessage: String?
@@ -15,6 +16,14 @@ class LoginViewModel: ObservableObject {
     init(authService: AuthService = FirebaseAuthService.shared) {
         self.authService = authService
     }
+    
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow } ?? ASPresentationAnchor()
+    }
+
 
     /// Returns true on success, false on failure
     @MainActor
@@ -82,6 +91,45 @@ class LoginViewModel: ObservableObject {
             }
         }
     }
+    
+    func startSignInWithAppleFlow(onSuccess: @escaping () -> Void) {
+        let nonce = randomNonceString()
+        currentNonce = nonce
+
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        request.requestedScopes = [.email, .fullName]
+        request.nonce = sha256(nonce)
+
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        controller.performRequests()
+
+        self.onSuccessCallback = onSuccess
+    }
+    
+    private var onSuccessCallback: (() -> Void)?
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        if let credential = authorization.credential as? ASAuthorizationAppleIDCredential {
+            loginWithApple(credential: credential) {
+                self.onSuccessCallback?()
+            }
+        }
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        errorMessage = error.localizedDescription
+    }
+
+    
+    final class AppleSignInContext: NSObject, ASAuthorizationControllerPresentationContextProviding {
+        
+        func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+            return UIApplication.shared.windows.first { $0.isKeyWindow }!
+        }
+    }
+
 
     
     
@@ -97,3 +145,5 @@ class LoginViewModel: ObservableObject {
     }
 
 }
+
+

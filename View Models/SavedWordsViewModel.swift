@@ -9,6 +9,7 @@ import Combine
 import FirebaseFirestore
 import Foundation
 import FirebaseAuth
+import SwiftUICore
 
 enum WordType {
     case known
@@ -17,47 +18,64 @@ enum WordType {
 
 @MainActor
 class SavedWordViewModel: ObservableObject {
-    @Published var languageData: [String: LanguageEntry] = [:]
+    @Published var savedWords: WordLists?
     @Published var selectedLanguage: String = "de"
     @Published var selectedTab: WordType = .known
     @Published var errorMessage: String?
-
+    
     private let db = Firestore.firestore()
+        private let userSession: UserSessionViewModel
 
-    func fetchLanguageData(userId: String?) async {
-        guard let uid = userId else {
-            errorMessage = "User not signed in."
-            return
+        init(userSession: UserSessionViewModel) {
+            self.userSession = userSession
+        }
+    
+    
+
+
+    func fetchLanguageData() async {
+        await userSession.refreshUser()
+        if let languageKey = userSession.currentUser?.targetLanguage,
+           let savedWords = userSession.currentUser?.languagesData?[languageKey]?.savedWords {
+            self.savedWords = savedWords
+        } else {
+            self.savedWords = nil
+            self.errorMessage = "Failed to fetch saved words for selected language."
         }
 
-        let docRef = db.collection("users").document(uid)
-
-        do {
-            let snapshot = try await docRef.getDocument()
-            let data = try snapshot.data(as: FirestoreLanguageData.self)
-            self.languageData = data.languageData
-        } catch {
-            self.errorMessage = "Failed to fetch data: \(error.localizedDescription)"
-        }
     }
 
-    func moveToKnown(word: WordPair, userId: String?) {
-        guard var saved = languageData[selectedLanguage]?.savedWords else { return }
-        guard let uid = userId else { return }
-
+    func moveToKnown(word: WordPair, userId: String) {
+        
+        let languageKey = userSession.currentUser?.targetLanguage ?? ""
+           
+        guard var saved = savedWords else { return }
+           
         saved.unknownWords.removeAll { $0.target == word.target && $0.native == word.native }
 
         if !saved.knownWords.contains(where: { $0.target == word.target && $0.native == word.native }) {
             saved.knownWords.append(word)
         }
 
-        languageData[selectedLanguage]?.savedWords = saved
 
-        let docRef = db.collection("users").document(uid)
+        savedWords = saved
+
         do {
-            try docRef.setData(from: FirestoreLanguageData(languageData: languageData), merge: true)
+            let known = saved.knownWords.map { WordPair(target: $0.target, native: $0.native) }
+            let unknown = saved.unknownWords.map { WordPair(target: $0.target, native: $0.native) }
+
+            let savedWords = WordLists(knownWords: known, unknownWords: unknown)
+            let languageData = LanguagesData(savedWords: savedWords)
+            let patch = FirestoreUserPatch(languagesData: [languageKey: languageData])
+
+            let docRef = Firestore.firestore().collection("users").document(userId)
+            try docRef.setData(from: patch, merge: true)
+
+
+
         } catch {
-            print("Failed to update words: \(error.localizedDescription)")
+            print("🔥 Failed to encode savedWords: \(error.localizedDescription)")
         }
+
     }
 }

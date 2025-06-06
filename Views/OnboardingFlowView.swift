@@ -3,23 +3,136 @@ import SwiftUI
 struct OnboardingFlowView: View {
     let onComplete: () -> Void
     @State private var page = 0
-    private let total = 3  // number of pages
+    @State private var selectPage = 0
+    @State private var targetLanguages: [String] = []
+    @State private var selectedLevel: String? = nil
+    
+    private let total = 0  // number of pages
 
     var body: some View {
         VStack {
-            TabView(selection: $page) {
-                ForEach(0..<total, id: \.self) { idx in
-                    OnboardingPageView(index: idx)
-                        .tag(idx)
-                }
+            
+            switch page {
+                case 0:
+                    Button(action: {
+                        page -= 1
+                    }) {
+                        Image("Return_Button")
+                            .frame(width: 25, height: 25) // Adjust size as needed
+                            .padding(.horizontal, 30)
+                    }
+                    .offset(x: -180, y: 0)
+                    OnboardingPageView(index: 0)
+                    
+                    LanguageSelectionView(onContinue:{ selected in
+                        targetLanguages = selected
+                        page += 1
+                    })
+                    .padding(.top, -250)
+                    .padding(.horizontal, -15)
+                    
+                    
+                case 1:
+                    Button(action: {
+                        page -= 1
+                    }) {
+                        Image("Return_Button")
+                            .frame(width: 25, height: 25) // Adjust size as needed
+                            .padding(.horizontal, 30)
+                    }
+                    .offset(x: -180, y: 0)
+                    OnboardingPageView(index: 1)
+                
+                    LanguageSelectionView(onContinue:{ selected in
+                        targetLanguages = selected
+                        page += 1
+                    })
+                    .padding(.top, -250)
+                    .padding(.horizontal, -15)
+                
+                case 2:
+                    Button(action: {
+                        page -= 1
+                        selectPage = 0
+                    }) {
+                        Image("Return_Button")
+                            .frame(width: 25, height: 25) // Adjust size as needed
+                            .padding(.horizontal, 30)
+                    }
+                    .offset(x: -180, y: 0)
+                    if selectPage < targetLanguages.count {
+                        LanguageLevelSelectionView(
+                            selectedLevel: $selectedLevel,
+                            languageName: targetLanguages[selectPage],
+                            onContinue: {
+                                selectedLevel = nil
+                                selectPage += 1
+                                if selectPage >= targetLanguages.count {
+                                    page += 1
+                                    selectPage = 0
+                                }
+                            }
+                        )
+                    }
+                
+                case 3:
+                    Button(action: {
+                        page -= 1
+                        
+                    }) {
+                        Image("Return_Button")
+                            .frame(width: 25, height: 25) // Adjust size as needed
+                            .padding(.horizontal, 30)
+                    }
+                    .offset(x: -180, y: 0)
+                    OnboardingPageView(index: 2)
+                    
+                    Button(action: {
+                            onComplete()
+                    }) {
+                        Text("Begin")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                            .cornerRadius(8)
+                            .padding(.horizontal)
+                    }
+                    .padding(.bottom, 30)
+                    .padding(.horizontal, 10)
+                
+                default:
+                    EmptyView()
+                    Button(action: {
+                            page += 1
+                    }) {
+                        Text("Continue")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                            .cornerRadius(8)
+                            .padding(.horizontal)
+                    }
+                    .padding(.bottom, 30)
+                    .padding(.horizontal, 10)
             }
-            .tabViewStyle(.page)
+            
+            Spacer()
+            
+            
+        }
+        .background(Color.black.ignoresSafeArea())
+    }
+}
 
-            Button(page == total - 1 ? "Get Started" : "Next") {
-                if page < total - 1 { page += 1 }
-                else { onComplete() }
-            }
-            .padding()
+
+struct OnboardingFlowView_Previews: PreviewProvider {
+    static var previews: some View {
+        OnboardingFlowView {
+            print("Onboarding Complete")
         }
     }
 }
