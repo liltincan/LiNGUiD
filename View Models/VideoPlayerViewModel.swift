@@ -52,5 +52,20 @@ class VideoPlayerViewModel: ObservableObject {
             }
         }
     }
+    
+    // Function to mark fetched videos as watched
+    // - Gerardo De La Torre. 06/06/2025
+    func markVideoAsWatched(_ videoID: String, userID: String) async {
+        let db = Firestore.firestore()
+        
+        do {
+            try await db.collection("users").document(userID).updateData([
+                "watchedVideos": FieldValue.arrayUnion([videoID])
+            ])
+            print("📝 Marked video \(videoID) as watched")
+        } catch {
+            print("❌ Failed to mark video as watched: \(error)")
+        }
+    }
 
 }
