@@ -7,13 +7,16 @@ struct LanguageSelectionView: View {
     @State private var selectedLanguages = Set<String>()
     @State private var searchText = ""
     @State private var isSearching = false
+    @Binding var nativeLanguage: [String]
     
 
+    
     var filteredLanguages: [String] {
+        let languages = allLanguages.filter{ !nativeLanguage.contains($0)}
         if searchText.isEmpty {
-            return allLanguages
+            return languages
         } else {
-            return allLanguages.filter { $0.localizedCaseInsensitiveContains(searchText) }
+            return languages.filter { $0.localizedCaseInsensitiveContains(searchText) }
         }
     }
 
@@ -123,6 +126,7 @@ struct LanguageSelectionView: View {
         .animation(.easeInOut, value: isSearching)
         .animation(.easeInOut, value: selectedLanguages)
     }
+    
 
     private func toggleSelection(for language: String) {
         if selectedLanguages.contains(language) {
