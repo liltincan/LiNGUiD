@@ -18,6 +18,8 @@ struct VideoPlayerView: View {
     @State private var looper: AVPlayerLooper? //used to loop the video
     @State private var isLiked: Bool = false
     @State private var isSaved: Bool = false
+    @State private var isShareSheetPresented = false
+
     
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
@@ -101,7 +103,7 @@ struct VideoPlayerView: View {
                     .contentShape(Rectangle())
                     
                     Button(action: {
-                                    // Share logic goes here
+                        isShareSheetPresented = true
                     }) {
                         Image(systemName: "square.and.arrow.up")
                             .resizable()
@@ -111,6 +113,12 @@ struct VideoPlayerView: View {
                             .shadow(radius: 2)
                     }
                     .contentShape(Rectangle())
+                    .sheet(isPresented: $isShareSheetPresented) {
+                        ShareSheetView(videoId: videoId)
+                            .presentationDetents([.medium, .large]) // Optional: defines height levels
+                            .presentationDragIndicator(.visible)
+                    }
+
                 }
                 .padding(.trailing)
             }
