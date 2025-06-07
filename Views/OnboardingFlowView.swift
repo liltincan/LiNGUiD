@@ -22,6 +22,10 @@ struct OnboardingFlowView: View {
                     
                     LanguageSelectionView(onContinue:{ selected in
                         nativeLanguages = selected
+                        let overlap = selectedTargetLanguages.intersection(selected)
+                        selectedTargetLanguages.subtract(overlap)
+                        targetLanguages.removeAll { overlap.contains($0) }
+                        overlap.forEach { languageLevels.removeValue(forKey: $0) }
                         page += 1
                     }, selectionLimit: 3, selectedLanguages: $selectedNativeLanguages, excludeLanguages: [])
                     .padding(.top, -250)
@@ -42,7 +46,9 @@ struct OnboardingFlowView: View {
                     LanguageSelectionView(onContinue:{ selected in
                         targetLanguages = selected
                         page += 1
-                    }, selectionLimit: 50, selectedLanguages: $selectedTargetLanguages, excludeLanguages: nativeLanguages)
+                    }, selectionLimit: 50, selectedLanguages: $selectedTargetLanguages, excludeLanguages: nativeLanguages, onDeselect: { language in
+                        languageLevels.removeValue(forKey: language)
+                    })
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.top, -250)
                     .padding(.horizontal, -15)

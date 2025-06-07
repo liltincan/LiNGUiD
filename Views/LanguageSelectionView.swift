@@ -10,7 +10,7 @@ struct LanguageSelectionView: View {
     @State private var isSearching = false
     @State private var showCustomAlert = false
     var excludeLanguages: [String] = []
-    
+    var onDeselect: ((String) -> Void)? = nil
 
     
     var filteredLanguages: [String] {
@@ -177,6 +177,7 @@ struct LanguageSelectionView: View {
     private func toggleSelection(for language: String) {
         if selectedLanguages.contains(language) {
             selectedLanguages.remove(language)
+            onDeselect?(language)
         } else {
             if selectedLanguages.count >= selectionLimit {
                 withAnimation {
