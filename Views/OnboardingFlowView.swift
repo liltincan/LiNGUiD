@@ -15,20 +15,12 @@ struct OnboardingFlowView: View {
             
             switch page {
                 case 0:
-                    Button(action: {
-                        page -= 1
-                    }) {
-                        Image("Return_Button")
-                            .frame(width: 25, height: 25) // Adjust size as needed
-                            .padding(.horizontal, 30)
-                        }
-                        .offset(x: -180, y: 0)
                     OnboardingPageView(index: 0)
                     
                     LanguageSelectionView(onContinue:{ selected in
                         nativeLanguages = selected
                         page += 1
-                    }, nativeLanguage: $nativeLanguages)
+                    }, selectionLimit: 3, nativeLanguage: $nativeLanguages)
                     .padding(.top, -250)
                     .padding(.horizontal, -15)
                     
@@ -47,7 +39,8 @@ struct OnboardingFlowView: View {
                     LanguageSelectionView(onContinue:{ selected in
                         targetLanguages = selected
                         page += 1
-                    }, nativeLanguage: $nativeLanguages)
+                    }, selectionLimit: 50, nativeLanguage: $nativeLanguages)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.top, -250)
                     .padding(.horizontal, -15)
                 
