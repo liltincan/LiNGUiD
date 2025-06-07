@@ -41,12 +41,7 @@ class VideoFeedViewModel: ObservableObject {
             let user = try userDoc.data(as: User.self)
             
             // debugging code
-            print("🔍 USER FETCH DEBUG:")
-            print("   Document exists: \(userDoc.exists)")
-            print("   Document data: \(userDoc.data() ?? [:])")
-            print("   Decoded user ID: \(user.id ?? "nil")")
-            print("   UserID from auth: \(userID)")
-            print("🔍 WATCHED COUNT CHECK: \(user.watchedVideos?.count ?? 0)")
+            print("WATCHED COUNT CHECK: \(user.watchedVideos?.count ?? 0)")
             // Determine which language to use
             /*
              Commenting out because we now have a targetLanguage property in User Model. We could delete later
@@ -59,9 +54,6 @@ class VideoFeedViewModel: ObservableObject {
              print("User has no target languages, using 'russian' as fallback")
              targetLanguage = "russian"
              }*/
-            print("🔍 TARGET LANGUAGE DEBUG:")
-            print("   user.targetLanguage: '\(user.targetLanguage)'")
-            print("   user.targetLanguage.lowercased(): '\(user.targetLanguage.lowercased())'")
             
             // 1. check if targetLanguage is empty (it shoudn't)
             // if empty, fall back to the first language from languagesData
@@ -123,9 +115,8 @@ class VideoFeedViewModel: ObservableObject {
             try await db.collection("users").document(userID).updateData([
                 "watchedVideos": FieldValue.arrayUnion([videoID])
             ])
-            print("📝 Marked video \(videoID) as watched")
         } catch {
-            print("❌ Failed to mark video as watched: \(error)")
+            print("Failed to mark video as watched: \(error)")
         }
     }
 }

@@ -62,9 +62,8 @@ class VideoPlayerViewModel: ObservableObject {
             try await db.collection("users").document(userID).updateData([
                 "watchedVideos": FieldValue.arrayUnion([videoID])
             ])
-            print("📝 Marked video \(videoID) as watched")
         } catch {
-            print("❌ Failed to mark video as watched: \(error)")
+            print("Failed to mark video as watched: \(error)")
         }
     }
 
