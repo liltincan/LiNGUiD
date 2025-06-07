@@ -27,8 +27,8 @@ struct VideoFeedView: View {
                             .rotationEffect(.degrees(90))
                             .tag(index)
                             .frame(
-                                width: UIScreen.main.bounds.width,
-                                height: UIScreen.main.bounds.height
+                                width: UIScreen.main.bounds.height,
+                                height: UIScreen.main.bounds.width
                             )
                         //.ignoresSafeArea()
                             .onAppear {
@@ -40,7 +40,7 @@ struct VideoFeedView: View {
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                 .rotationEffect(.degrees(-90))  // vertical scroll illusion
-                //.frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
                 //.rotationEffect(.degrees(90))
                 //            .offset(x: UIScreen.main.bounds.width)
                 .ignoresSafeArea()
