@@ -14,7 +14,7 @@ class VideoFeedViewModel: ObservableObject {
     private let db = Firestore.firestore()
     private var lastID: String?
     private let pageSize = 10
-
+    
     init(repository: VideoRepository = DependencyContainer.shared.resolve(), authService: AuthService = DependencyContainer.shared.resolve()) {
         self.repository = repository
         self.authService = authService
@@ -24,7 +24,7 @@ class VideoFeedViewModel: ObservableObject {
         guard let languagesData = user.languagesData else { return [] }
         return Array(languagesData.keys)
     }
-
+    
     func fetchInitialVideos(for language: String? = nil) async {
         guard !isLoading else { return }
         
@@ -40,45 +40,51 @@ class VideoFeedViewModel: ObservableObject {
             let userDoc = try await db.collection("users").document(userID).getDocument()
             let user = try userDoc.data(as: User.self)
             
-            
+            // debugging code
+            print("WATCHED COUNT CHECK: \(user.watchedVideos?.count ?? 0)")
             // Determine which language to use
-            let targetLanguage : String
-            if let language = language {
-                targetLanguage = language
-            } else {
-                targetLanguage = user.targetLanguage
-            }
-            if(targetLanguage == ""){
-                errorMessage = "Target language not set, set the target language in firestore add manually\ntargetLanguage: 'de' "
-            }else{
-                errorMessage = nil
-                selectedLanguage = targetLanguage // stores the language for future use.
-                
-                print("User languages:", user.languagesData?.keys ?? []) // check if user has language data
-                
-                let newVideos = try await repository.fetchVideos(
-                    afterID: targetLanguage,
-                    limit: pageSize,
-                    user: user,
-                    selectedLanguage: targetLanguage
-                )
-                
-                videos = newVideos
-                lastID = newVideos.last?.id
-                print(" videos",videos)
-            }
+            /*
+             Commenting out because we now have a targetLanguage property in User Model. We could delete later
+             let targetLanguage : String
+             if let language = language {
+             targetLanguage = language
+             } else if let firstLanguage = user.languagesData?.keys.first {
+             targetLanguage = firstLanguage.lowercased()
+             } else {
+             print("User has no target languages, using 'russian' as fallback")
+             targetLanguage = "russian"
+             }*/
             
+            // 1. check if targetLanguage is empty (it shoudn't)
+            // if empty, fall back to the first language from languagesData
+            // if that is also empty, default to "french"
+            let targetLanguage = user.targetLanguage.isEmpty ?
+            (user.languagesData?.keys.first?.lowercased() ?? "french") :
+            user.targetLanguage.lowercased()
+            
+            selectedLanguage = targetLanguage // stores the language for future use.
+            print("User languages:", user.languagesData?.keys ?? []) // check if user has language data
+            
+            let newVideos = try await repository.fetchVideos(
+                afterID: targetLanguage,
+                limit: pageSize,
+                user: user,
+                selectedLanguage: targetLanguage
+            )
+            
+            videos = newVideos
+            lastID = newVideos.last?.id
         } catch {
             print("Error loading initial videos: \(error)")
         }
-
+        
     }
-
+    
     func fetchMoreVideos() async {
         guard !isLoading,
-            let lastID = lastID,
-            let userID = authService.currentUserID,
-            let currentLanguage = selectedLanguage else { return }
+              let lastID = lastID,
+              let userID = authService.currentUserID,
+              let currentLanguage = selectedLanguage else { return }
         
         isLoading = true
         defer { isLoading = false }
@@ -97,6 +103,20 @@ class VideoFeedViewModel: ObservableObject {
             self.lastID = newVideos.last?.id
         } catch {
             print("Error loading more videos: \(error)")
+        }
+    }
+    
+    // Function to mark fetched videos as watched
+    // - Gerardo De La Torre. 06/06/2025
+    func markVideoAsWatched(_ videoID: String, userID: String) async {
+        let db = Firestore.firestore()
+        
+        do {
+            try await db.collection("users").document(userID).updateData([
+                "watchedVideos": FieldValue.arrayUnion([videoID])
+            ])
+        } catch {
+            print("Failed to mark video as watched: \(error)")
         }
     }
 }
