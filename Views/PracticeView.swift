@@ -7,7 +7,8 @@ import SwiftUI
 
 struct PracticeView: View {
     @StateObject private var viewModel: SavedWordViewModel
-    @StateObject var userSession = UserSessionViewModel()
+//    @StateObject private var userSession = UserSessionViewModel()
+    @ObservedObject var userSession: UserSessionViewModel
 
 
 
@@ -16,6 +17,7 @@ struct PracticeView: View {
     @State private var isLoading = false
     
     init(userSession: UserSessionViewModel) {
+        self.userSession = userSession
         _viewModel = StateObject(wrappedValue: SavedWordViewModel(userSession: userSession))
     }
 
@@ -140,7 +142,7 @@ struct PracticeView: View {
 
                 isLoading = true
 
-                db.collection("users").document("63gFgHkgWoOOFnfbFtSuo7rzHTS2").setData(data, merge: true) { error in
+                db.collection("users").document(userSession.currentUser?.id ?? "").setData(data, merge: true) { error in
                     if let error = error {
                         print("❌ Failed to save: \(error.localizedDescription)")
                     } else {

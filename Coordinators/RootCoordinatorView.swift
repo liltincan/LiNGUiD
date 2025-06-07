@@ -3,6 +3,11 @@ import SwiftUI
 struct RootCoordinatorView: View {
     @EnvironmentObject var appState: AppState
     @StateObject var userSession = UserSessionViewModel()
+    @StateObject private var vm = LoginViewModel()
+    
+    init () {
+//        logout()
+    }
 
     var body: some View {
         Group {
@@ -30,6 +35,13 @@ struct RootCoordinatorView: View {
             }
         }
         .environmentObject(userSession)
+    }
+    
+    func logout(){
+        let result = vm.logout()
+        if (result){
+            print("Logout successful")
+        }
     }
 }
 
