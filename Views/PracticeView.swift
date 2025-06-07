@@ -142,7 +142,7 @@ struct PracticeView: View {
 
                 isLoading = true
 
-                db.collection("users").document("63gFgHkgWoOOFnfbFtSuo7rzHTS2").setData(data, merge: true) { error in
+                db.collection("users").document(userSession.currentUser?.id ?? "").setData(data, merge: true) { error in
                     if let error = error {
                         print("❌ Failed to save: \(error.localizedDescription)")
                     } else {
