@@ -23,7 +23,7 @@ struct VideoFeedView: View {
 //            .rotationEffect(.degrees(-90)) // vertical scroll illusion
             .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
             //.rotationEffect(.degrees(90))
-//            .offset(x: UIScreen.main.bounds.width)
+            .offset(x: UIScreen.main.bounds.width)
             .onAppear {
                 Task { await vm.fetchInitialVideos() }
             }

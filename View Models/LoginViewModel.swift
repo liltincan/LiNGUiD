@@ -119,8 +119,19 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-        errorMessage = error.localizedDescription
-    }
+           // Convert to ASAuthorizationError if possible
+           if let authError = error as? ASAuthorizationError {
+               switch authError.code {
+               case .canceled:
+                   return
+               default:
+                   // Handle other errors appropriately
+                   errorMessage = "Something went wrong. Please try again."
+               }
+           } else {
+               // Handle non-authorization errors
+           }
+       }
 
     
     final class AppleSignInContext: NSObject, ASAuthorizationControllerPresentationContextProviding {

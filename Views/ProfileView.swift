@@ -29,8 +29,6 @@ struct ProfileView: View {
       var body: some View {
             NavigationStack {
                   ZStack {
-//                        Color.black.ignoresSafeArea(edges: .all)
-                         
                         ScrollView {
                               VStack {
                                     ProfileHeaderView(
