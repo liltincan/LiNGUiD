@@ -7,6 +7,9 @@ struct OnboardingFlowView: View {
     @State private var targetLanguages: [String] = []
     @State private var nativeLanguages: [String] = []
     @State private var selectedLevel: String? = nil
+    @State private var selectedNativeLanguages: Set<String> = []
+    @State private var selectedTargetLanguages: Set<String> = []
+    @State private var languageLevels: [String: String] = [:]
     
     private let total = 0  // number of pages
 
@@ -20,7 +23,7 @@ struct OnboardingFlowView: View {
                     LanguageSelectionView(onContinue:{ selected in
                         nativeLanguages = selected
                         page += 1
-                    }, selectionLimit: 3, nativeLanguage: $nativeLanguages)
+                    }, selectionLimit: 3, selectedLanguages: $selectedNativeLanguages, excludeLanguages: [])
                     .padding(.top, -250)
                     .padding(.horizontal, -15)
                     
@@ -39,7 +42,7 @@ struct OnboardingFlowView: View {
                     LanguageSelectionView(onContinue:{ selected in
                         targetLanguages = selected
                         page += 1
-                    }, selectionLimit: 50, nativeLanguage: $nativeLanguages)
+                    }, selectionLimit: 50, selectedLanguages: $selectedTargetLanguages, excludeLanguages: nativeLanguages)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.top, -250)
                     .padding(.horizontal, -15)
@@ -68,11 +71,14 @@ struct OnboardingFlowView: View {
                     }
                     
                     if selectPage < targetLanguages.count {
+                        let currentLanguage = targetLanguages[selectPage]
                         LanguageLevelSelectionView(
-                            selectedLevel: $selectedLevel,
-                            languageName: targetLanguages[selectPage],
+                            selectedLevel: Binding(
+                                get: { languageLevels[currentLanguage] },
+                                set: { languageLevels[currentLanguage] = $0 }
+                            ),
+                            languageName: currentLanguage,
                             onContinue: {
-                                selectedLevel = nil
                                 selectPage += 1
                                 if selectPage >= targetLanguages.count {
                                     page += 1

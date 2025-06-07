@@ -5,16 +5,16 @@ struct LanguageSelectionView: View {
     let allLanguages = ["Arabic", "Chinese", "English", "French", "German", "Italian", "Portuguese", "Russian", "Spanish", "Afrikaans", "Armenian", "Azerbaijani", "Belarusian", "Bosnian", "Bulgarian", "Catalan", "Croatian", "Czech", "Danish", "Dutch", "Estonian", "Finnish", "Galician", "Greek", "Hebrew", "Hindi", "Hungarian", "Icelandic", "Indonesian", "Japanese", "Kannada", "Kazakh", "Korean", "Latvian", "Lithuanian", "Macedonian", "Malay", "Maori", "Marathi", "Nepali", "Norwegian", "Persian", "Polish", "Romanian", "Serbian", "Slovak", "Slovenian", "Swahili", "Swedish", "Tagalog", "Tamil", "Thai", "Turkish", "Ukrainian", "Urdu", "Vietnamese", "Welsh"]
     let selectionLimit: Int
     
-    @State private var selectedLanguages = Set<String>()
+    @Binding var selectedLanguages: Set<String>
     @State private var searchText = ""
     @State private var isSearching = false
     @State private var showCustomAlert = false
-    @Binding var nativeLanguage: [String]
+    var excludeLanguages: [String] = []
     
 
     
     var filteredLanguages: [String] {
-        let languages = allLanguages.filter{ !nativeLanguage.contains($0)}
+        let languages = allLanguages.filter { !excludeLanguages.contains($0) }
         if searchText.isEmpty {
             return languages
         } else {
