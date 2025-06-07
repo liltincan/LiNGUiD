@@ -22,7 +22,7 @@ final class FirebaseAuthService: AuthService {
         let username = email.components(separatedBy: "@").first ?? "user"
 
         let userData: [String: Any] = [
-            "uid": user.uid,
+            "id": user.uid,
             "email": email,
             "userName": username,
             "loginWith": loginMethod,
