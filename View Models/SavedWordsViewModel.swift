@@ -24,7 +24,7 @@ class SavedWordViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     private let db = Firestore.firestore()
-        private let userSession: UserSessionViewModel
+    private let userSession: UserSessionViewModel
 
         init(userSession: UserSessionViewModel) {
             self.userSession = userSession

@@ -7,6 +7,7 @@ class VideoFeedViewModel: ObservableObject {
     @Published var videos: [Video] = []
     @Published var isLoading = false
     @Published var selectedLanguage: String?
+    @Published var errorMessage: String?
     
     private let repository: VideoRepository
     private let authService: AuthService
@@ -44,24 +45,29 @@ class VideoFeedViewModel: ObservableObject {
             let targetLanguage : String
             if let language = language {
                 targetLanguage = language
-            } else if let firstLanguage = user.languagesData?.keys.first {
-                targetLanguage = firstLanguage.lowercased()
             } else {
-                print("User has no target languages, using 'russian' as fallback")
-                targetLanguage = "russian"
+                targetLanguage = user.targetLanguage
             }
-            selectedLanguage = targetLanguage // stores the language for future use.
+            if(targetLanguage == ""){
+                errorMessage = "Target language not set, set the target language in firestore add manually\ntargetLanguage: 'de' "
+            }else{
+                errorMessage = nil
+                selectedLanguage = targetLanguage // stores the language for future use.
+                
+                print("User languages:", user.languagesData?.keys ?? []) // check if user has language data
+                
+                let newVideos = try await repository.fetchVideos(
+                    afterID: targetLanguage,
+                    limit: pageSize,
+                    user: user,
+                    selectedLanguage: targetLanguage
+                )
+                
+                videos = newVideos
+                lastID = newVideos.last?.id
+                print(" videos",videos)
+            }
             
-            print("User languages:", user.languagesData?.keys ?? []) // check if user has language data
-            
-            let newVideos = try await repository.fetchVideos(
-                afterID: targetLanguage,
-                limit: pageSize,
-                user: user,
-                selectedLanguage: targetLanguage
-            )
-            videos = newVideos
-            lastID = newVideos.last?.id
         } catch {
             print("Error loading initial videos: \(error)")
         }

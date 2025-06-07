@@ -7,7 +7,8 @@ import SwiftUI
 
 struct PracticeView: View {
     @StateObject private var viewModel: SavedWordViewModel
-    @StateObject var userSession = UserSessionViewModel()
+//    @StateObject private var userSession = UserSessionViewModel()
+    @ObservedObject var userSession: UserSessionViewModel
 
 
 
@@ -16,6 +17,7 @@ struct PracticeView: View {
     @State private var isLoading = false
     
     init(userSession: UserSessionViewModel) {
+        self.userSession = userSession
         _viewModel = StateObject(wrappedValue: SavedWordViewModel(userSession: userSession))
     }
 
