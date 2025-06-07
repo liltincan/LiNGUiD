@@ -16,17 +16,17 @@ final class FirestoreVideoRepository: VideoRepository {
 //            .order(by: "createdAt", descending: true)
 //            .limit(to: limit)
         
-//        if let afterID = afterID {
-//            let doc = try await db.collection(videosCollection).document(afterID).collection("items").getDocuments()
-////            query = query.start(afterDocument: lastDoc)
-//        } else{
-//            print("fail")
-//        }
+        if let afterID = afterID {
+            let doc = try await db.collection(videosCollection).document(afterID).collection("items").getDocuments()
+//            query = query.start(afterDocument: lastDoc)
+        } else{
+            print("fail")
+        }
         
         let userLevel = user.languagesData?[selectedLanguage]?.comprehensionLevel ?? 2
         
-        //print("User level for \(selectedLanguage):", userLevel) // debugging code
-        //print("Looking for videos in: videos/\(afterID ?? "")/items") // debugging code
+//        print("User level for \(selectedLanguage):", userLevel) // debugging code
+        print("Looking for videos in: videos/\(afterID ?? "")/items") // debugging code
         
         let snapshot = try await db.collection(videosCollection).document(selectedLanguage).collection("items").getDocuments()
         print("snapshot", snapshot)

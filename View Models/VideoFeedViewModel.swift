@@ -7,6 +7,7 @@ class VideoFeedViewModel: ObservableObject {
     @Published var videos: [Video] = []
     @Published var isLoading = false
     @Published var selectedLanguage: String?
+    @Published var errorMessage: String?
     
     private let repository: VideoRepository
     private let authService: AuthService
