@@ -39,7 +39,7 @@ final class FirebaseAuthService: AuthService {
     }
 
 
-    private func userDocumentExists(uid: String) async -> Bool {
+    func userDocumentExists(uid: String) async -> Bool {
         do {
             let doc = try await db.collection("users").document(uid).getDocument()
             return doc.exists
@@ -50,10 +50,12 @@ final class FirebaseAuthService: AuthService {
     }
 
     @MainActor
-    func registerOrLogin(email: String, password: String) async -> String? {
+    func registerOrLogin(email: String, password: String, appState: AppState) async -> String? {
         do {
             let result = try await Auth.auth().createUser(withEmail: email, password: password)
             saveUserData(user: result.user, loginMethod: "email", isNewUser: true)
+            UserDefaults.standard.set(false, forKey: "didCompleteOnboarding")
+            appState.needsOnboarding = true
             return nil
         } catch let error as NSError {
             if error.code == AuthErrorCode.emailAlreadyInUse.rawValue {
@@ -85,7 +87,7 @@ final class FirebaseAuthService: AuthService {
         }
     }
 
-    func signInWithGoogle(presenting: UIViewController) async throws -> Bool {
+    func signInWithGoogle(presenting: UIViewController, appState: AppState) async throws -> Bool {
         guard let clientID = FirebaseApp.app()?.options.clientID else {
             print("Google client ID not found.")
             throw NSError(domain: "FirebaseAuthService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Google client ID not found."])
@@ -113,6 +115,10 @@ final class FirebaseAuthService: AuthService {
             let exists = await userDocumentExists(uid: firebaseUser.uid)
             if !exists {
                 saveUserData(user: firebaseUser, loginMethod: "google", isNewUser: true)
+                UserDefaults.standard.set(false, forKey: "didCompleteOnboarding")
+                await MainActor.run {
+                    appState.needsOnboarding = true
+                }
             } else {
                 // If user exists, update login method if necessary (e.g., if linked later)
                 // This is optional; you might want to update the 'loginWith' field only if it changes
@@ -131,7 +137,7 @@ final class FirebaseAuthService: AuthService {
         }
     }
 
-    func signInWithApple(credential: ASAuthorizationAppleIDCredential, rawNonce: String) async throws {
+    func signInWithApple(credential: ASAuthorizationAppleIDCredential, rawNonce: String, appState: AppState) async throws {
         guard let tokenData = credential.identityToken,
               let tokenString = String(data: tokenData, encoding: .utf8) else {
             throw NSError(domain: "FirebaseAuth", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid identity token from Apple."])
@@ -150,6 +156,10 @@ final class FirebaseAuthService: AuthService {
             let exists = await userDocumentExists(uid: firebaseUser.uid)
             if !exists {
                 saveUserData(user: firebaseUser, loginMethod: "apple", isNewUser: true)
+                UserDefaults.standard.set(false, forKey: "didCompleteOnboarding")
+                await MainActor.run {
+                    appState.needsOnboarding = true
+                }
             } else {
                 db.collection("users").document(firebaseUser.uid).updateData(["loginWith": "apple"]) { error in
                     if let error = error {

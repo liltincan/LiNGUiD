@@ -18,10 +18,17 @@ struct RootCoordinatorView: View {
                 })
                 .onAppear {
                     let isUserAuthenticated = FirebaseAuthService.shared.currentUserID != nil
-                    if isUserAuthenticated && !appState.isSignedIn {
-                        appState.isSignedIn = true
-                        userSession.getCurrentUser()
-                    }
+                    if isUserAuthenticated {
+                            Task {
+                                let exists = await userSession.checkUserExists()
+                                appState.isSignedIn = true
+                                appState.needsOnboarding = !exists
+
+                                if exists {
+                                    UserDefaults.standard.set(true, forKey: "didCompleteOnboarding")
+                                }
+                            }
+                        }
                 }
             } else if appState.needsOnboarding {
                 OnboardingFlowView {
