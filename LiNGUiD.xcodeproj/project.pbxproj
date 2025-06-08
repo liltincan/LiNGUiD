@@ -25,6 +25,7 @@
 		60C7E5BD2DE2C0C500C1AAF2 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 60C7E5BC2DE2C0C500C1AAF2 /* GoogleSignInSwift */; };
 		60DAC59C2DE2F770002C5410 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */; };
 		60E0B8F52DF268230065B772 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 60E0B8F42DF268230065B772 /* GoogleService-Info.plist */; };
+		60E0B91D2DF53A5C0065B772 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60E0B91C2DF53A550065B772 /* DashboardViewModel.swift */; };
 		60F930802DE98E3100E37156 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F9307F2DE98E2A00E37156 /* User.swift */; };
 		60F930CE2DEA83F300E37156 /* SavedWordsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */; };
 		81F436412DF2830600DA9BDA /* LanguageLevelSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */; };
@@ -106,6 +107,8 @@
 		60C7E5B72DE2B51B00C1AAF2 /* AppSocialLoginButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSocialLoginButton.swift; sourceTree = "<group>"; };
 		60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
 		60E0B8F42DF268230065B772 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		60E0B91B2DF52A8D0065B772 /* Untitled.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Untitled.swift; sourceTree = "<group>"; };
+		60E0B91C2DF53A550065B772 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		60F9307F2DE98E2A00E37156 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWordsViewModel.swift; sourceTree = "<group>"; };
 		81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageLevelSelectionView.swift; sourceTree = "<group>"; };
@@ -234,6 +237,7 @@
 		8F51F21C2DE01C6900397726 /* View Models */ = {
 			isa = PBXGroup;
 			children = (
+				60E0B91C2DF53A550065B772 /* DashboardViewModel.swift */,
 				139ABECD2DF2270C00EB45FD /* ChangeEmailViewModel.swift */,
 				60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */,
 				60DAC59B2DE2F76B002C5410 /* ProfileViewModel.swift */,
@@ -248,6 +252,7 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				60E0B91B2DF52A8D0065B772 /* Untitled.swift */,
 				81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */,
 				81F436422DF2831300DA9BDA /* LanguageSelectionView.swift */,
 				138018E42DF0ACFB003FC3D6 /* ChangeEmailView.swift */,
@@ -518,6 +523,7 @@
 				60974D8A2DE803810075CAAE /* PracticeWordView.swift in Sources */,
 				D69E52012DE6CC5500329D64 /* PlayerView.swift in Sources */,
 				81F436412DF2830600DA9BDA /* LanguageLevelSelectionView.swift in Sources */,
+				60E0B91D2DF53A5C0065B772 /* DashboardViewModel.swift in Sources */,
 				8FB9294C2DE02A2C0020AFCD /* LoginView.swift in Sources */,
 				8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */,
 				8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */,

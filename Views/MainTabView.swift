@@ -20,8 +20,8 @@ struct MainTabView: View {
                 .tabItem { Label("Chats", systemImage: "bubble.left.and.bubble.right.fill") }
                 .tag(1)
 
-            DashboardView()
-                .tabItem { Label("Stats", systemImage: "chart.bar.fill") }
+            DashboardView(userSession: userSession)
+                .tabItem { Label("Dashboard", systemImage: "chart.bar.fill") }
                 .tag(2)
 
             PracticeView(userSession:  userSession)
