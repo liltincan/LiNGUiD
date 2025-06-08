@@ -47,7 +47,7 @@ struct LoginView: View {
                             AppTextField(
                                 placeholder: "",
                                 text: $vm.password,
-                                isSecureTextEntry: true,
+                                isSecureTextEntry: true
                             )
 
                             if vm.password.isEmpty {
