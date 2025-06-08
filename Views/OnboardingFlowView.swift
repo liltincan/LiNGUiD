@@ -7,6 +7,9 @@ struct OnboardingFlowView: View {
     @State private var targetLanguages: [String] = []
     @State private var nativeLanguages: [String] = []
     @State private var selectedLevel: String? = nil
+    @State private var selectedNativeLanguages: Set<String> = []
+    @State private var selectedTargetLanguages: Set<String> = []
+    @State private var languageLevels: [String: String] = [:]
     
     private let total = 0  // number of pages
 
@@ -15,20 +18,16 @@ struct OnboardingFlowView: View {
             
             switch page {
                 case 0:
-                    Button(action: {
-                        page -= 1
-                    }) {
-                        Image("Return_Button")
-                            .frame(width: 25, height: 25) // Adjust size as needed
-                            .padding(.horizontal, 30)
-                        }
-                        .offset(x: -180, y: 0)
                     OnboardingPageView(index: 0)
                     
                     LanguageSelectionView(onContinue:{ selected in
                         nativeLanguages = selected
+                        let overlap = selectedTargetLanguages.intersection(selected)
+                        selectedTargetLanguages.subtract(overlap)
+                        targetLanguages.removeAll { overlap.contains($0) }
+                        overlap.forEach { languageLevels.removeValue(forKey: $0) }
                         page += 1
-                    }, nativeLanguage: $nativeLanguages)
+                    }, selectionLimit: 3, selectedLanguages: $selectedNativeLanguages, excludeLanguages: [])
                     .padding(.top, -250)
                     .padding(.horizontal, -15)
                     
@@ -47,7 +46,10 @@ struct OnboardingFlowView: View {
                     LanguageSelectionView(onContinue:{ selected in
                         targetLanguages = selected
                         page += 1
-                    }, nativeLanguage: $nativeLanguages)
+                    }, selectionLimit: 50, selectedLanguages: $selectedTargetLanguages, excludeLanguages: nativeLanguages, onDeselect: { language in
+                        languageLevels.removeValue(forKey: language)
+                    })
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.top, -250)
                     .padding(.horizontal, -15)
                 
@@ -75,11 +77,14 @@ struct OnboardingFlowView: View {
                     }
                     
                     if selectPage < targetLanguages.count {
+                        let currentLanguage = targetLanguages[selectPage]
                         LanguageLevelSelectionView(
-                            selectedLevel: $selectedLevel,
-                            languageName: targetLanguages[selectPage],
+                            selectedLevel: Binding(
+                                get: { languageLevels[currentLanguage] },
+                                set: { languageLevels[currentLanguage] = $0 }
+                            ),
+                            languageName: currentLanguage,
                             onContinue: {
-                                selectedLevel = nil
                                 selectPage += 1
                                 if selectPage >= targetLanguages.count {
                                     page += 1
