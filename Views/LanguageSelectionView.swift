@@ -3,17 +3,22 @@ import SwiftUI
 struct LanguageSelectionView: View {
     var onContinue: (([String]) -> Void)?
     let allLanguages = ["Arabic", "Chinese", "English", "French", "German", "Italian", "Portuguese", "Russian", "Spanish", "Afrikaans", "Armenian", "Azerbaijani", "Belarusian", "Bosnian", "Bulgarian", "Catalan", "Croatian", "Czech", "Danish", "Dutch", "Estonian", "Finnish", "Galician", "Greek", "Hebrew", "Hindi", "Hungarian", "Icelandic", "Indonesian", "Japanese", "Kannada", "Kazakh", "Korean", "Latvian", "Lithuanian", "Macedonian", "Malay", "Maori", "Marathi", "Nepali", "Norwegian", "Persian", "Polish", "Romanian", "Serbian", "Slovak", "Slovenian", "Swahili", "Swedish", "Tagalog", "Tamil", "Thai", "Turkish", "Ukrainian", "Urdu", "Vietnamese", "Welsh"]
+    let selectionLimit: Int
     
-    @State private var selectedLanguages = Set<String>()
+    @Binding var selectedLanguages: Set<String>
     @State private var searchText = ""
     @State private var isSearching = false
-    
+    @State private var showCustomAlert = false
+    var excludeLanguages: [String] = []
+    var onDeselect: ((String) -> Void)? = nil
 
+    
     var filteredLanguages: [String] {
+        let languages = allLanguages.filter { !excludeLanguages.contains($0) }
         if searchText.isEmpty {
-            return allLanguages
+            return languages
         } else {
-            return allLanguages.filter { $0.localizedCaseInsensitiveContains(searchText) }
+            return languages.filter { $0.localizedCaseInsensitiveContains(searchText) }
         }
     }
 
@@ -120,21 +125,81 @@ struct LanguageSelectionView: View {
         }
         .padding()
         .background(Color.black.ignoresSafeArea())
+        .overlay(
+            Group {
+                if showCustomAlert {
+                    ZStack {
+                        // Dimmed blurred background
+                        Color.black.opacity(0.8)
+                            .ignoresSafeArea()
+                            .transition(.opacity)
+                        
+                        // Alert box
+                        VStack(spacing: 20) {
+                            Text("Selection Limit Reached")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.white)
+                            
+                            Text("You can only select up to \(selectionLimit) languages")
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(.white)
+                            
+                            Button(action: {
+                                withAnimation {
+                                    showCustomAlert = false
+                                }
+                            }) {
+                                Text("OK")
+                                    .frame(minWidth: 250)
+                                    .padding()
+                                    .background(Color.white)
+                                    .foregroundColor(Color(red: 124/255, green: 58/255, blue: 237/255))
+                                    .cornerRadius(8)
+                            }
+                        }
+                        .padding()
+                        .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                        .cornerRadius(12)
+                        .shadow(radius: 10)
+                        .padding(.horizontal, 40)
+                        .transition(.scale)
+                        .offset(y: -100)
+                    }
+                    .animation(.easeInOut, value: showCustomAlert)
+                }
+            }
+        )
         .animation(.easeInOut, value: isSearching)
         .animation(.easeInOut, value: selectedLanguages)
     }
+    
 
     private func toggleSelection(for language: String) {
         if selectedLanguages.contains(language) {
             selectedLanguages.remove(language)
+            onDeselect?(language)
         } else {
-            selectedLanguages.insert(language)
+            if selectedLanguages.count >= selectionLimit {
+                withAnimation {
+                    showCustomAlert = true
+                }
+            } else {
+                selectedLanguages.insert(language)
+            }
         }
     }
 }
 
 //struct LanguageSelectionView_Previews: PreviewProvider {
+//    @State static var nativeLanguages: [String] = []
+//
 //    static var previews: some View {
-//        LanguageSelectionView()
+//        LanguageSelectionView(
+//            onContinue: { selected in
+//                print("Selected languages: \(selected)")
+//            },
+//            selectionLimit: 3,
+//            nativeLanguage: $nativeLanguages
+//        )
 //    }
 //}

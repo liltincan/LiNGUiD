@@ -8,7 +8,7 @@ struct EditProfileView: View {
     @Environment(\.presentationMode) var presentationMode
 
     @State private var profileImage: Image?
-    @State private var inputImage: UIImage?
+    @State private var inputImage: UIImage? // This is the original image from the picker
     @State private var isShowingImagePicker = false
     @State private var username: String
     @State private var profilePictureURL: String?
@@ -55,21 +55,21 @@ struct EditProfileView: View {
                                 .shadow(radius: 7)
                                 .overlay(Circle().stroke(Color.gray.opacity(0.4), lineWidth: 1))
                         case .failure(_):
-                            Image(systemName: "person.circle.fill")
+                            Image(systemName: "person.crop.circle.fill")
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 120, height: 120)
-                                .foregroundColor(.gray)
+                                .foregroundColor(.secondary) // Adaptive fallback icon color
                         @unknown default:
                             EmptyView()
                         }
                     }
                 } else {
-                    Image(systemName: "person.circle.fill")
+                    Image(systemName: "person.crop.circle.fill")
                         .resizable()
                         .scaledToFill()
                         .frame(width: 120, height: 120)
-                        .foregroundColor(.white)
+                        .foregroundColor(.secondary) // Adaptive fallback icon color
                 }
 
                 if profilePictureURL != nil || profileImage != nil {
@@ -148,10 +148,39 @@ struct EditProfileView: View {
 
     func loadImage() {
         guard let inputImage = inputImage else { return }
+        // For the display immediately after selection, use the original inputImage
+        // We will resize it only before uploading to Firebase Storage
         profileImage = Image(uiImage: inputImage)
         profilePictureURL = nil
         shouldDeleteProfilePicture = false
     }
+
+    // MARK: - Image Resizing Helper
+    func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage? {
+        let size = image.size
+        let widthRatio  = targetSize.width  / size.width
+        let heightRatio = targetSize.height / size.height
+
+        // Determine what our actual scaling factor is to maintain aspect ratio
+        var newSize: CGSize
+        if widthRatio > heightRatio {
+            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
+        } else {
+            newSize = CGSize(width: size.width * widthRatio, height: size.height * widthRatio)
+        }
+
+        // This is the rect of the image
+        let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
+
+        // Draw new image in current graphics context
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0) // Scale set to 1.0 for pixel-perfect resizing
+        image.draw(in: rect)
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return newImage
+    }
+
 
     func saveProfile() async {
         isLoading = true
@@ -164,7 +193,7 @@ struct EditProfileView: View {
 
         if shouldDeleteProfilePicture {
             let storageRef = Storage.storage().reference()
-            let profileImagesRef = storageRef.child("profile_photos/\(userId)/profile.jpg")
+            let profileImagesRef = storageRef.child("profile_photos/\(userId)/profile.jpg") // This is the fixed name
 
             do {
                 try await profileImagesRef.delete()
@@ -180,22 +209,30 @@ struct EditProfileView: View {
         }
 
         if let uiImage = inputImage {
-            guard let imageData = uiImage.jpegData(compressionQuality: 0.8) else {
-                print("Failed to convert image to Data.")
+            // MARK: Resize Image to 200x200 before uploading
+            let targetSize = CGSize(width: 500, height: 500)
+            guard let resizedImage = resizeImage(image: uiImage, targetSize: targetSize) else {
+                print("Failed to resize image.")
+                isLoading = false
+                return
+            }
+
+            guard let imageData = resizedImage.jpegData(compressionQuality: 0.7) else { // Compress further
+                print("Failed to convert resized image to Data.")
                 isLoading = false
                 return
             }
 
             let storageRef = Storage.storage().reference()
-            let profileImagesRef = storageRef.child("profile_photos/\(userId)/profile.jpg")
+            let profileImagesRef = storageRef.child("profile_photos/\(userId)/profile.jpg") // Save with a consistent name
 
             do {
                 let _ = try await profileImagesRef.putDataAsync(imageData)
                 let downloadURL = try await profileImagesRef.downloadURL()
                 profilePictureURL = downloadURL.absoluteString
-                print("Profile image uploaded. Download URL: \(downloadURL.absoluteString)")
+                print("Resized profile image uploaded. Download URL: \(downloadURL.absoluteString)")
             } catch {
-                print("Error uploading image or getting URL: \(error.localizedDescription)")
+                print("Error uploading resized image or getting URL: \(error.localizedDescription)")
                 isLoading = false
                 return
             }
@@ -220,6 +257,7 @@ struct EditProfileView: View {
     }
 }
 
+// ImagePicker and other helper structs remain unchanged
 struct ImagePicker: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentationMode
     @Binding var image: UIImage?

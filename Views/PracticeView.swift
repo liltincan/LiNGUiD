@@ -2,21 +2,21 @@ import FirebaseAuth
 import FirebaseFirestore
 import SwiftUI
 
-import FirebaseFirestore
-import SwiftUI
-
 struct PracticeView: View {
     @StateObject private var viewModel: SavedWordViewModel
-    @StateObject var userSession = UserSessionViewModel()
-
-
+    //    @StateObject private var userSession = UserSessionViewModel()
+    @ObservedObject var userSession: UserSessionViewModel
 
     @State private var selectedSegment: Int = 0
     @State private var isActive: Bool = false
     @State private var isLoading = false
-    
+    @State private var showAlert: Bool = false
+
     init(userSession: UserSessionViewModel) {
-        _viewModel = StateObject(wrappedValue: SavedWordViewModel(userSession: userSession))
+        self.userSession = userSession
+        _viewModel = StateObject(
+            wrappedValue: SavedWordViewModel(userSession: userSession)
+        )
     }
 
     @Environment(\.colorScheme) var colorScheme
@@ -28,8 +28,6 @@ struct PracticeView: View {
     var knownWords: [WordPair] {
         viewModel.savedWords?.knownWords ?? []
     }
-    
-    
 
     var body: some View {
         if isLoading {
@@ -44,10 +42,12 @@ struct PracticeView: View {
                             .font(.title)
                             .foregroundColor(.white)
 
-                        Text("Start saving words to practice and track your progress.")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .multilineTextAlignment(.center)
+                        Text(
+                            "Start saving words to practice and track your progress."
+                        )
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
                     }
                     .padding()
                 } else {
@@ -60,8 +60,12 @@ struct PracticeView: View {
                                     .onTapGesture {
                                         isActive = true
                                     }
-                                    .navigationDestination(isPresented: $isActive) {
-                                        PracticeWordView(savedWordsViewModel: viewModel)
+                                    .navigationDestination(
+                                        isPresented: $isActive
+                                    ) {
+                                        PracticeWordView(
+                                            savedWordsViewModel: viewModel
+                                        )
                                     }
                             }
 
@@ -73,13 +77,20 @@ struct PracticeView: View {
                     }
                 }
             }
+            .alert("Alert", isPresented: $showAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(
+                    "We cannot find the user's ID in database\nMake sure to add the 'id'"
+                )
+            }
             .task {
                 print("isLoading")
                 await viewModel.fetchLanguageData()
             }
+
         }
     }
-
 
     private func wordCard(for word: WordPair) -> some View {
         ZStack {
@@ -131,26 +142,46 @@ struct PracticeView: View {
                     "languagesData": [
                         "de": [
                             "savedWords": [
-                                "knownWords": [["target": "hallo", "native": "hello"]],
-                                "unknownWords": [["target": "buch", "native": "book"], ["target": "tisch", "native": "table"],["target": "milch", "native": "milk"]]
+                                "knownWords": [
+                                    ["target": "hallo", "native": "hello"]
+                                ],
+                                "unknownWords": [
+                                    ["target": "buch", "native": "book"],
+                                    ["target": "tisch", "native": "table"],
+                                    ["target": "milch", "native": "milk"],
+                                ],
                             ]
                         ]
                     ]
                 ]
 
                 isLoading = true
-
-                db.collection("users").document("63gFgHkgWoOOFnfbFtSuo7rzHTS2").setData(data, merge: true) { error in
-                    if let error = error {
-                        print("❌ Failed to save: \(error.localizedDescription)")
-                    } else {
-                        print("Words uploaded successfully")
-                        Task {
-                            await viewModel.fetchLanguageData()
+                
+                guard let userId = userSession.currentUser?.id else {
+                       showAlert = true
+                       isLoading = false
+                       return
+                   }
+                
+                if(!userId.isEmpty) {
+                    db.collection("users").document(userId).setData(
+                        data,
+                        merge: true
+                    ) { error in
+                        if let error = error {
+                            print("❌ Failed to save: \(error.localizedDescription)")
+                        } else {
+                            print("Words uploaded successfully")
+                            Task {
+                                await viewModel.fetchLanguageData()
+                            }
                         }
+                       
                     }
-                    isLoading = false
                 }
+                
+                isLoading = false
+                showAlert = false
             }
         }
     }
@@ -160,7 +191,9 @@ struct PracticeView: View {
             SegmentedControlView(selectedSegment: $selectedSegment)
 
             ScrollView {
-                ForEach(Array(getWords().enumerated()), id: \.offset) { index, word in
+                ForEach(Array(getWords().enumerated()), id: \.offset) {
+                    index,
+                    word in
                     VStack {
                         HStack(spacing: 20) {
                             ZStack {
@@ -194,7 +227,9 @@ struct PracticeView: View {
             }
         }
         .padding()
-        .background(colorScheme == .dark ? Color.white : Color.gray.opacity(0.1))
+        .background(
+            colorScheme == .dark ? Color.white : Color.gray.opacity(0.1)
+        )
         .cornerRadius(12)
     }
 
@@ -204,7 +239,6 @@ struct PracticeView: View {
             : viewModel.savedWords?.unknownWords ?? []
     }
 }
-
 
 struct SegmentedControlView: View {
     @Binding var selectedSegment: Int

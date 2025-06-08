@@ -18,6 +18,8 @@ struct VideoPlayerView: View {
     @State private var looper: AVPlayerLooper? //used to loop the video
     @State private var isLiked: Bool = false
     @State private var isSaved: Bool = false
+    @State private var isShareSheetPresented = false
+
     
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
@@ -45,6 +47,11 @@ struct VideoPlayerView: View {
                     
                     if isPlaying { //plays as long as it wasn't manually paused by the user prior to disappearing
                         player.play()
+                    }
+                    // marking current video as watched - Gerardo De La Torre 06/06/2025
+                    Task {
+                        guard let userID = userSession.currentUser?.id else { return }
+                        await videoPlayerViewModel.markVideoAsWatched(videoId, userID: userID)
                     }
                 }
                 .onDisappear { //pauses upon disappearing
@@ -101,7 +108,7 @@ struct VideoPlayerView: View {
                     .contentShape(Rectangle())
                     
                     Button(action: {
-                                    // Share logic goes here
+                        isShareSheetPresented = true
                     }) {
                         Image(systemName: "square.and.arrow.up")
                             .resizable()
@@ -111,6 +118,12 @@ struct VideoPlayerView: View {
                             .shadow(radius: 2)
                     }
                     .contentShape(Rectangle())
+                    .sheet(isPresented: $isShareSheetPresented) {
+                        ShareSheetView(videoId: videoId)
+                            .presentationDetents([.medium, .large]) // Optional: defines height levels
+                            .presentationDragIndicator(.visible)
+                    }
+
                 }
                 .padding(.trailing)
             }
@@ -121,7 +134,6 @@ struct VideoPlayerView: View {
         isPlaying.toggle() //toggles the boolean value for isPlaying
         isPlaying ? player.play() : player.pause() //plays if true, pauses if not
     }
-    
 }
 
 

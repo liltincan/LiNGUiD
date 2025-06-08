@@ -42,6 +42,25 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         db.collection("users").document(uid).updateData(["savedVideos": savedVideos])
     }
     
+    func getVideoURL(for videoId: String, completion: @escaping (Result<URL, Error>) -> Void) {
+        db.collection("videos").document(videoId).getDocument { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+
+            guard let data = snapshot?.data(),
+                  let urlString = data["url"] as? String,
+                  let url = URL(string: urlString) else {
+                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL data"])))
+                return
+            }
+
+            completion(.success(url))
+        }
+    }
+
+    
     
 }
 
