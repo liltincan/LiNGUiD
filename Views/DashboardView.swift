@@ -1,100 +1,5 @@
 import SwiftUI
 
-// MARK: - Data Models
-struct LeaderboardUser: Identifiable {
-    let id: String
-    let name: String
-    let minutes: Int
-    let rank: Int
-    let avatarURL: String
-}
-
-// MARK: - Dashboard ViewModel
-@MainActor
-class DashboardViewModel: ObservableObject {
-    @Published var user: User?
-    @Published var userLevel: Int = 4
-    @Published var totalHours: Int = 32
-    @Published var monthlyHoursIncrease: Int = 14
-    @Published var userRank: Int = 4
-    @Published var savedWords: [WordPair] = []
-    @Published var studyDates: Set<Int> = []
-    @Published var currentMonth: String = ""
-    @Published var isLoading = false
-    @Published var leaderboardUsers: [LeaderboardUser] = []
-    
-    var userSession: UserSessionViewModel
-    
-    init(userSession: UserSessionViewModel) {
-        self.userSession = userSession
-        setupCurrentMonth()
-        setupMockLeaderboard()
-    }
-    
-    func loadDashboardData() async {
-        isLoading = true
-        
-        await userSession.refreshUser()
-        
-        guard let currentUser = userSession.currentUser else {
-            isLoading = false
-            return
-        }
-        
-        self.user = currentUser
-        
-        calculateUserStats(from: currentUser)
-        loadSavedWords(from: currentUser)
-        generateStudyDates()
-        
-        isLoading = false
-    }
-    
-    private func calculateUserStats(from user: User) {
-        let totalWatchTime = user.globalWatchTime ?? 0
-        userLevel = Int(totalWatchTime / 3600) + 1
-        
-        totalHours = Int((totalWatchTime) / 3600)
-        
-        monthlyHoursIncrease = 14
-        
-        userRank = 4
-    }
-    
-    private func loadSavedWords(from user: User) {
-        if let targetLanguage = user.languagesData?[user.targetLanguage]?.savedWords {
-            savedWords = Array(targetLanguage.unknownWords.prefix(5))
-        } else {
-            savedWords = [
-                WordPair(target: "fraiche", native: "fresh"),
-                WordPair(target: "aimer", native: "to love"),
-                WordPair(target: "fille", native: "girl"),
-                WordPair(target: "voir", native: "to see"),
-                WordPair(target: "jaune", native: "yellow")
-            ]
-        }
-    }
-    
-    private func generateStudyDates() {
-        studyDates = Set([4, 5, 8, 12, 15, 18, 22, 25])
-    }
-    
-    private func setupCurrentMonth() {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM"
-        currentMonth = formatter.string(from: Date())
-    }
-    
-    private func setupMockLeaderboard() {
-        leaderboardUsers = [
-            LeaderboardUser(id: "1", name: "starryskies23", minutes: 59, rank: 2, avatarURL: "https://images.unsplash.com/photo-1494790108755-2616b612b1c?w=150&h=150&fit=crop&crop=face"),
-            LeaderboardUser(id: "2", name: "Eloise", minutes: 60, rank: 1, avatarURL: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face"),
-            LeaderboardUser(id: "3", name: "nebulanomad", minutes: 55, rank: 3, avatarURL: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"),
-            LeaderboardUser(id: "4", name: "Me", minutes: 4, rank: 15, avatarURL: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face")
-        ]
-    }
-}
-
 struct DashboardView: View {
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject private var viewModel: DashboardViewModel
@@ -391,7 +296,7 @@ struct CalendarGridView: View {
     let studyDates: Set<Int>
     
     private let weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-    private let daysInMonth = Array(1...30) // 简化为30天
+    private let daysInMonth = Array(1...30)
     
     var body: some View {
         VStack(spacing: 8) {
@@ -427,4 +332,4 @@ struct CalendarGridView: View {
     DashboardView()
         .environmentObject(UserSessionViewModel())
         .preferredColorScheme(.dark)
-}
+} 
