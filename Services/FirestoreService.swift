@@ -104,12 +104,16 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         }
 
         do {
-            let encoded = try Firestore.Encoder().encode(languagesData)
+            var encodedLanguagesData: [String: [String: Any]] = [:]
+            for (code, data) in languagesData {
+                let encodedData = try Firestore.Encoder().encode(data)
+                encodedLanguagesData[code] = encodedData
+            }
+
             let data: [String: Any] = [
                 "nativeLanguage": firstNative,
                 "nativeLanguageList": nativeCodes,
-                "targetLanguage": targetLanguage,
-                "languagesData": encoded
+                "languagesData": encodedLanguagesData
             ]
 
             db.collection("users").document(uid).updateData(data) { error in
