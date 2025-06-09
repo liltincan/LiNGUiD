@@ -111,7 +111,19 @@ struct OnboardingFlowView: View {
                     OnboardingPageView(index: 2)
                     
                     Button(action: {
+                            FirestoreService.shared.updateUserLanguagePreferences(
+                            nativeLanguages: selectedNativeLanguages,
+                            targetLanguages: selectedTargetLanguages,
+                            languageLevels: languageLevels
+                        ) { result in
+                            switch result {
+                            case .success:
+                                print("User preferences saved.")
+                            case .failure(let error):
+                                print("Error saving preferences: \(error.localizedDescription)")
+                            }
                             onComplete()
+                        }
                     }) {
                         Text("Begin")
                             .font(.headline)
