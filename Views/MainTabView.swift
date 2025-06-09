@@ -21,7 +21,8 @@ struct MainTabView: View {
                 .tag(1)
 
             DashboardView()
-                .tabItem { Label("Stats", systemImage: "chart.bar.fill") }
+                .environmentObject(userSession)
+                .tabItem { Label("Dashboard", systemImage: "chart.bar.fill") }
                 .tag(2)
 
             PracticeView(userSession:  userSession)

@@ -73,7 +73,7 @@ struct LanguageLevelSelectionView: View {
         }
         .padding()
         .background(Color.black.ignoresSafeArea())
-        .animation(.easeInOut, value: selectedLevel)
+        //.animation(.easeInOut, value: selectedLevel)
     }
 }
 

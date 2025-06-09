@@ -48,8 +48,21 @@ struct PracticeView: View {
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
+                        
+                        savedWordsHeader
                     }
                     .padding()
+                    .alert("Alert", isPresented: $showAlert) {
+                        Button("OK", role: .cancel) {}
+                    } message: {
+                        Text(
+                            "We cannot find the user's ID in database\nMake sure to add the 'id'"
+                        )
+                    }
+                    .task {
+                        print("isLoading")
+                        await viewModel.fetchLanguageData()
+                    }
                 } else {
                     NavigationStack {
                         VStack(spacing: 20) {
@@ -147,6 +160,11 @@ struct PracticeView: View {
                                 ],
                                 "unknownWords": [
                                     ["target": "buch", "native": "book"],
+                                    ["target": "apfel", "native": "apple"],
+                                    ["target": "haus", "native": "house"],
+                                    ["target": "hund", "native": "dog"],
+                                    ["target": "katze", "native": "cat"],
+                                    ["target": "stuhl", "native": "chair"],
                                     ["target": "tisch", "native": "table"],
                                     ["target": "milch", "native": "milk"],
                                 ],
@@ -156,30 +174,32 @@ struct PracticeView: View {
                 ]
 
                 isLoading = true
-                
+
                 guard let userId = userSession.currentUser?.id else {
-                       showAlert = true
-                       isLoading = false
-                       return
-                   }
-                
-                if(!userId.isEmpty) {
+                    showAlert = true
+                    isLoading = false
+                    return
+                }
+
+                if !userId.isEmpty {
                     db.collection("users").document(userId).setData(
                         data,
                         merge: true
                     ) { error in
                         if let error = error {
-                            print("❌ Failed to save: \(error.localizedDescription)")
+                            print(
+                                "❌ Failed to save: \(error.localizedDescription)"
+                            )
                         } else {
                             print("Words uploaded successfully")
                             Task {
                                 await viewModel.fetchLanguageData()
                             }
                         }
-                       
+
                     }
                 }
-                
+
                 isLoading = false
                 showAlert = false
             }

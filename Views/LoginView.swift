@@ -3,6 +3,9 @@ import _AuthenticationServices_SwiftUI
 
 struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
+    
+    @EnvironmentObject var appState: AppState
+    
     let onSuccess: () -> Void
 
     var body: some View {
@@ -44,7 +47,7 @@ struct LoginView: View {
                             AppTextField(
                                 placeholder: "",
                                 text: $vm.password,
-                                isSecureTextEntry: true,
+                                isSecureTextEntry: true
                             )
 
                             if vm.password.isEmpty {
@@ -66,7 +69,7 @@ struct LoginView: View {
 
                 Button {
                     Task {
-                        if await vm.login() {
+                        if await vm.login(appState: appState) {
                             onSuccess()
                         }
                     }
@@ -99,7 +102,7 @@ struct LoginView: View {
                     action: {
                         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                            let rootVC = windowScene.windows.first?.rootViewController {
-                            vm.loginWithGoogle(presenting: rootVC) {
+                            vm.loginWithGoogle(presenting: rootVC, appState: appState) {
                                 onSuccess()
                             }
                         }
@@ -107,7 +110,7 @@ struct LoginView: View {
                 )
                 
                 Button {
-                    vm.startSignInWithAppleFlow {
+                    vm.startSignInWithAppleFlow(appState: appState) {
                         onSuccess()
                     }
                 } label: {

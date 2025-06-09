@@ -14,10 +14,12 @@ struct User: Codable, Identifiable {
     var username: String?
     var createdAt: Date?
     var flameDate: Date?
-    var targetLanguage: String = ""
     var flameStatus: String?
     var globalWatchTime: Double?
     var interests: [String]?
+    var targetLanguage: String = ""
+    var nativeLanguage: String?
+    var nativeLanguageList: [String]?
     var languagesData: [String: LanguagesData]?
     var likedVideos: [String]?
     var savedVideos: [String]?
@@ -79,17 +81,25 @@ struct LanguagesData: Codable {
     var watchTime: WatchTime?
     
     enum CodingKeys: String, CodingKey {
-        case savedWords
+        case savedWords, comprehensionLevel, watchTime
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         savedWords = try container.decodeIfPresent(WordLists.self, forKey: .savedWords)
+        comprehensionLevel = try container.decodeIfPresent(Int.self, forKey: .comprehensionLevel)
+        watchTime = try container.decodeIfPresent(WatchTime.self, forKey: .watchTime)
     }
     
     init(savedWords: WordLists) {
-           self.savedWords = savedWords
-       }
+        self.savedWords = savedWords
+    }
+    
+    init(comprehensionLevel: Int, timestamp: Date) {
+        self.comprehensionLevel = comprehensionLevel
+        self.timestamp = timestamp
+    }
+    
 }
 
 struct WrappedSavedWords: Codable {
@@ -125,6 +135,15 @@ struct WordPair: Codable {
 struct WatchTime: Codable {
     var daily: [String: Double]?
     var total: Double?
+    
+    enum CodingKeys: String, CodingKey {
+        case daily, total
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        total = try container.decodeIfPresent(Double.self, forKey: .total)
+    }
 }
 
 
