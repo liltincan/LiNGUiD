@@ -48,8 +48,21 @@ struct PracticeView: View {
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
+                        
+                        savedWordsHeader
                     }
                     .padding()
+                    .alert("Alert", isPresented: $showAlert) {
+                        Button("OK", role: .cancel) {}
+                    } message: {
+                        Text(
+                            "We cannot find the user's ID in database\nMake sure to add the 'id'"
+                        )
+                    }
+                    .task {
+                        print("isLoading")
+                        await viewModel.fetchLanguageData()
+                    }
                 } else {
                     NavigationStack {
                         VStack(spacing: 20) {

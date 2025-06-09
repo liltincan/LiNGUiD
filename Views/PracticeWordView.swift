@@ -23,6 +23,11 @@ struct PracticeWordView: View {
     @State private var unknownWords: [String] = []
     @State private var flashcardCache: [WordPair] = []
     @State private var viewID = UUID()
+    @State private var swipeDirection: SwipeDirection? = nil
+
+    enum SwipeDirection {
+        case left, right
+    }
 
     var knownWordsCount: Int {
         savedWordsViewModel.savedWords?.knownWords.count ?? 0
@@ -91,7 +96,7 @@ struct PracticeWordView: View {
             }
         }
         .padding()
-//        .background(Color.black)
+        //        .background(Color.black)
         .onAppear {
             flashcardCache =
                 savedWordsViewModel.savedWords?.unknownWords ?? []
@@ -103,20 +108,51 @@ struct PracticeWordView: View {
 
     private func flashcardStack() -> some View {
         ZStack {
-            ForEach(Array(flashcardCache.enumerated()), id: \.offset) { index, word in
+            ForEach(Array(flashcardCache.enumerated()), id: \.offset) {
+                index,
+                word in
                 let visibleIndex = index - currentIndex
                 if visibleIndex >= 0 && visibleIndex < maxVisibleCards {
-                    flashcardView(for: word, at: index, visibleIndex: visibleIndex)
+                    flashcardView(
+                        for: word,
+                        at: index,
+                        visibleIndex: visibleIndex
+                    )
                 }
             }
         }
         .gesture(
             DragGesture()
                 .onChanged { value in
-                    dragOffset = isFlipped
-                        ? CGSize(width: -value.translation.width, height: value.translation.height)
+                    let offset =
+                        isFlipped
+                        ? CGSize(
+                            width: -value.translation.width,
+                            height: value.translation.height
+                        )
                         : value.translation
+                    dragOffset = offset
+
+                    // Direction preview based on horizontal intent
+                    if isFlipped {
+                        if offset.width < -40 {
+                            swipeDirection = .right
+                        } else if offset.width > 40 {
+                            swipeDirection = .left
+                        } else {
+                            swipeDirection = nil
+                        }
+                    } else {
+                        if offset.width > 40 {
+                            swipeDirection = .right
+                        } else if offset.width < -40 {
+                            swipeDirection = .left
+                        } else {
+                            swipeDirection = nil
+                        }
+                    }
                 }
+
                 .onEnded { _ in handleSwipe() }
         )
         .onTapGesture {
@@ -124,13 +160,41 @@ struct PracticeWordView: View {
         }
     }
 
-    private func flashcardView(for word: WordPair, at index: Int, visibleIndex: Int) -> some View {
+    private func flashcardView(
+        for word: WordPair,
+        at index: Int,
+        visibleIndex: Int
+    ) -> some View {
         RoundedRectangle(cornerRadius: 20)
-            .stroke(Color.black, lineWidth: 2)
-            .fill(isFlipped && index == currentIndex ? Color.appSecondaryColor : Color.appPrimaryColor)
+            .stroke(
+                currentIndex == index
+                    ? (swipeDirection == .right
+                        ? Color.green
+                        : swipeDirection == .left ? Color.red : Color.black)
+                    : Color.black,
+                lineWidth: 3
+            )
+            .fill(
+                isFlipped && index == currentIndex
+                    ? Color.appSecondaryColor : Color.appPrimaryColor
+            )
             .frame(width: 300, height: 500)
             .overlay(
                 ZStack {
+                    if swipeDirection != nil && index == currentIndex {
+
+                        VStack {
+                            Spacer().frame(height: 20)
+
+                            swipeTextView(
+                                swipeDirection: swipeDirection,
+                                index: index
+                            )
+
+                            Spacer()
+                        }
+
+                    }
                     Text(word.target)
                         .font(.system(size: 40, weight: .bold))
                         .foregroundColor(.white)
@@ -140,14 +204,25 @@ struct PracticeWordView: View {
                         .font(.system(size: 30, weight: .medium))
                         .foregroundColor(.white)
                         .opacity(isFlipped && index == currentIndex ? 1 : 0)
-                        .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
+                        .rotation3DEffect(
+                            .degrees(180),
+                            axis: (x: 0, y: 1, z: 0)
+                        )
                 }
                 .animation(nil, value: isFlipped)
             )
             .offset(
                 x: visibleIndex == 0 ? dragOffset.width : CGFloat(-visibleIndex * 8),
-                y: CGFloat(-visibleIndex * 8)
+                y: visibleIndex == 0 ? dragOffset.height : CGFloat(-visibleIndex * 8)
             )
+            .rotationEffect(
+                visibleIndex == 0 ? .degrees(Double(dragOffset.width / 15)) : .degrees(0)
+            )
+//            .rotation3DEffect(
+//                .degrees(Double(dragOffset.height / 15)),
+//                axis: (x: 1.0, y: 0.0, z: 0.0)
+//            )
+
             .zIndex(Double(maxVisibleCards - visibleIndex))
             .rotation3DEffect(
                 .degrees(isFlipped && index == currentIndex ? 180 : 0),
@@ -155,6 +230,38 @@ struct PracticeWordView: View {
             )
             .animation(.spring(), value: currentIndex)
             .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 2)
+    }
+
+    func swipeTextView(swipeDirection: SwipeDirection?, index: Int) -> some View
+    {
+        let statusText: String
+        let statusColor: Color
+        let textAlignment: Alignment
+
+        switch swipeDirection {
+        case .right:
+            statusText = "Know"
+            statusColor = .green
+            textAlignment = .leading
+        case .left:
+            statusText = "Still Learning"
+            statusColor = .red
+            textAlignment = .trailing
+        default:
+            statusText = ""
+            statusColor = .clear
+            textAlignment = .center
+        }
+
+        return Text(statusText)
+            .font(.system(size: 32, weight: .bold))
+            .foregroundStyle(statusColor)
+            .frame(maxWidth: .infinity, alignment: textAlignment)
+            .padding(.horizontal, 30)
+            .rotation3DEffect(
+                .degrees(isFlipped && index == currentIndex ? 180 : 0),
+                axis: (x: 0, y: 1, z: 0)
+            )
     }
 
     func progressText(with newID: UUID) -> some View {
@@ -179,9 +286,11 @@ struct PracticeWordView: View {
                                 .font(.title)
                                 .foregroundColor(.white)
 
-                            Text("You have \(unknownWordsCount) unknown words left!")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(.white)
+                            Text(
+                                "You have \(unknownWordsCount) unknown words left!"
+                            )
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(.white)
                         }
 
                         Button(action: {
@@ -190,7 +299,8 @@ struct PracticeWordView: View {
                             isFlipped = false
                             dragOffset = .zero
                             flashcardCache =
-                                savedWordsViewModel.savedWords?.unknownWords ?? []
+                                savedWordsViewModel.savedWords?.unknownWords
+                                ?? []
                         }) {
                             Text("Keep practicing")
                                 .fontWeight(.semibold)
@@ -207,33 +317,37 @@ struct PracticeWordView: View {
             return AnyView(
                 Text("Card \(currentIndex + 1) of \(flashcardCache.count)")
                     .font(.system(size: 14, weight: .regular))
-//                    .foregroundColor(.white)
+                //                    .foregroundColor(.white)
             )
         }
     }
-
+    
     func handleSwipe() {
-        let threshold: CGFloat = 100
-        var swipingRight = dragOffset.width > threshold
-        var swipingLeft = dragOffset.width < -threshold
+        let horizontal = dragOffset.width
+        let vertical = dragOffset.height
 
-        if isFlipped {
-            swap(&swipingRight, &swipingLeft)
-        }
+        // Use angle or dominance to determine intent
+        let threshold: CGFloat = 80
+        let isHorizontalSwipe = abs(horizontal) > abs(vertical)
 
         guard currentIndex < flashcardCache.count else { return }
-
         let currentWord = flashcardCache[currentIndex]
 
-        if swipingRight {
+        if isHorizontalSwipe && horizontal > threshold {
+            swipeDirection = .right
             if let userId = userSession.currentUser?.id {
-                savedWordsViewModel.moveToKnown(word: currentWord, userId: userId)
+                savedWordsViewModel.moveToKnown(
+                    word: currentWord,
+                    userId: userId
+                )
             }
             advance()
-        } else if swipingLeft {
+        } else if isHorizontalSwipe && horizontal < -threshold {
+            swipeDirection = .left
             advance()
         } else {
             dragOffset = .zero
+            swipeDirection = nil
         }
     }
 
@@ -241,6 +355,6 @@ struct PracticeWordView: View {
         dragOffset = .zero
         isFlipped = false
         currentIndex += 1
+        swipeDirection = nil
     }
 }
-
