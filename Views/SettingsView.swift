@@ -3,10 +3,12 @@ import SwiftUI
 struct SettingsView: View {
     var likedVideos: [String]
     var savedVideos: [String]
-    @StateObject private var vm = LoginViewModel()
+    var languages: Set<String>
+    @StateObject private var loginVM = LoginViewModel()
     @EnvironmentObject var state: AppState
     @State private var showLogoutAlert = false
-
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -21,7 +23,15 @@ struct SettingsView: View {
 
                         SettingsSection(title: "Content") {
                             SettingsRowLink(title: "Change Level", destination: ChangeLevelView())
-                            SettingsRowLink(title: "Change Language", destination: ChangeLanguageView())
+                            SettingsRowLink(title: "Change Language", destination:
+                                                VStack{
+                                                    OnboardingPageView(index: 1)
+                                                    LanguageSelectionView(currentLanguages: languages, onContinue: { _ in dismiss()})
+                                                        .padding(.top, -250)
+                                                        .padding(.horizontal, -15)
+                                                }
+                            )
+                                                
                         }
 
                         DividerLine()
@@ -37,7 +47,6 @@ struct SettingsView: View {
 
                         SettingsSection(title: "Account") {
                             SettingsRowLink(title: "Change password", destination: ChangePasswordView())
-                            SettingsRowLink(title: "Change email", destination: ChangeEmailView())
                             SettingsRowButton(title: "Log out", isDestructive: true) {
                                 showLogoutAlert = true
                             }
@@ -61,13 +70,15 @@ struct SettingsView: View {
             }
         }
     }
+        
 
     func logout() {
-        let result = vm.logout()
+        let result = loginVM.logout()
         if (result){
             state.isSignedIn = false
         }
     }
+       
 }
 
 struct SettingsSection<Content: View>: View {
@@ -161,8 +172,8 @@ struct SettingsRowContent: View {
 struct DividerLine: View {
     var body: some View {
         Rectangle()
-            .fill(Color(white: 0.25)) // Match the divider gray tone in Figma
-            .frame(height: 2)
+            .fill(Color(white: 0.25))
+            .frame(height: 1)
             .padding(.vertical, 20)
     }
 }
@@ -202,18 +213,13 @@ struct ChangeLevelView: View {
 }
 
 struct ChangeLanguageView: View {
+    var languages: [String] = []
     var body: some View {
         Text("Change Language Settings")
             .navigationTitle("Change Language")
     }
 }
 
-struct ChangePasswordView: View {
-    var body: some View {
-        Text("Change Password Screen")
-            .navigationTitle("Change Password")
-    }
-}
 
 
 

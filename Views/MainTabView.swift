@@ -27,7 +27,7 @@ struct MainTabView: View {
                 .tabItem { Label("Practice", systemImage: "rectangle.3.offgrid.fill") }
                 .tag(3)
 
-            ProfileView()
+            ProfileView(userSession: userSession)
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
                 .tag(4)
         }

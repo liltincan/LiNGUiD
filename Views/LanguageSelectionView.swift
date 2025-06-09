@@ -2,19 +2,35 @@ import SwiftUI
 
 struct LanguageSelectionView: View {
     var onContinue: (([String]) -> Void)?
+
     let allLanguages = ["Arabic", "Chinese", "English", "French", "German", "Italian", "Portuguese", "Russian", "Spanish", "Afrikaans", "Armenian", "Azerbaijani", "Belarusian", "Bosnian", "Bulgarian", "Catalan", "Croatian", "Czech", "Danish", "Dutch", "Estonian", "Finnish", "Galician", "Greek", "Hebrew", "Hindi", "Hungarian", "Icelandic", "Indonesian", "Japanese", "Kannada", "Kazakh", "Korean", "Latvian", "Lithuanian", "Macedonian", "Malay", "Maori", "Marathi", "Nepali", "Norwegian", "Persian", "Polish", "Romanian", "Serbian", "Slovak", "Slovenian", "Swahili", "Swedish", "Tagalog", "Tamil", "Thai", "Turkish", "Ukrainian", "Urdu", "Vietnamese", "Welsh"]
-    
+
     @State private var selectedLanguages = Set<String>()
     @State private var searchText = ""
     @State private var isSearching = false
-    
+
+    @Environment(\.dismiss) private var dismissThisView
+
+
+    init(currentLanguages: Set<String>? = nil,
+         onContinue: (([String]) -> Void)? = nil) {
+        let initialSelection = currentLanguages ?? []
+        _selectedLanguages = State(initialValue: initialSelection)
+        self.onContinue = onContinue
+    }
 
     var filteredLanguages: [String] {
+        let searchedLanguages: [String]
         if searchText.isEmpty {
-            return allLanguages
+            searchedLanguages = allLanguages
         } else {
-            return allLanguages.filter { $0.localizedCaseInsensitiveContains(searchText) }
+            searchedLanguages = allLanguages.filter { $0.localizedCaseInsensitiveContains(searchText) }
         }
+
+        let selected = searchedLanguages.filter { selectedLanguages.contains($0) }.sorted()
+        let unselected = searchedLanguages.filter { !selectedLanguages.contains($0) }.sorted()
+
+        return selected + unselected
     }
 
     var body: some View {
@@ -71,7 +87,7 @@ struct LanguageSelectionView: View {
 
                                 Text(language)
                                     .foregroundColor(.white)
-                                    
+
 
                                 Spacer()
                             }
@@ -103,6 +119,7 @@ struct LanguageSelectionView: View {
             if !selectedLanguages.isEmpty {
                 Button(action: {
                     onContinue?(Array(selectedLanguages));
+                    dismissThisView()
                 }) {
                     Text("Continue")
                         .font(.headline)

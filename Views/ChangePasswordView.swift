@@ -1,14 +1,13 @@
 import SwiftUI
 
-struct ChangeEmailView: View {
-    @StateObject private var viewModel = ChangeEmailViewModel()
+struct ChangePasswordView: View {
+    @StateObject private var viewModel = ChangePasswordViewModel()
     @StateObject private var loginVM = LoginViewModel()
     @Environment(\.dismiss) private var dismiss
 
-    @State private var newEmail: String = ""
     @State private var newPassword: String = ""
+    @State private var confirmPassword: String = ""
     
-    // Brand color
     private let brandColor = Color(red: 124/255, green: 58/255, blue: 237/255)
     
     var body: some View {
@@ -20,7 +19,7 @@ struct ChangeEmailView: View {
                     reauthenticationSection
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
                 } else {
-                    updateCredentialsSection
+                    updatePasswordSection
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
 
@@ -38,12 +37,12 @@ struct ChangeEmailView: View {
     
     private var headerSection: some View {
         VStack(spacing: 16) {
-            Text("Change Email & Password")
+            Text("Change Password")
                 .font(.system(size: 28, weight: .bold))
                 .foregroundColor(.primary)
                 .multilineTextAlignment(.center)
             
-            Text("Update your account credentials securely")
+            Text("Update your password securely")
                 .font(.system(size: 16))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -113,12 +112,12 @@ struct ChangeEmailView: View {
         }
     }
 
-    private var updateCredentialsSection: some View {
+    private var updatePasswordSection: some View {
         VStack(spacing: 20) {
-            sectionHeader(title: "Step 2 of 2", subtitle: "Update your credentials")
+            sectionHeader(title: "Step 2 of 2", subtitle: "Set your new password")
             
             VStack(spacing: 16) {
-                Text("Enter your new email and password below.")
+                Text("Enter your new password and confirm it below.")
                     .font(.system(size: 15))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -126,42 +125,59 @@ struct ChangeEmailView: View {
                 
                 VStack(spacing: 14) {
                     SimpleTextField(
-                        placeholder: "New Email",
-                        text: $newEmail,
-                        keyboardType: .emailAddress,
-                        brandColor: brandColor
-                    )
-
-                    SimpleTextField(
                         placeholder: "New Password",
                         text: $newPassword,
                         isSecure: true,
                         brandColor: brandColor
                     )
+
+                    SimpleTextField(
+                        placeholder: "Confirm New Password",
+                        text: $confirmPassword,
+                        isSecure: true,
+                        brandColor: brandColor
+                    )
+                }
+                
+                if !newPassword.isEmpty || !confirmPassword.isEmpty {
+                    passwordValidationView
                 }
 
-                VStack(spacing: 12) {
-                    SimpleButton(
-                        title: "Send Verification Email",
-                        isLoading: viewModel.isLoading,
-                        backgroundColor: viewModel.verificationSent ? .gray : brandColor,
-                        isDisabled: viewModel.isLoading || newEmail.isEmpty || viewModel.verificationSent
-                    ) {
-                        viewModel.sendVerificationEmail(newEmail: newEmail, newPassword: newPassword)
-                    }
-
-                    SimpleButton(
-                        title: "Update",
-                        isLoading: viewModel.isLoading,
-                        backgroundColor: viewModel.verificationSent ? brandColor : .gray,
-                        isDisabled: viewModel.isLoading || !viewModel.verificationSent
-                    ) {
-                        viewModel.updateEmailAndPassword(newEmail: newEmail, newPassword: newPassword)
-                    }
+                SimpleButton(
+                    title: "Update Password",
+                    isLoading: viewModel.isLoading,
+                    backgroundColor: brandColor,
+                    isDisabled: viewModel.isLoading || !isPasswordValid
+                ) {
+                    viewModel.updatePassword(newPassword: newPassword)
                 }
             }
         }
         .simpleCardStyle()
+    }
+    
+    private var passwordValidationView: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if !newPassword.isEmpty && newPassword.count < 6 {
+                ValidationRow(text: "Password must be at least 6 characters", isValid: false)
+            }
+            
+            if !confirmPassword.isEmpty && newPassword != confirmPassword {
+                ValidationRow(text: "Passwords do not match", isValid: false)
+            }
+            
+            if !newPassword.isEmpty && !confirmPassword.isEmpty && newPassword == confirmPassword && newPassword.count >= 6 {
+                ValidationRow(text: "Passwords match", isValid: true)
+            }
+        }
+        .padding(.top, 8)
+    }
+    
+    private var isPasswordValid: Bool {
+        return !newPassword.isEmpty &&
+               !confirmPassword.isEmpty &&
+               newPassword == confirmPassword &&
+               newPassword.count >= 6
     }
 
     private var messageView: some View {
@@ -203,6 +219,25 @@ struct ChangeEmailView: View {
 }
 
 // MARK: - Simple Components
+
+struct ValidationRow: View {
+    let text: String
+    let isValid: Bool
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: isValid ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .foregroundColor(isValid ? .green : .red)
+                .font(.system(size: 14))
+            
+            Text(text)
+                .font(.system(size: 14))
+                .foregroundColor(isValid ? .green : .red)
+            
+            Spacer()
+        }
+    }
+}
 
 struct SimpleButton: View {
     let title: String
@@ -261,6 +296,7 @@ struct SimpleTextField: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(isFocused ? brandColor : Color.clear, lineWidth: 2)
+            .animation(.easeInOut(duration: 0.2), value: isFocused)
         )
     }
 }
@@ -304,6 +340,6 @@ extension View {
 
 private extension String {
     var isSuccessMessage: Bool {
-        contains("successfully") || contains("sent")
+        contains("successfully") || contains("updated") || contains("changed")
     }
 }
