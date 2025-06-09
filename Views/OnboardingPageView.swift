@@ -17,11 +17,14 @@ struct OnboardingPageView: View {
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
                                 .padding(.top, 20)
+                                .drawingGroup()
                             
-                            Text("\nYou may select one or more\n\n")
+                            Text("You may select one or more")
                                 .font(.system(size: 17))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
+                                .padding(.top, 10)
+                                .drawingGroup()
                             
                         }
                         
@@ -34,12 +37,13 @@ struct OnboardingPageView: View {
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
                                 .padding(.top, 20)
+                                .drawingGroup()
                             
                         }
 
                     case 2:
                         VStack(spacing: 00) {
-                            Image("AppLogo")
+                            Image("AppLogoPdf")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 290, height: 100, alignment: .center) // Adjust size as needed
@@ -54,15 +58,17 @@ struct OnboardingPageView: View {
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.center)
                                     .padding()
+                                    .drawingGroup()
                                 
                                 Text("\nTo get the most out of LiNGUiD, stop\ncaring about understanding every word.\nThe more relaxed you are, the more\nefficiently you will acquire your target\nlanguage. LiNGUiD is the best way to\nachieve true immersion. Forget\ndoomscrolling. From now on, you will be\nlanguage scrolling to fluency. Now all\nthe time you spend swiping will be time\nspent acquiring.\n")
                                     .font(.system(size: 17))
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal, 10)
+                                    .drawingGroup()
                             }
                             .padding()
-                            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                            .background(Color(red: 62/255, green: 29/255, blue: 119/255))
                             .cornerRadius(8)
                             .padding()
 
@@ -84,6 +90,6 @@ struct OnboardingPageView: View {
 
 //struct OnboardingPageView_Previews: PreviewProvider {
 //    static var previews: some View {
-//        OnboardingPageView(index: 3)
+//        OnboardingPageView(index: 2)
 //    }
 //}
