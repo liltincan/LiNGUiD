@@ -135,7 +135,7 @@ struct OnboardingFlowView: View {
                             .padding(.horizontal)
                             .drawingGroup()
                     }
-                    .padding(.bottom, 30)
+                    .padding(.bottom, 25)
                 
                 default:
                     EmptyView()
