@@ -50,7 +50,7 @@ struct OnboardingPageView: View {
                                 .padding(.top, 30)
                         }
                         
-                        Spacer(minLength: 50)
+                        Spacer(minLength: 40)
                         ZStack(){
                             VStack(spacing: 00) {
                                 Text("Zero to Fluent\nthe easy way")
