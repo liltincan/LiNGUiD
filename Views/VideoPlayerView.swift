@@ -19,7 +19,9 @@ struct VideoPlayerView: View {
     @State private var isLiked: Bool = false
     @State private var isSaved: Bool = false
     @State private var isShareSheetPresented = false
-
+    @State private var watchTimer: Timer? // timer for video watch time - Gerardo
+    @State private var totalWatchTime: TimeInterval = 0 // total watch time - Gerardo
+    @State private var hasBeenMarkedAsWatched = false
     
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
@@ -47,6 +49,7 @@ struct VideoPlayerView: View {
                     
                     if isPlaying { //plays as long as it wasn't manually paused by the user prior to disappearing
                         player.play()
+                        startWatchTimer()
                     }
                     // marking current video as watched - Gerardo De La Torre 06/06/2025
                     Task {
@@ -56,6 +59,7 @@ struct VideoPlayerView: View {
                 }
                 .onDisappear { //pauses upon disappearing
                     player.pause()
+                    stopWatchTimer()
                 }
             HStack {
                 Spacer()
@@ -132,7 +136,41 @@ struct VideoPlayerView: View {
 
     private func togglePlayPause() {
         isPlaying.toggle() //toggles the boolean value for isPlaying
-        isPlaying ? player.play() : player.pause() //plays if true, pauses if not
+        if isPlaying {
+            player.play()
+            startWatchTimer()
+        } else {
+            player.pause()
+            stopWatchTimer()
+        }
+    }
+    
+    /// Function to start the watch timer for a video
+    /// - Author: Gerardo De La Torre
+    /// - Date: 2025-06-10
+    private func startWatchTimer() {
+        // Guard so we don't start the timer if it's already running
+        guard watchTimer == nil else { return }
+        
+        watchTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in totalWatchTime += 0.1
+            
+            // Check if we've hit 1 second and haven't marked as watched yet
+            if totalWatchTime >= 1.0 && !hasBeenMarkedAsWatched {
+                hasBeenMarkedAsWatched = true
+                Task { @MainActor in
+                    guard let userID = userSession.currentUser?.id else { return }
+                    await videoPlayerViewModel.markVideoAsWatched(videoId, userID: userID)
+                }
+            }
+        }
+    }
+    
+    /// Function to stop the watch timer for a video
+    /// - Author: Gerardo De La Torre
+    /// - Date: 2025-06-10
+    private func stopWatchTimer() {
+        watchTimer?.invalidate()
+        watchTimer = nil
     }
 }
 
