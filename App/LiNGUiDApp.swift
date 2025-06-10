@@ -9,9 +9,11 @@ struct LiNGUiDApp: App {
     @StateObject private var state = AppState()
     @Environment(\.openURL) var openURL
     @StateObject var deepLinkCoordinator = DeepLinkCoordinator()
+    
 
     init() {
         DependencyContainer.shared.registerAll()
+        
     }
 
     var body: some Scene {
@@ -26,3 +28,4 @@ struct LiNGUiDApp: App {
         }
     }
 }
+

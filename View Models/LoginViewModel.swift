@@ -27,14 +27,14 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
 
     /// Returns true on success, false on failure
     @MainActor
-    func login() async -> Bool {
+    func login(appState: AppState) async -> Bool {
         guard !email.isEmpty else {
             errorMessage = "Email is required"
             return false
         }
 
         do {
-            let result = try await authService.registerOrLogin(email: email, password: password)
+            let result = try await authService.registerOrLogin(email: email, password: password, appState: appState)
             if let error = result {
                 errorMessage = error
                 return false
@@ -51,10 +51,10 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
         }
     }
 
-    func loginWithGoogle(presenting: UIViewController, onSuccess: @escaping () -> Void) {
+    func loginWithGoogle(presenting: UIViewController, appState: AppState, onSuccess: @escaping () -> Void) {
         Task {
             do {
-                let success = try await authService.signInWithGoogle(presenting: presenting)
+                let success = try await authService.signInWithGoogle(presenting: presenting, appState: appState)
                 if success {
                     onSuccess()
                 } else {
@@ -76,7 +76,7 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
         request.nonce = sha256(nonce)
     }
 
-    func loginWithApple(credential: ASAuthorizationAppleIDCredential, onSuccess: @escaping () -> Void) {
+    func loginWithApple(credential: ASAuthorizationAppleIDCredential, appState: AppState, onSuccess: @escaping () -> Void) {
         Task {
             do {
                 guard let nonce = currentNonce else {
@@ -84,7 +84,7 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
                     return
                 }
 
-                try await authService.signInWithApple(credential: credential, rawNonce: nonce)
+                try await authService.signInWithApple(credential: credential, rawNonce: nonce, appState: appState)
                 onSuccess()
             } catch {
                 errorMessage = error.localizedDescription
@@ -92,7 +92,7 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
         }
     }
     
-    func startSignInWithAppleFlow(onSuccess: @escaping () -> Void) {
+    func startSignInWithAppleFlow(appState: AppState, onSuccess: @escaping () -> Void) {
         let nonce = randomNonceString()
         currentNonce = nonce
 
@@ -110,17 +110,28 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
     
     private var onSuccessCallback: (() -> Void)?
 
-    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+    func authorizationController( appState: AppState, controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         if let credential = authorization.credential as? ASAuthorizationAppleIDCredential {
-            loginWithApple(credential: credential) {
+            loginWithApple(credential: credential, appState: appState) {
                 self.onSuccessCallback?()
             }
         }
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-        errorMessage = error.localizedDescription
-    }
+           // Convert to ASAuthorizationError if possible
+           if let authError = error as? ASAuthorizationError {
+               switch authError.code {
+               case .canceled:
+                   return
+               default:
+                   // Handle other errors appropriately
+                   errorMessage = "Something went wrong. Please try again."
+               }
+           } else {
+               // Handle non-authorization errors
+           }
+       }
 
     
     final class AppleSignInContext: NSObject, ASAuthorizationControllerPresentationContextProviding {

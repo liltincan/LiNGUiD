@@ -129,7 +129,7 @@ struct ProfileHeaderView: View {
     let profilePictureURL: String
     let languageDisplay: String
     let vm: ProfileViewModel
-    
+    let uid: String = Auth.auth().currentUser!.uid
     @Binding var showingFullScreenProfilePicture: Bool
     @Binding var fullScreenProfilePictureURL: String?
     
@@ -146,7 +146,8 @@ struct ProfileHeaderView: View {
                         SettingsView(
                             likedVideos: vm.likedVideoThumbnails,
                             savedVideos: vm.savedVideoThumbnails,
-                            languages: vm.allLanguageNames
+                            languages: vm.allLanguageNames,
+                            uid: uid
                         )
                     } label: {
                         Image(systemName: "gearshape.fill")

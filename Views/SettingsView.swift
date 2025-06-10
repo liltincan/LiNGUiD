@@ -4,9 +4,11 @@ struct SettingsView: View {
     var likedVideos: [String]
     var savedVideos: [String]
     var languages: Set<String>
+    var uid: String = FirebaseAuthService.shared.currentUserID ?? ""
     @StateObject private var loginVM = LoginViewModel()
     @EnvironmentObject var state: AppState
     @State private var showLogoutAlert = false
+    @State private var selectedLanguages: Set<String> = []
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -26,9 +28,17 @@ struct SettingsView: View {
                             SettingsRowLink(title: "Change Language", destination:
                                                 VStack{
                                                     OnboardingPageView(index: 1)
-                                                    LanguageSelectionView(currentLanguages: languages, onContinue: { _ in dismiss()})
-                                                        .padding(.top, -250)
-                                                        .padding(.horizontal, -15)
+                                                    LanguageSelectionView(
+                                                        onContinue: { newLanguages in
+                                                            // Handle the updated languages here
+                                                            // You might want to update your app state or call a delegate
+                                                            dismiss()
+                                                        },
+                                                        selectionLimit: 5, // Set your desired limit
+                                                        selectedLanguages: $selectedLanguages
+                                                    )
+                                                    .padding(.top, -250)
+                                                    .padding(.horizontal, -15)
                                                 }
                             )
                                                 
@@ -67,6 +77,10 @@ struct SettingsView: View {
                     logout()
                 }
                 Button("Cancel", role: .cancel) {}
+            }
+            .onAppear {
+                // Initialize selectedLanguages with current languages when view appears
+                selectedLanguages = languages
             }
         }
     }
@@ -219,8 +233,6 @@ struct ChangeLanguageView: View {
             .navigationTitle("Change Language")
     }
 }
-
-
 
 
 struct DeleteAccountConfirmationView: View {

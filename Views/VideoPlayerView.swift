@@ -48,6 +48,11 @@ struct VideoPlayerView: View {
                     if isPlaying { //plays as long as it wasn't manually paused by the user prior to disappearing
                         player.play()
                     }
+                    // marking current video as watched - Gerardo De La Torre 06/06/2025
+                    Task {
+                        guard let userID = userSession.currentUser?.id else { return }
+                        await videoPlayerViewModel.markVideoAsWatched(videoId, userID: userID)
+                    }
                 }
                 .onDisappear { //pauses upon disappearing
                     player.pause()
@@ -129,7 +134,6 @@ struct VideoPlayerView: View {
         isPlaying.toggle() //toggles the boolean value for isPlaying
         isPlaying ? player.play() : player.pause() //plays if true, pauses if not
     }
-    
 }
 
 

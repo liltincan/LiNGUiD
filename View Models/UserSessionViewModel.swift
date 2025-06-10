@@ -18,6 +18,14 @@ class UserSessionViewModel: ObservableObject {
     init() {
         getCurrentUser()
     }
+    
+    func checkUserExists() async -> Bool {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            return false
+        }
+        return await FirebaseAuthService.shared.userDocumentExists(uid: uid)
+    }
+
 
     func getCurrentUser() {  //talks to firebase service to fetch user data
         firestoreService.getCurrentUser { result in

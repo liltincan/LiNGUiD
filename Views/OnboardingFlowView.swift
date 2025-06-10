@@ -5,7 +5,11 @@ struct OnboardingFlowView: View {
     @State private var page = 0
     @State private var selectPage = 0
     @State private var targetLanguages: [String] = []
+    @State private var nativeLanguages: [String] = []
     @State private var selectedLevel: String? = nil
+    @State private var selectedNativeLanguages: Set<String> = []
+    @State private var selectedTargetLanguages: Set<String> = []
+    @State private var languageLevels: [String: String] = [:]
     
     private let total = 0  // number of pages
 
@@ -14,21 +18,18 @@ struct OnboardingFlowView: View {
             
             switch page {
                 case 0:
-                    Button(action: {
-                        page -= 1
-                    }) {
-                        Image("Return_Button")
-                            .frame(width: 25, height: 25) // Adjust size as needed
-                            .padding(.horizontal, 30)
-                    }
-                    .offset(x: -180, y: 0)
                     OnboardingPageView(index: 0)
+                    .padding(.top, 20)
                     
                     LanguageSelectionView(onContinue:{ selected in
-                        targetLanguages = selected
+                        nativeLanguages = selected
+                        let overlap = selectedTargetLanguages.intersection(selected)
+                        selectedTargetLanguages.subtract(overlap)
+                        targetLanguages.removeAll { overlap.contains($0) }
+                        overlap.forEach { languageLevels.removeValue(forKey: $0) }
                         page += 1
-                    })
-                    .padding(.top, -250)
+                    }, selectionLimit: 3, selectedLanguages: $selectedNativeLanguages, excludeLanguages: [])
+                    .padding(.top, -260)
                     .padding(.horizontal, -15)
                     
                     
@@ -39,33 +40,54 @@ struct OnboardingFlowView: View {
                         Image("Return_Button")
                             .frame(width: 25, height: 25) // Adjust size as needed
                             .padding(.horizontal, 30)
-                    }
-                    .offset(x: -180, y: 0)
+                        }
+                        .offset(x: -180, y: 0)
                     OnboardingPageView(index: 1)
+                    .padding(.top, -10)
+                    .padding(.horizontal, 25)
                 
                     LanguageSelectionView(onContinue:{ selected in
                         targetLanguages = selected
                         page += 1
+                    }, selectionLimit: 50, selectedLanguages: $selectedTargetLanguages, excludeLanguages: nativeLanguages, onDeselect: { language in
+                        languageLevels.removeValue(forKey: language)
                     })
-                    .padding(.top, -250)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.top, -275)
                     .padding(.horizontal, -15)
                 
                 case 2:
-                    Button(action: {
-                        page -= 1
-                        selectPage = 0
-                    }) {
-                        Image("Return_Button")
-                            .frame(width: 25, height: 25) // Adjust size as needed
-                            .padding(.horizontal, 30)
+                    if selectPage > 0 {
+                        Button(action: {
+                            selectPage -= 1
+                        }) {
+                            Image("Return_Button")
+                                .frame(width: 25, height: 25) // Adjust size as needed
+                                .padding(.horizontal, 30)
+                        }
+                        .offset(x: -180, y: 0)
                     }
-                    .offset(x: -180, y: 0)
+                    else{
+                        Button(action: {
+                            page = 1
+                            selectPage = 0
+                        }) {
+                            Image("Return_Button")
+                                .frame(width: 25, height: 25) // Adjust size as needed
+                                .padding(.horizontal, 30)
+                        }
+                        .offset(x: -180, y: 0)
+                    }
+                    
                     if selectPage < targetLanguages.count {
+                        let currentLanguage = targetLanguages[selectPage]
                         LanguageLevelSelectionView(
-                            selectedLevel: $selectedLevel,
-                            languageName: targetLanguages[selectPage],
+                            selectedLevel: Binding(
+                                get: { languageLevels[currentLanguage] },
+                                set: { languageLevels[currentLanguage] = $0 }
+                            ),
+                            languageName: currentLanguage,
                             onContinue: {
-                                selectedLevel = nil
                                 selectPage += 1
                                 if selectPage >= targetLanguages.count {
                                     page += 1
@@ -77,7 +99,8 @@ struct OnboardingFlowView: View {
                 
                 case 3:
                     Button(action: {
-                        page -= 1
+                        page = 2
+                        selectPage = max(targetLanguages.count - 1, 0)
                         
                     }) {
                         Image("Return_Button")
@@ -88,7 +111,19 @@ struct OnboardingFlowView: View {
                     OnboardingPageView(index: 2)
                     
                     Button(action: {
+                            FirestoreService.shared.updateUserLanguagePreferences(
+                            nativeLanguages: selectedNativeLanguages,
+                            targetLanguages: selectedTargetLanguages,
+                            languageLevels: languageLevels
+                        ) { result in
+                            switch result {
+                            case .success:
+                                print("User preferences saved.")
+                            case .failure(let error):
+                                print("Error saving preferences: \(error.localizedDescription)")
+                            }
                             onComplete()
+                        }
                     }) {
                         Text("Begin")
                             .font(.headline)
@@ -98,26 +133,13 @@ struct OnboardingFlowView: View {
                             .background(Color(red: 124/255, green: 58/255, blue: 237/255))
                             .cornerRadius(8)
                             .padding(.horizontal)
+                            .drawingGroup()
                     }
-                    .padding(.bottom, 30)
-                    .padding(.horizontal, 10)
+                    .padding(.bottom, 25)
                 
                 default:
                     EmptyView()
-                    Button(action: {
-                            page += 1
-                    }) {
-                        Text("Continue")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
-                            .cornerRadius(8)
-                            .padding(.horizontal)
-                    }
-                    .padding(.bottom, 30)
-                    .padding(.horizontal, 10)
+                    
             }
             
             Spacer()

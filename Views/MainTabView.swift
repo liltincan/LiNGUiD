@@ -2,16 +2,17 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selection = 0
-    @EnvironmentObject var userSession: UserSessionViewModel
     @EnvironmentObject var deepLinkCoordinator: DeepLinkCoordinator
     @State private var showDeepLinkedVideo = false
     @State private var deepLinkedVideoID: String?
     @State private var deepLinkedVideoURL: URL?
+    
+    @StateObject var userSession = UserSessionViewModel()
 
 
     var body: some View {
         TabView(selection: $selection) {
-            VideoFeedView()
+            VideoFeedView(userSession: userSession)
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
 
@@ -20,7 +21,8 @@ struct MainTabView: View {
                 .tag(1)
 
             DashboardView()
-                .tabItem { Label("Stats", systemImage: "chart.bar.fill") }
+                .environmentObject(userSession)
+                .tabItem { Label("Dashboard", systemImage: "chart.bar.fill") }
                 .tag(2)
 
             PracticeView(userSession:  userSession)
