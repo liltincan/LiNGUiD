@@ -3,56 +3,120 @@ import SwiftUI
 
 struct VideoFeedView: View {
     @StateObject private var vm = VideoFeedViewModel()
-    @State private var player = AVPlayer()
     @State private var currentIndex = 0
-    @ObservedObject var userSession : UserSessionViewModel
-    
-   
+    @ObservedObject var userSession: UserSessionViewModel
 
     var body: some View {
-        VStack{
-            if vm.errorMessage != nil {
-                VStack {
-                    Text(vm.errorMessage ?? "")
-                        .font(.title3)
-                        .foregroundColor(.red)
-                        .multilineTextAlignment(.center)
-                }
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
+
+            if let error = vm.errorMessage {
+                Text(error)
+                    .font(.title3)
+                    .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
+                    .padding()
+            } else if vm.videos.isEmpty {
+                Text("No videos found.")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.gray)
             } else {
-                TabView(selection: $currentIndex) {
-                    ForEach(Array(vm.videos.enumerated()), id: \.element.id) {
-                        index,
-                        video in
-                        VideoPlayerView(url: video.url, videoId: video.id)
-                            .rotationEffect(.degrees(90))
-                            .tag(index)
-                            .frame(
-                                width: UIScreen.main.bounds.height,
-                                height: UIScreen.main.bounds.width
+                VerticalVideoFeed(videos: vm.videos, currentIndex: $currentIndex, userSession: userSession, vm: vm)
+            }
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            Task { await vm.fetchInitialVideos() }
+        }
+    }
+}
+
+struct VerticalVideoFeed: View {
+    let videos: [Video]
+    @Binding var currentIndex: Int
+    @ObservedObject var userSession: UserSessionViewModel
+    @ObservedObject var vm: VideoFeedViewModel
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let screenWidth = geometry.size.width
+            let screenHeight = geometry.size.height
+            
+            ScrollViewReader { proxy in
+                ScrollView(.vertical, showsIndicators: false) {
+                    LazyVStack(spacing: 0) {
+                        ForEach(videos.indices, id: \.self) { index in
+                            FeedVideoPage(
+                                video: videos[index],
+                                isActive: index == currentIndex,
+                                userSession: userSession,
+                                containerWidth: screenWidth,
+                                containerHeight: screenHeight
                             )
-                        //.ignoresSafeArea()
-                            .onAppear {
-                                if index >= vm.videos.count - 2 {
-                                    Task { await vm.fetchMoreVideos() }
+                            .frame(width: screenWidth, height: screenHeight)
+                            .id(index)
+                            .background(
+                                GeometryReader { itemGeo in
+                                    Color.clear
+                                        .onAppear {
+                                            checkIfCentered(index: index, geometry: itemGeo, screenHeight: screenHeight)
+                                        }
+                                        .onChange(of: itemGeo.frame(in: .global)) { oldFrame, newFrame in
+                                            checkIfCentered(index: index, geometry: itemGeo, screenHeight: screenHeight)
+                                        }
                                 }
-                            }
+                            )
+                        }
                     }
                 }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                .rotationEffect(.degrees(-90))  // vertical scroll illusion
-                .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-                //.rotationEffect(.degrees(90))
-                //            .offset(x: UIScreen.main.bounds.width)
-                .ignoresSafeArea()
+                .scrollTargetBehavior(.paging)
                 .onAppear {
-                    Task { await vm.fetchInitialVideos() }
+                    currentIndex = 0
                 }
+                .onChange(of: currentIndex) { oldIndex, newIndex in
+                    if newIndex >= videos.count - 2 && !vm.isLoading {
+                        Task { await vm.fetchMoreVideos() }
+                    }
+                }
+            }
+        }
+        .background(Color.black)
+    }
+    
+    private func checkIfCentered(index: Int, geometry: GeometryProxy, screenHeight: CGFloat) {
+        let frame = geometry.frame(in: .global)
+        let screenCenter = screenHeight / 2
+        let itemCenter = frame.midY
+        let distanceFromCenter = abs(itemCenter - screenCenter)
+        
+        if distanceFromCenter < screenHeight / 4 {
+            if index != currentIndex {
+                currentIndex = index
             }
         }
     }
 }
-//struct VideoFeedView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        VideoFeedView()
-//    }
-//}
+
+struct FeedVideoPage: View {
+    let video: Video
+    let isActive: Bool
+    @ObservedObject var userSession: UserSessionViewModel
+    let containerWidth: CGFloat
+    let containerHeight: CGFloat
+
+    var body: some View {
+        ZStack {
+            Color.black
+            VideoPlayerView(
+                url: video.url,
+                videoId: video.id,
+                containerWidth: containerWidth,
+                containerHeight: containerHeight,
+                isActive: isActive
+            )
+            .environmentObject(userSession)
+        }
+        .frame(width: containerWidth, height: containerHeight)
+    }
+}
