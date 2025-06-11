@@ -30,7 +30,9 @@ struct VideoPlayerView: View {
     @State private var isLiked: Bool = false
     @State private var isSaved: Bool = false
     @State private var isShareSheetPresented = false
-    @State private var isPlayerReady = false
+    @State private var watchTimer: Timer? // timer for video watch time - Gerardo
+    @State private var totalWatchTime: TimeInterval = 0 // total watch time - Gerardo
+    @State private var hasBeenMarkedAsWatched = false    @State private var isPlayerReady = false
     @State private var hasBeenSetup = false
 
     @EnvironmentObject var userSession: UserSessionViewModel
@@ -48,6 +50,36 @@ struct VideoPlayerView: View {
                 .onTapGesture {
                     togglePlayPause()
                 }
+                .onAppear {
+                    if let cached = VideoCache.shared.player(for: url) as? AVQueuePlayer {
+                        player = cached //get the player from the cache if it already exists with the url
+                        looper = AVPlayerLooper(player: cached, templateItem: AVPlayerItem(url: url)) //creates video looper
+                        
+                        
+                    } else { //if not, we make it here
+                        
+                        let queuePlayer = AVQueuePlayer() //queue of player items
+                        
+                        looper = AVPlayerLooper(player: queuePlayer, templateItem: AVPlayerItem(url: url)) //creates video looper
+                        VideoCache.shared.setPlayer(queuePlayer, for: url) //saves new queue player to the cache
+                        player = queuePlayer //sets the new queue player as the player for the view
+                    }
+                    
+                    if isPlaying { //plays as long as it wasn't manually paused by the user prior to disappearing
+                        player.play()
+                        startWatchTimer()
+                    }
+                    // marking current video as watched - Gerardo De La Torre 06/06/2025
+                    Task {
+                        guard let userID = userSession.currentUser?.id else { return }
+                        await videoPlayerViewModel.markVideoAsWatched(videoId, userID: userID)
+                    }
+                }
+                .onDisappear { //pauses upon disappearing
+                    player.pause()
+                    stopWatchTimer()
+                }
+            HStack {
 
             VStack {
                 Spacer()
@@ -196,8 +228,10 @@ struct VideoPlayerView: View {
         isPlaying.toggle()
         if isPlaying {
             player.play()
+            startWatchTimer()
         } else {
             player.pause()
+            stopWatchTimer()
         }
     }
 }
