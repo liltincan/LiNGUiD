@@ -18,49 +18,117 @@ struct ShareSheetView: View {
                 .frame(width: 40, height: 5)
                 .padding(.top, 8)
 
-            Text("Share this video")
+            Text("Share")
                 .font(.headline)
                 .padding(.bottom, 10)
+                .foregroundStyle(.white)
             
             
             HStack(spacing: 20) {
-                Button {
-                    if let url = URL(string: "https://learnwithlinguid.com/videos/\(videoId)") {
-                        let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-                        UIApplication.shared.windows.first?.rootViewController?.present(av, animated: true)
-                    }
-                } label: {
-                    VStack {
-                        Image(systemName: "square.and.arrow.up")
-                        Text("Share Link")
-                    }
-                }
-                .padding(15)
-                .buttonBorderShape(.circle)
+//                VStack {
+//                    Button {
+//                        if let url = URL(string: "https://learnwithlinguid.com/videos/\(videoId)") {
+//                            let av = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+//                            UIApplication.shared.windows.first?.rootViewController?.present(av, animated: true)
+//                        }
+//                    } label: {
+//                        Image(systemName: "square.and.arrow.up")
+//                        
+//                    }
+//                    .padding(15)
+//                    .clipShape(Circle())
+//                    .overlay(
+//                        Circle()
+//                            .stroke(Color.gray, lineWidth: 2)
+//                    )
+//                    
+//                    Text("Share Link")
+//                        .foregroundStyle(.white)
+//                }
                 
-                Button {
-                    UIPasteboard.general.string = "https://learnwithlinguid.com/videos/\(videoId)"
-                } label: {
-                    VStack {
+                VStack {
+                    Button {
+                        UIPasteboard.general.string = "https://learnwithlinguid.com/videos/\(videoId)"
+                    } label: {
                         Image(systemName: "doc.on.doc")
-                        Text("Copy Link")
+                            .foregroundColor(.white)
+                            .font(.system(size: 24))
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 24, height: 24)
+                            .padding(16)
                     }
+                    .background(Color.blue)
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.3), radius: 4)
+                    
+                    Text("Copy Link")
+                        .foregroundStyle(.white)
                 }
-                .buttonBorderShape(.circle)
                 
-                
-                
-                Button(role: .destructive) {
-                    // Report video logic
-                } label: {
-                    VStack {
+                VStack {
+                    Button(role: .destructive) {
+                        // Report video logic
+                    } label: {
                         Image(systemName: "flag")
-                        Text("Report")
+                            .foregroundColor(.white)
+                            .font(.system(size: 24))
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 24, height: 24)
+                            .padding(16)
                     }
+                    .background(Color.red)
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.3), radius: 4)
+                    
+                    Text("Report")
+                        .foregroundStyle(.white)
+                    
                 }
-                .buttonBorderShape(.circle)
                 
-                Spacer()
+                VStack {
+                    Button {
+                        if let url = URL(string: "https://learnwithlinguid.com/videos/\(videoId)"),
+                           let messageURL = URL(string: "sms:&body=\(url.absoluteString)") {
+                            UIApplication.shared.open(messageURL)
+                        }
+                    } label: {
+                        Image(systemName: "message.fill")
+                            .foregroundColor(.white)
+                            .font(.system(size: 24))
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 24, height: 24)
+                            .padding(16)
+                    }
+                    .background(Color.green)
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.3), radius: 4)
+
+                    Text("iMessage")
+                        .foregroundStyle(.white)
+                }
+                
+                VStack {
+                    Button {
+                        if let url = URL(string: "mailto:?subject=Check this out&body=https://learnwithlinguid.com/videos/\(videoId)") {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        Image(systemName: "envelope.fill")
+                            .foregroundColor(.white)
+                            .font(.system(size: 24))
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 24, height: 24)
+                            .padding(16)
+                    }
+                    .background(Color.orange)
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.3), radius: 4)
+
+                    Text("Email")
+                        .foregroundStyle(.white)
+                }
+
+                
             }
             Button("Dismiss") {
                 withAnimation {
@@ -71,11 +139,18 @@ struct ShareSheetView: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(.ultraThinMaterial)
+        .background(
+            Color.black
+        )
         .cornerRadius(20)
-        .shadow(radius: 10)
+        .overlay( // Optional: Add a soft white border
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.8), radius: 10)
         .padding(.horizontal)
         .transition(.move(edge: .bottom))
+
     }
 }
 

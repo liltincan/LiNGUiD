@@ -20,4 +20,9 @@ class DeepLinkCoordinator: ObservableObject {
             deepLinkVideoID = videoId
         }
     }
+    
+    func deepLinkToVideo(with videoId: String) {
+        self.deepLinkVideoID = videoId
+    }
+
 }

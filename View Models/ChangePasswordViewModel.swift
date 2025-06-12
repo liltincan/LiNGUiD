@@ -40,15 +40,11 @@ extension UIViewController {
 }
 
 @MainActor
-class ChangeEmailViewModel: ObservableObject {
-    @Published var verificationSent: Bool = false
+class ChangePasswordViewModel: ObservableObject {
     @Published var isReauthenticated: Bool = false
     @Published var isLoading: Bool = false
     @Published var userIsGoogleUser: Bool = false
-    @Published var hasEmailPasswordProvider: Bool = false
     @Published var errorMessage: String? = nil
-    
-    private var wasOriginallyGoogleUser: Bool = false
     
     var currentUserEmail: String? {
         return Auth.auth().currentUser?.email
@@ -56,7 +52,6 @@ class ChangeEmailViewModel: ObservableObject {
     
     func resetMessages() {
         errorMessage = ""
-        verificationSent = false
         isLoading = false
     }
 
@@ -66,10 +61,6 @@ class ChangeEmailViewModel: ObservableObject {
             return
         }
         userIsGoogleUser = user.providerData.contains(where: { $0.providerID == "google.com" })
-        hasEmailPasswordProvider = user.providerData.contains(where: { $0.providerID == "password" })
-        if !wasOriginallyGoogleUser && userIsGoogleUser && !hasEmailPasswordProvider {
-            wasOriginallyGoogleUser = true
-        }
     }
 
     func googleReauth(loginVM: LoginViewModel) {
@@ -126,7 +117,6 @@ class ChangeEmailViewModel: ObservableObject {
                 
                 self.isReauthenticated = true
                 self.isLoading = false
-                self.detectUserSignInProvider()
             }
         }
     }
@@ -154,13 +144,13 @@ class ChangeEmailViewModel: ObservableObject {
             
             self.isReauthenticated = true
             self.isLoading = false
-            self.detectUserSignInProvider()
         }
     }
 
-    func sendVerificationEmail(newEmail: String, newPassword: String) {
+    func updatePassword(newPassword: String) {
         isLoading = true
         errorMessage = nil
+        
         Task {
             guard let user = Auth.auth().currentUser else {
                 await MainActor.run {
@@ -171,82 +161,14 @@ class ChangeEmailViewModel: ObservableObject {
             }
 
             do {
-                if !hasEmailPasswordProvider {
-                    // Link email/password to existing account
-                    let credential = EmailAuthProvider.credential(withEmail: newEmail, password: newPassword)
-                    try await user.link(with: credential)
-                    
-                    await MainActor.run {
-                        self.detectUserSignInProvider()
-                    }
-                    
-                    try await user.sendEmailVerification()
-                    await MainActor.run {
-                        self.verificationSent = true
-                        self.errorMessage = "Email/Password linked successfully! Verification email sent to \(newEmail)."
-                    }
-                } else {
-                    // Send verification email before updating email
-                    try await user.sendEmailVerification(beforeUpdatingEmail: newEmail)
-                    await MainActor.run {
-                        self.verificationSent = true
-                        self.errorMessage = "Verification email sent to \(newEmail). Please verify before updating."
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                }
-            }
-
-            await MainActor.run {
-                self.isLoading = false
-            }
-        }
-    }
-
-    func updateEmailAndPassword(newEmail: String, newPassword: String) {
-        isLoading = true
-        errorMessage = nil
-        Task {
-            guard let user = Auth.auth().currentUser else {
-                await MainActor.run {
-                    self.errorMessage = "User not signed in."
-                    self.isLoading = false
-                }
-                return
-            }
-
-            do {
-                // Reload user to get latest verification status
-                try await user.reload()
-                
-                var successMessages: [String] = []
-                
-                // Update email if provided and different from current
-                if !newEmail.isEmpty && newEmail != user.email {
-                    try await user.updateEmail(to: newEmail)
-                    successMessages.append("Email updated successfully")
-                    
-                    // CRITICAL: Reload the user after email update to refresh token
-                    try await user.reload()
-                }
-                
-                // Update password if provided
-                if !newPassword.isEmpty {
-                    try await user.updatePassword(to: newPassword)
-                    successMessages.append("Password updated successfully")
-                }
+                // Update password
+                try await user.updatePassword(to: newPassword)
                 
                 // Force refresh the ID token to ensure authentication state is current
                 try await user.getIDTokenResult(forcingRefresh: true)
                 
                 await MainActor.run {
-                    if successMessages.isEmpty {
-                        self.errorMessage = "No changes were made."
-                    } else {
-                        self.errorMessage = successMessages.joined(separator: " and ") + "."
-                    }
+                    self.errorMessage = "Password updated successfully."
                     self.isLoading = false
                 }
                 
@@ -257,10 +179,6 @@ class ChangeEmailViewModel: ObservableObject {
                     case AuthErrorCode.requiresRecentLogin.rawValue:
                         self.errorMessage = "This operation requires recent authentication. Please reauthenticate and try again."
                         self.isReauthenticated = false
-                    case AuthErrorCode.emailAlreadyInUse.rawValue:
-                        self.errorMessage = "This email is already in use by another account."
-                    case AuthErrorCode.invalidEmail.rawValue:
-                        self.errorMessage = "Please enter a valid email address."
                     case AuthErrorCode.weakPassword.rawValue:
                         self.errorMessage = "Password is too weak. Please choose a stronger password."
                     default:

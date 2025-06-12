@@ -59,7 +59,7 @@ struct EditProfileView: View {
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 120, height: 120)
-                                .foregroundColor(.secondary) // Adaptive fallback icon color
+                                .foregroundColor(.secondary)
                         @unknown default:
                             EmptyView()
                         }
@@ -69,7 +69,7 @@ struct EditProfileView: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: 120, height: 120)
-                        .foregroundColor(.secondary) // Adaptive fallback icon color
+                        .foregroundColor(.secondary)
                 }
 
                 if profilePictureURL != nil || profileImage != nil {
@@ -148,8 +148,7 @@ struct EditProfileView: View {
 
     func loadImage() {
         guard let inputImage = inputImage else { return }
-        // For the display immediately after selection, use the original inputImage
-        // We will resize it only before uploading to Firebase Storage
+
         profileImage = Image(uiImage: inputImage)
         profilePictureURL = nil
         shouldDeleteProfilePicture = false
@@ -161,7 +160,7 @@ struct EditProfileView: View {
         let widthRatio  = targetSize.width  / size.width
         let heightRatio = targetSize.height / size.height
 
-        // Determine what our actual scaling factor is to maintain aspect ratio
+        
         var newSize: CGSize
         if widthRatio > heightRatio {
             newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
@@ -169,11 +168,10 @@ struct EditProfileView: View {
             newSize = CGSize(width: size.width * widthRatio, height: size.height * widthRatio)
         }
 
-        // This is the rect of the image
+        
         let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
 
-        // Draw new image in current graphics context
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0) // Scale set to 1.0 for pixel-perfect resizing
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
         image.draw(in: rect)
         let newImage = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
@@ -193,7 +191,7 @@ struct EditProfileView: View {
 
         if shouldDeleteProfilePicture {
             let storageRef = Storage.storage().reference()
-            let profileImagesRef = storageRef.child("profile_photos/\(userId)/profile.jpg") // This is the fixed name
+            let profileImagesRef = storageRef.child("profile_photos/\(userId)/profile.jpg")
 
             do {
                 try await profileImagesRef.delete()
@@ -217,14 +215,14 @@ struct EditProfileView: View {
                 return
             }
 
-            guard let imageData = resizedImage.jpegData(compressionQuality: 0.7) else { // Compress further
+            guard let imageData = resizedImage.jpegData(compressionQuality: 0.7) else {
                 print("Failed to convert resized image to Data.")
                 isLoading = false
                 return
             }
 
             let storageRef = Storage.storage().reference()
-            let profileImagesRef = storageRef.child("profile_photos/\(userId)/profile.jpg") // Save with a consistent name
+            let profileImagesRef = storageRef.child("profile_photos/\(userId)/profile.jpg")
 
             do {
                 let _ = try await profileImagesRef.putDataAsync(imageData)
@@ -244,7 +242,6 @@ struct EditProfileView: View {
                 "username": username,
                 "profilePhotoUrl": profilePictureURL ?? NSNull()
             ], merge: true)
-            print("Profile data saved to Firestore successfully.")
         } catch {
             print("Error saving profile data to Firestore: \(error.localizedDescription)")
         }
@@ -257,7 +254,6 @@ struct EditProfileView: View {
     }
 }
 
-// ImagePicker and other helper structs remain unchanged
 struct ImagePicker: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentationMode
     @Binding var image: UIImage?

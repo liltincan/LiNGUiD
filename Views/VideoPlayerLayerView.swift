@@ -1,27 +1,18 @@
-//
-//  VideoPlayerLayerView.swift
-//  LiNGUiD
-//
-//  Created by Jackson Sanders on 5/27/25.
-//
-
 import SwiftUI
-import AVFoundation
+import AVKit
 
 struct VideoPlayerLayerView: UIViewRepresentable {
-    let player: AVPlayer //player we'll use to create the layer view
+    let player: AVPlayer
 
     func makeUIView(context: Context) -> PlayerView {
-        let view = PlayerView() //view with video player layer that fills screen appropriately
-        view.player = player //sets the view's player to the current player
+        let view = PlayerView()
+        view.player = player
+        view.videoGravity = .resizeAspectFill
+        view.backgroundColor = UIColor.systemBackground
         return view
     }
 
     func updateUIView(_ uiView: PlayerView, context: Context) {
-        uiView.player = player //updates with new player to represent visually
+        uiView.player = player
     }
 }
-
-//#Preview {
-    //VideoPlayerLayerView()
-//}

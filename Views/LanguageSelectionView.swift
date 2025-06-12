@@ -15,11 +15,19 @@ struct LanguageSelectionView: View {
     
     var filteredLanguages: [String] {
         let languages = allLanguages.filter { !excludeLanguages.contains($0) }
+        let searchFilteredLanguages: [String]
+        
         if searchText.isEmpty {
-            return languages
+            searchFilteredLanguages = languages
         } else {
-            return languages.filter { $0.localizedCaseInsensitiveContains(searchText) }
+            searchFilteredLanguages = languages.filter { $0.localizedCaseInsensitiveContains(searchText) }
         }
+        
+        // Sort languages: selected ones first, then unselected ones
+        let selectedFiltered = searchFilteredLanguages.filter { selectedLanguages.contains($0) }
+        let unselectedFiltered = searchFilteredLanguages.filter { !selectedLanguages.contains($0) }
+        
+        return selectedFiltered + unselectedFiltered
     }
 
     var body: some View {
@@ -64,13 +72,15 @@ struct LanguageSelectionView: View {
 
                 // Scrollable Language List
                 ScrollView {
-                    VStack(spacing: 0) {
+                    LazyVStack(spacing: 0) {
                         ForEach(filteredLanguages, id: \.self) { language in
                             HStack {
                                 Image(systemName: selectedLanguages.contains(language) ? "checkmark.square.fill" : "square")
                                     .foregroundColor(.white)
                                     .onTapGesture {
-                                        toggleSelection(for: language)
+                                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0)) {
+                                            toggleSelection(for: language)
+                                        }
                                     }
                                     .font(.system(size: 17, weight: .bold))
 
@@ -86,8 +96,14 @@ struct LanguageSelectionView: View {
                             .background(Color(red: 124/255, green: 58/255, blue: 237/255))
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                toggleSelection(for: language)
+                                withAnimation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0)) {
+                                    toggleSelection(for: language)
+                                }
                             }
+                            .transition(.asymmetric(
+                                insertion: .scale(scale: 0.8).combined(with: .opacity).combined(with: .move(edge: .top)),
+                                removal: .scale(scale: 0.8).combined(with: .opacity).combined(with: .move(edge: .bottom))
+                            ))
 
                             if language != filteredLanguages.last {
                                 Rectangle()
@@ -96,6 +112,7 @@ struct LanguageSelectionView: View {
                                     .padding(.horizontal)
                             }
                         }
+                        .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: selectedLanguages)
                     }
                 }
                 .frame(maxHeight: 800)
@@ -170,7 +187,7 @@ struct LanguageSelectionView: View {
             }
         )
         .animation(.easeInOut, value: isSearching)
-        .animation(.easeInOut, value: selectedLanguages)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: selectedLanguages)
     }
     
 
@@ -189,17 +206,3 @@ struct LanguageSelectionView: View {
         }
     }
 }
-
-//struct LanguageSelectionView_Previews: PreviewProvider {
-//    @State static var nativeLanguages: [String] = []
-//
-//    static var previews: some View {
-//        LanguageSelectionView(
-//            onContinue: { selected in
-//                print("Selected languages: \(selected)")
-//            },
-//            selectionLimit: 3,
-//            nativeLanguage: $nativeLanguages
-//        )
-//    }
-//}

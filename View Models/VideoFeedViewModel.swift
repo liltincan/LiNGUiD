@@ -105,18 +105,4 @@ class VideoFeedViewModel: ObservableObject {
             print("Error loading more videos: \(error)")
         }
     }
-    
-    // Function to mark fetched videos as watched
-    // - Gerardo De La Torre. 06/06/2025
-    func markVideoAsWatched(_ videoID: String, userID: String) async {
-        let db = Firestore.firestore()
-        
-        do {
-            try await db.collection("users").document(userID).updateData([
-                "watchedVideos": FieldValue.arrayUnion([videoID])
-            ])
-        } catch {
-            print("Failed to mark video as watched: \(error)")
-        }
-    }
 }
