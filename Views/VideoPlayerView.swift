@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 import AVFoundation
 
 struct VideoPlayerView: View {
@@ -220,12 +221,14 @@ struct VideoPlayerView: View {
             if totalWatchTime >= 1.0 && !hasBeenMarkedAsWatched {
                 hasBeenMarkedAsWatched = true
                 Task { @MainActor in
-                    guard let userID = userSession.currentUser?.id else { return }
+                    // Use Firebase Auth UID instead of Firestore user.id
+                    guard let userID = Auth.auth().currentUser?.uid else { return }
                     await videoPlayerViewModel.markVideoAsWatched(videoId, userID: userID)
                 }
             }
         }
     }
+    
     /// Function to stop the watch timer for a video
     /// - Author: Gerardo De La Torre
     /// - Date: 2025-06-10
