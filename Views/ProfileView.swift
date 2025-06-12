@@ -22,7 +22,7 @@ struct ProfileView: View {
                 ScrollView {
                     VStack {
                         ProfileHeaderView(
-                            userName: vm.username,
+                            userName: vm.userName,
                             profilePictureURL: vm.profilePictureURL,
                             languageDisplay: vm.formattedLanguagesDisplay,
                             vm: vm,
@@ -38,7 +38,7 @@ struct ProfileView: View {
                         )
                         .padding(.bottom, 10)
                         
-                        ProfileActionButtons(username: vm.username, pfp: vm.profilePictureURL)
+                        ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL)
                             .padding(.bottom, 15)
                         
                         VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs)

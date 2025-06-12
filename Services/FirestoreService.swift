@@ -70,7 +70,7 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             completion(.failure(NSError(domain: "NoUID", code: -1)))
             return
         }
-
+        
         let languageCodes: [String: String] = [
             "Arabic": "ar", "Chinese": "zh", "English": "en", "French": "fr", "German": "de",
             "Italian": "it", "Portuguese": "pt", "Russian": "ru", "Spanish": "es",
@@ -85,9 +85,12 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             "Swedish": "sv", "Tagalog": "tl", "Tamil": "ta", "Thai": "th", "Turkish": "tr",
             "Ukrainian": "uk", "Urdu": "ur", "Vietnamese": "vi", "Welsh": "cy"
         ]
-
+        
         let nativeCodes = nativeLanguages.compactMap { languageCodes[$0] }
         let firstNative = nativeCodes.first ?? ""
+        
+        let targetCodes = targetLanguages.compactMap{ languageCodes[$0] }
+        let targetLanguage = targetCodes.first ?? ""
 
         var languagesData: [String: LanguagesData] = [:]
         for target in targetLanguages {
@@ -105,6 +108,7 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             let data: [String: Any] = [
                 "nativeLanguage": firstNative,
                 "nativeLanguageList": nativeCodes,
+                "targetLanguage": targetLanguage,
                 "languagesData": encoded
             ]
 

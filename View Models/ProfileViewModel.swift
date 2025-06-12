@@ -22,8 +22,8 @@ class ProfileViewModel: ObservableObject {
     }
     
     // MARK: - Computed Properties
-    var username: String {
-        return user?.username ?? ""
+    var userName: String {
+        return user?.userName ?? ""
     }
     
     var primaryLanguage: String {

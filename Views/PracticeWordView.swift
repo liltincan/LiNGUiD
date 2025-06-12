@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PracticeWordView: View {
-    @EnvironmentObject var userSession: UserSessionViewModel
+    var userSession: UserSessionViewModel
     @ObservedObject var savedWordsViewModel: SavedWordViewModel
 
     @State private var currentIndex = 0
