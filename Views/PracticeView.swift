@@ -77,6 +77,7 @@ struct PracticeView: View {
                                         isPresented: $isActive
                                     ) {
                                         PracticeWordView(
+                                            userSession: userSession,
                                             savedWordsViewModel: viewModel
                                         )
                                     }
@@ -177,7 +178,7 @@ struct PracticeView: View {
 
                 guard let userId = userSession.currentUser?.id else {
                     showAlert = true
-                    isLoading = false
+                    isLoading = true
                     return
                 }
 
