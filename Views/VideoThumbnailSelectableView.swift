@@ -15,14 +15,12 @@ struct VideoThumbnailSelectableView: View {
                     Image(uiImage: thumbnail)
                         .resizable()
                         .aspectRatio(9/16, contentMode: .fill)
-                        .frame(height: 160)
-                        .cornerRadius(8)
-                        .shadow(radius: 4)
+                        .border(Color.white.opacity(0.8), width: 1)
                         .clipped()
                 } else {
                     Color.gray
-                        .frame(height: 160)
-                        .cornerRadius(8)
+                        .aspectRatio(9/16, contentMode: .fill)
+                        .border(Color.white.opacity(0.8), width: 1)
                 }
             }
             .onAppear(perform: fetchThumbnail)
@@ -48,10 +46,11 @@ struct VideoThumbnailSelectableView: View {
         options.isSynchronous = false
 
         manager.requestImage(for: asset,
-                             targetSize: CGSize(width: 900, height: 1600),  // 3:4 size
+                             targetSize: CGSize(width: 900, height: 1600),
                              contentMode: .aspectFill,
                              options: options) { image, _ in
             self.thumbnail = image
         }
     }
+
 }
