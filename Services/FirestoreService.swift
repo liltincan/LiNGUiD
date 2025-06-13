@@ -100,9 +100,16 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         
         var languagesData: [String: LanguagesData] = [:]
         for target in targetLanguages {
-            guard let code = languageCodes[target],
-                  let levelStr = languageLevels[target],
-                  let level = levelMapping[levelStr] else {
+            guard let code = languageCodes[target] else {
+                print("⚠️ Missing code for \(target)")
+                continue
+            }
+            guard let levelStr = languageLevels[target] else {
+                print("⚠️ Missing level for \(target)")
+                continue
+            }
+            guard let level = levelMapping[levelStr] else {
+                print("⚠️ Invalid level string: \(levelStr)")
                 continue
             }
 
