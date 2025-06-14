@@ -129,7 +129,7 @@ struct ProfileHeaderView: View {
     let profilePictureURL: String
     let languageDisplay: String
     let vm: ProfileViewModel
-    let uid: String = Auth.auth().currentUser!.uid
+    let uid: String = Auth.auth().currentUser?.uid ?? ""
     @Binding var showingFullScreenProfilePicture: Bool
     @Binding var fullScreenProfilePictureURL: String?
     

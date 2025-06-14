@@ -2,12 +2,14 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var userSession: UserSessionViewModel
-    @StateObject private var viewModel: DashboardViewModel
+        @StateObject private var viewModel: DashboardViewModel
 
-    @State private var showPopup = false
-    @State private var selectedWordIndex: Int? = nil
-    @State private var popupPosition: CGPoint = .zero
-    @State private var selectedWord: WordPair? = nil
+        @State private var showPopup = false
+        @State private var selectedWordIndex: Int? = nil
+        @State private var popupPosition: CGPoint = .zero
+        @State private var selectedWord: WordPair? = nil
+        @State private var translatedText: String? = nil
+        @State private var isTranslating = false
 
     init() {
         _viewModel = StateObject(
@@ -18,57 +20,70 @@ struct DashboardView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.black.ignoresSafeArea()
+            NavigationStack {
+                ZStack {
+                    Color.black.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 20) {
-                        if viewModel.isLoading {
-                            ProgressView("Loading...")
-                                .foregroundColor(.white)
-                        } else {
-                            headerStatsSection
-                            leaderboardSection
-                                .padding(.top, -10)
-                            calendarSection
-                                .padding(.top, 50)
-                            savedWordsSection
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            if viewModel.isLoading {
+                                ProgressView("Loading...")
+                                    .foregroundColor(.white)
+                            } else {
+                                headerStatsSection
+                                leaderboardSection
+                                    .padding(.top, -10)
+                                calendarSection
+                                    .padding(.top, 50)
+                                savedWordsSection
+                            }
                         }
+                        .padding()
                     }
-                    .padding()
+                    .coordinateSpace(name: "SavedWordsScroll")
+                    .allowsHitTesting(selectedWord == nil) // disable scrolling when popup is shown
+
+                    if let _ = selectedWord, selectedWordIndex != nil {
+                        // Background tap dismiss layer
+                        Color.black.opacity(0.001)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                withAnimation {
+                                    selectedWord = nil
+                                    translatedText = nil
+                                    selectedWordIndex = nil
+                                }
+                            }
+
+                        popupMenu(
+                            for: translatedText,
+                            from: viewModel.user?.targetLanguage ?? "",
+                            to: viewModel.user?.nativeLanguage ?? ""
+                        )
+                        .position(
+                            x: popupPosition.x + 130,
+                            y: popupPosition.y - 90
+                        )
+                        .zIndex(10)
+                    }
                 }
-                .coordinateSpace(name: "SavedWordsScroll")
-
-                if selectedWordIndex != nil && selectedWord != nil {
-                    if let word = selectedWord {
-                        popupMenu(for: word)
-                            .position(
-                                x: popupPosition.x + 130,
-                                y: popupPosition.y - 90
-                            )
-                            .zIndex(10)
+                .navigationTitle("DASHBOARD")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text("DASHBOARD")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
                     }
-
                 }
             }
-            .navigationTitle("DASHBOARD")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("DASHBOARD")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+            .onAppear {
+                viewModel.userSession = userSession
+                Task {
+                    await viewModel.loadDashboardData()
                 }
             }
         }
-        .onAppear {
-            viewModel.userSession = userSession
-            Task {
-                await viewModel.loadDashboardData()
-            }
-        }
-    }
 
     private var headerStatsSection: some View {
         HStack(spacing: 16) {
@@ -227,14 +242,7 @@ struct DashboardView: View {
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                withAnimation {
-                                    selectedWordIndex = index
-                                    selectedWord = word
-                                    popupPosition =
-                                        geo.frame(
-                                            in: .named("SavedWordsScroll")
-                                        ).origin
-                                }
+                                actionFunction(index: index, geo: geo, word: word)
                             }
                         }
                         .frame(height: 50)
@@ -250,13 +258,50 @@ struct DashboardView: View {
         .background(Color.white)
         .cornerRadius(16)
     }
+    
+    func actionFunction(index: Int, geo: GeometryProxy, word: WordPair){
+        isTranslating = true
+        withAnimation {
+            translateWithMyMemory(
+                text: word.target,
+                from: viewModel.targetLanguage ?? "",
+                to: viewModel.nativeLanguage ?? ""
+            ) { result, source  in
+                DispatchQueue.main.async {
+                    isTranslating = false
+                    translatedText = result
+                    print(
+                        "Translated: \(result ?? "Failed")\nSource: \(source ?? "Failed")"
+                    )
 
-    private func popupMenu(for word: WordPair) -> some View {
+                }
+            }
+            selectedWordIndex = index
+            selectedWord = word
+            popupPosition =
+                geo.frame(
+                    in: .named("SavedWordsScroll")
+                ).origin
+        }
+    }
+
+    private func popupMenu(
+        for word: String?,
+        from targetLanguage: String,
+        to nativeLanguage: String
+    ) -> some View {
         return VStack(spacing: 0) {
             VStack(spacing: 0) {
-                Text(word.native)
-                    .font(.system(size: 24, weight: .semibold))
-                    .padding(.top)
+                if isTranslating {
+                    ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .padding(.top, 15)
+                } else if let translated = translatedText{
+                    Text(translated)
+                        .font(.system(size: 24, weight: .semibold))
+                        .padding(.top)
+                }
+                
 
                 Spacer().frame(height: 10)
 
@@ -265,8 +310,8 @@ struct DashboardView: View {
                     .background(Color.white)
 
                 Button(action: {
-                    // practice logic here
                     selectedWord = nil
+
                 }) {
                     HStack {
                         Image(systemName: "rectangle.3.offgrid.fill")
@@ -296,14 +341,14 @@ struct DashboardView: View {
             .cornerRadius(16)
             .shadow(radius: 8)
             .frame(width: 200)
-            
+
             Triangle()
                 .fill(Color.appPrimaryColor)
                 .frame(width: 30, height: 15)
                 .rotationEffect(.degrees(180))
-                .offset(x: -60 ,y: -1)
+                .offset(x: -60, y: -1)
         }
-        
+
     }
 
     struct Triangle: Shape {

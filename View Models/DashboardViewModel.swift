@@ -20,6 +20,8 @@ class DashboardViewModel: ObservableObject{
     @Published var currentMonth: String = ""
     @Published var leaderboardUsers: [LeaderboardUser] = []
     @Published var isLoading: Bool = false
+    @Published var targetLanguage: String?
+    @Published var nativeLanguage: String?
     
     var userSession: UserSessionViewModel
 
@@ -40,6 +42,8 @@ class DashboardViewModel: ObservableObject{
             if let userLanguageData = user.languagesData?[user.targetLanguage] {
                 self.userLevel = userLanguageData.comprehensionLevel ?? 0
                 self.totalWatchTime = userLanguageData.watchTime?.total ?? 0
+                self.targetLanguage = user.targetLanguage
+                self.nativeLanguage = user.nativeLanguage
             }
             
             // 计算用户数据

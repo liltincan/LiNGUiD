@@ -36,6 +36,7 @@ struct User: Codable, Identifiable {
         case id, email, userName, createdAt, flameDate, flameStatus,
             globalWatchTime, interests, targetLanguage, languagesData,
             likedVideos, savedVideos, watchedVideos, uploadedVideos,
+             nativeLanguage, nativeLanguageList,
             followers, following, chats, country, streak, profilePhotoUrl
     }
 
@@ -79,6 +80,7 @@ struct User: Codable, Identifiable {
         targetLanguage =
             try container.decodeIfPresent(String.self, forKey: .targetLanguage)
             ?? ""
+        nativeLanguage = try container.decodeIfPresent(String.self, forKey: .nativeLanguage)
         languagesData = try container.decodeIfPresent(
             [String: LanguagesData].self,
             forKey: .languagesData

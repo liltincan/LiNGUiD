@@ -48,7 +48,7 @@ struct PracticeView: View {
                         .font(.subheadline)
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
-                        
+
                         savedWordsHeader
                     }
                     .padding()
@@ -154,20 +154,20 @@ struct PracticeView: View {
                 let db = Firestore.firestore()
                 let data: [String: Any] = [
                     "languagesData": [
-                        "de": [
+                        "fr": [
                             "savedWords": [
                                 "knownWords": [
-                                    ["target": "hallo", "native": "hello"]
+                                    ["target": "bonjour", "native": "hello"]
                                 ],
                                 "unknownWords": [
-                                    ["target": "buch", "native": "book"],
-                                    ["target": "apfel", "native": "apple"],
-                                    ["target": "haus", "native": "house"],
-                                    ["target": "hund", "native": "dog"],
-                                    ["target": "katze", "native": "cat"],
-                                    ["target": "stuhl", "native": "chair"],
-                                    ["target": "tisch", "native": "table"],
-                                    ["target": "milch", "native": "milk"],
+                                    ["target": "livre", "native": "book"],
+                                    ["target": "pomme", "native": "apple"],
+                                    ["target": "maison", "native": "house"],
+                                    ["target": "chien", "native": "dog"],
+                                    ["target": "chat", "native": "cat"],
+                                    ["target": "chaise", "native": "chair"],
+                                    ["target": "table", "native": "table"],
+                                    ["target": "lait", "native": "milk"],
                                 ],
                             ]
                         ]
