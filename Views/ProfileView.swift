@@ -214,7 +214,12 @@ struct ProfileActionButtons: View {
             } label: {
                 Buttons(text: "edit")
             }
-            Buttons(text: "upload")
+            NavigationLink {
+                UploadView() // <- your upload screen
+            } label: {
+                Buttons(text: "upload")
+            }
+            //Buttons(text: "upload")
             Buttons(text: "share")
         }
     }

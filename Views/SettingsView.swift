@@ -1,16 +1,15 @@
 import SwiftUI
+import FirebaseFirestore
 
 struct SettingsView: View {
     var likedVideos: [String]
     var savedVideos: [String]
     var languages: Set<String>
-    var uid: String = FirebaseAuthService.shared.currentUserID ?? ""
+    var uid: String?
+    @State private var showLogoutAlert = false
     @StateObject private var loginVM = LoginViewModel()
     @EnvironmentObject var state: AppState
-    @State private var showLogoutAlert = false
-    @State private var selectedLanguages: Set<String> = []
-    @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -24,35 +23,19 @@ struct SettingsView: View {
                         DividerLine()
 
                         SettingsSection(title: "Content") {
-                            SettingsRowLink(title: "Change Level", destination: ChangeLevelView())
-                            SettingsRowLink(title: "Change Language", destination:
-                                                VStack{
-                                                    OnboardingPageView(index: 1)
-                                                    LanguageSelectionView(
-                                                        onContinue: { newLanguages in
-                                                            // Handle the updated languages here
-                                                            // You might want to update your app state or call a delegate
-                                                            dismiss()
-                                                        },
-                                                        selectionLimit: 5, // Set your desired limit
-                                                        selectedLanguages: $selectedLanguages
-                                                    )
-                                                    .padding(.top, -250)
-                                                    .padding(.horizontal, -15)
-                                                }
-                            )
-                                                
+                            SettingsRowLink(title: "Change Level", destination: ChangeLanguageLevelFlow(selectedLanguagesArray: Array(languages), uid: uid!))
+                            SettingsRowLink(title: "Change Language", destination: ChangeLanguageFlowView(existingLanguages: languages, uid: uid!))
                         }
 
                         DividerLine()
-                        
+
                         SettingsSection(title: "Information") {
                             SettingsRowLink(title: "About", destination: AboutView())
                             SettingsRowLink(title: "Privacy", destination: PrivacyView())
                             SettingsRowLink(title: "Help", destination: HelpView())
                             SettingsRowLink(title: "Request a Feature", destination: RequestFeatureView())
                         }
-                        
+
                         DividerLine()
 
                         SettingsSection(title: "Account") {
@@ -62,7 +45,6 @@ struct SettingsView: View {
                             }
                             SettingsRowLink(title: "Delete account", destination: DeleteAccountConfirmationView(), isDestructive: true)
                         }
-                        
                     }
                     .padding(.top, 32)
                     .padding(.horizontal, 16)
@@ -78,21 +60,15 @@ struct SettingsView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             }
-            .onAppear {
-                // Initialize selectedLanguages with current languages when view appears
-                selectedLanguages = languages
-            }
         }
     }
-        
 
     func logout() {
         let result = loginVM.logout()
-        if (result){
+        if result {
             state.isSignedIn = false
         }
     }
-       
 }
 
 struct SettingsSection<Content: View>: View {
@@ -110,7 +86,7 @@ struct SettingsSection<Content: View>: View {
                 .font(UIConstants.sectionFont)
                 .foregroundColor(UIConstants.sectionColor)
                 .padding(.bottom, 12)
-            
+
             VStack(spacing: 0) {
                 content
             }
@@ -119,8 +95,6 @@ struct SettingsSection<Content: View>: View {
         }
     }
 }
-
-// MARK: - Row for Navigation
 
 struct SettingsRowLink<Destination: View>: View {
     var title: String
@@ -136,8 +110,6 @@ struct SettingsRowLink<Destination: View>: View {
     }
 }
 
-// MARK: - Row for Button Action
-
 struct SettingsRowButton: View {
     var title: String
     var icon: String? = nil
@@ -151,8 +123,6 @@ struct SettingsRowButton: View {
         .buttonStyle(PlainButtonStyle())
     }
 }
-
-// MARK: - Reusable Row Content
 
 struct SettingsRowContent: View {
     var title: String
@@ -201,8 +171,6 @@ struct UIConstants {
     static let redColor = Color(red: 255/255, green: 69/255, blue: 58/255)
 }
 
-// MARK: - Destination Views (Examples)
-
 struct LikedView: View {
     var videoThumnails: [String] = []
     var body: some View {
@@ -225,15 +193,6 @@ struct ChangeLevelView: View {
             .navigationTitle("Change Level")
     }
 }
-
-struct ChangeLanguageView: View {
-    var languages: [String] = []
-    var body: some View {
-        Text("Change Language Settings")
-            .navigationTitle("Change Language")
-    }
-}
-
 
 struct DeleteAccountConfirmationView: View {
     var body: some View {

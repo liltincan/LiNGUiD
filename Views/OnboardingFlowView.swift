@@ -111,7 +111,7 @@ struct OnboardingFlowView: View {
                     OnboardingPageView(index: 2)
                     
                     Button(action: {
-                            FirestoreService.shared.updateUserLanguagePreferences(
+                        FirestoreService.shared.updateUserLanguagePreferences(
                             nativeLanguages: selectedNativeLanguages,
                             targetLanguages: selectedTargetLanguages,
                             languageLevels: languageLevels
