@@ -77,13 +77,7 @@ class DashboardViewModel: ObservableObject{
         if let targetLanguage = user.languagesData?[user.targetLanguage]?.savedWords {
             savedWords = Array(targetLanguage.unknownWords)
         } else {
-            savedWords = [
-                WordPair(target: "fraiche", native: "fresh"),
-                WordPair(target: "aimer", native: "to love"),
-                WordPair(target: "fille", native: "girl"),
-                WordPair(target: "voir", native: "to see"),
-                WordPair(target: "jaune", native: "yellow")
-            ]
+            savedWords = []
         }
     }
     
