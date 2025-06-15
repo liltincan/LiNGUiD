@@ -61,19 +61,16 @@ class ProfileViewModel: ObservableObject {
     }
     
     var formattedLanguagesDisplay: String {
-        guard let languagesData = user?.languagesData, !languagesData.isEmpty else {
-            return "No languages selected"
+        
+        if let languagesData = user?.languagesData{
+            let nativeLanugage: String = user?.nativeLanguage?.capitalized ?? ""
+            let targetLanugage: String = user?.targetLanguage.capitalized ?? languagesData.keys.first?.capitalized ?? ""
+            let comprehensionLevel: Int = languagesData[targetLanugage.lowercased()]?.comprehensionLevel ?? 0
+            
+            return "\(nativeLanugage) → " + " \(targetLanugage) (Lvl.\(comprehensionLevel))"
         }
         
-        let displayStrings: [String] = languagesData.compactMap { (languageName, langData) in
-            guard let comprehensionLevel = langData.comprehensionLevel else {
-                return nil
-            }
-            let languageCode = String(languageName.prefix(2))
-            return "\(languageCode) (Lvl \(comprehensionLevel))"
-        }
-        
-        return "En → " + displayStrings.joined(separator: ", ")
+        return ""
     }
     
     var allLanguageNames: Set<String> {
@@ -81,6 +78,7 @@ class ProfileViewModel: ObservableObject {
             return Set<String>()
         }
         return Set(languagesData.keys)
+        
     }
     
     // MARK: - Data Fetching

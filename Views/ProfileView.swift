@@ -330,10 +330,10 @@ struct Buttons: View{
         Text(text)
             .foregroundColor(.white)
             .fontWeight(.medium)
-            .font(.system(size: 13))
-            .padding()
-            .frame(maxWidth: 100)
-            .background(Color(red: 0.486, green: 0.227, blue: 0.929))
+            .font(.system(size: 16))
+            .padding(15)
+            .frame(maxWidth: 100, maxHeight: 45)
+            .background(Color.appPrimaryColor)
             .cornerRadius(10)
     }
 }

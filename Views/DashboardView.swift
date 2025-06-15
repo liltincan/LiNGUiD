@@ -293,9 +293,15 @@ struct DashboardView: View {
         return VStack(spacing: 0) {
             VStack(spacing: 0) {
                 if isTranslating {
-                    ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle())
+                    HStack(spacing: 10){
+                        ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle())
+                                .padding(.top, 15)
+                        
+                        Text("Translating...")
+                            .font(.system(size: 14, weight: .medium))
                             .padding(.top, 15)
+                    }
                 } else if let translated = translatedText{
                     Text(translated)
                         .font(.system(size: 24, weight: .semibold))
