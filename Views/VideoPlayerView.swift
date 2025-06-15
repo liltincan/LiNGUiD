@@ -5,21 +5,24 @@ import AVFoundation
 struct VideoPlayerView: View {
     let url: URL
     let videoId: String
+    let language: String?
     let containerWidth: CGFloat?
     let containerHeight: CGFloat?
     var isActive: Bool
 
-    init(url: URL, videoId: String) {
+    init(url: URL, videoId: String, language: String? = nil) {
         self.url = url
         self.videoId = videoId
+        self.language = language
         self.containerWidth = nil
         self.containerHeight = nil
         self.isActive = true
     }
 
-    init(url: URL, videoId: String, containerWidth: CGFloat, containerHeight: CGFloat, isActive: Bool = true) {
+    init(url: URL, videoId: String, language: String? = nil, containerWidth: CGFloat, containerHeight: CGFloat, isActive: Bool = true) {
         self.url = url
         self.videoId = videoId
+        self.language = language
         self.containerWidth = containerWidth
         self.containerHeight = containerHeight
         self.isActive = isActive
@@ -114,8 +117,10 @@ struct VideoPlayerView: View {
             }
         }
         .onDisappear {
+            recordWatchTime() // Record session when leaving view entirely
             player.pause()
             isPlaying = false
+            stopWatchTimer()
         }
         .onChange(of: isActive) { oldValue, newValue in
             if hasBeenSetup {
@@ -188,10 +193,14 @@ struct VideoPlayerView: View {
             player.seek(to: .zero)
             player.play()
             isPlaying = true
+            // Resetting for a new watch session
+            totalWatchTime = 0
+            hasBeenMarkedAsWatched = false
             startWatchTimer()
         } else {
             player.pause()
             isPlaying = false
+            recordWatchTime() // Record this session before stopping
             stopWatchTimer()
         }
     }
@@ -208,6 +217,7 @@ struct VideoPlayerView: View {
             stopWatchTimer()
         }
     }
+
     /// Function to start the watch timer for a video
     /// - Author: Gerardo De La Torre
     /// - Date: 2025-06-10
@@ -237,6 +247,22 @@ struct VideoPlayerView: View {
         watchTimer = nil
     }
     
+    /// Function to record watch time
+    /// - Author: Gerardo De La Torre
+    /// - Date: 2025-06-15
+    private func recordWatchTime() {
+        guard totalWatchTime > 0 else { return }
+
+        Task { @MainActor in
+            guard let userID = Auth.auth().currentUser?.uid else { return }
+            await videoPlayerViewModel.recordWatchSession(
+                videoId: videoId,
+                userID: userID,
+                watchTime: totalWatchTime,
+                language: language
+            )
+        }
+    }
 }
 
 struct ActionButton: View {

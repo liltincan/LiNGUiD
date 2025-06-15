@@ -53,8 +53,9 @@ class VideoPlayerViewModel: ObservableObject {
         }
     }
     
-    // Function to mark fetched videos as watched
-    // - Gerardo De La Torre. 06/06/2025
+    /// Function to mark fetched videos as watched
+    /// - Author: Gerardo De La Torre. 
+    /// - Date: 2025-06-06
     func markVideoAsWatched(_ videoID: String, userID: String) async {
         let db = Firestore.firestore()
         
@@ -67,4 +68,28 @@ class VideoPlayerViewModel: ObservableObject {
         }
     }
 
+    /// Function to record watch sessions 
+    /// - Author: Gerardo De La Torre.
+    /// - Date: 2025-06-15
+    func recordWatchSession(videoId: String, userID: String, watchTime: TimeInterval, language: String?) async {
+        let db = Firestore.firestore()
+
+        do {
+            // Create a watch session document
+            let sessionData: [String: Any] = [
+                "userId": userID,
+                "videoId": videoId,
+                "watchTime": watchTime,
+                "timestamp": FieldValue.serverTimestamp(),
+                "language": language ?? "unknown"
+            ]
+
+            // Store in a watch_sessions collection
+            try await db.collection("watch_sessions").addDocument(data: sessionData)
+
+            print("Recorded watch time session: \(watchTime) seconds for video \(videoId)")
+        } catch {
+            print("Failed to record watch session: \(error)")
+        }
+    }
 }

@@ -51,6 +51,7 @@ struct VerticalVideoFeed: View {
                                 video: videos[index],
                                 isActive: index == currentIndex,
                                 userSession: userSession,
+                                language: vm.selectedLanguage,
                                 containerWidth: screenWidth,
                                 containerHeight: screenHeight
                             )
@@ -102,6 +103,7 @@ struct FeedVideoPage: View {
     let video: Video
     let isActive: Bool
     @ObservedObject var userSession: UserSessionViewModel
+    let language: String?
     let containerWidth: CGFloat
     let containerHeight: CGFloat
 
@@ -111,6 +113,7 @@ struct FeedVideoPage: View {
             VideoPlayerView(
                 url: video.url,
                 videoId: video.id,
+                language: language,
                 containerWidth: containerWidth,
                 containerHeight: containerHeight,
                 isActive: isActive
