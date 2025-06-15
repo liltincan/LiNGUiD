@@ -119,12 +119,12 @@ struct DashboardView: View {
     }
 
     private var leaderboardSection: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 15) {
             ZStack {
                 if let centerUser = viewModel.leaderboardUsers.first(where: {
                     $0.rank == 1
                 }) {
-                    VStack {
+                    VStack(spacing: 8) {
                         ZStack {
                             Circle()
                                 .fill(Color.white)
@@ -152,12 +152,17 @@ struct DashboardView: View {
                                 .offset(x: 25, y: -25)
                         }
 
-                        Text(centerUser.name)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                        Text("1 hr")
-                            .font(.system(size: 12))
-                            .foregroundColor(.gray)
+                        VStack(spacing: 3) {
+                            Text(centerUser.name)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                            Text("\(centerUser.minutes) mins")
+                                .font(.system(size: 10))
+                                .foregroundColor(.gray)
+                        }
+                        .frame(width: 100)
                     }
                 }
 
@@ -169,7 +174,7 @@ struct DashboardView: View {
                         .offset(offsetForRank(user.rank))
                 }
             }
-            .frame(height: 250)
+            .frame(height: 320)
         }
     }
 
@@ -370,9 +375,9 @@ struct DashboardView: View {
 
     private func offsetForRank(_ rank: Int) -> CGSize {
         switch rank {
-        case 2: return CGSize(width: -110, height: 15)
-        case 3: return CGSize(width: 110, height: 15)
-        case 15: return CGSize(width: 0, height: 120)
+        case 2: return CGSize(width: -140, height: 30)
+        case 3: return CGSize(width: 140, height: 30)
+        case 4...Int.max: return CGSize(width: 0, height: 160) // Any rank 4 or higher goes to bottom
         default: return CGSize.zero
         }
     }
@@ -382,7 +387,7 @@ struct LeaderboardUserView: View {
     let user: LeaderboardUser
 
     var body: some View {
-        VStack {
+        VStack(spacing: 6) {
             ZStack {
                 Circle().fill(Color.white).frame(width: 60, height: 60)
                 AsyncImage(url: URL(string: user.avatarURL)) { image in
@@ -404,13 +409,22 @@ struct LeaderboardUserView: View {
                     )
                     .offset(x: 20, y: -20)
             }
-            Text(user.name)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white)
-            Text("\(user.minutes) mins")
-                .font(.system(size: 10))
-                .foregroundColor(.gray)
+            
+            VStack(spacing: 2) {
+                Text(user.name)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
+                    .multilineTextAlignment(.center)
+                
+                Text("\(user.minutes) mins")
+                    .font(.system(size: 8))
+                    .foregroundColor(.gray)
+            }
+            .frame(width: 100)
         }
+        .frame(width: 100, height: 120)
     }
 }
 

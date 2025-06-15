@@ -65,7 +65,19 @@ class ProfileViewModel: ObservableObject {
         if let languagesData = user?.languagesData{
             let nativeLanugage: String = user?.nativeLanguage?.capitalized ?? ""
             let targetLanugage: String = user?.targetLanguage.capitalized ?? languagesData.keys.first?.capitalized ?? ""
+            
+        
+            
             let comprehensionLevel: Int = languagesData[targetLanugage.lowercased()]?.comprehensionLevel ?? 0
+            
+ 
+            
+            // If we didn't find the level for target language, try the first available language
+            if comprehensionLevel == 0, let firstLanguageKey = languagesData.keys.first {
+                let fallbackLevel = languagesData[firstLanguageKey]?.comprehensionLevel ?? 0
+                
+                return "\(nativeLanugage) → " + " \(targetLanugage) (Lvl.\(fallbackLevel))"
+            }
             
             return "\(nativeLanugage) → " + " \(targetLanugage) (Lvl.\(comprehensionLevel))"
         }
