@@ -67,14 +67,18 @@ struct VideoPlayerView: View {
                             size: 32
                         ) {
                             isLiked.toggle()
-                            if let user = userSession.currentUser,
-                               let userId = user.id {
-                                videoPlayerViewModel.toggleLike(
-                                    for: videoId,
-                                    userId: userId,
-                                    currentLikes: user.likedVideos ?? []
-                                )
-                            }
+                            
+                            // Use Firebase Auth directly
+                            guard let userID = Auth.auth().currentUser?.uid else { return }
+
+                            // Get current likes from userSession
+                            let currentLikes = userSession.currentUser?.likedVideos ?? []
+                            videoPlayerViewModel.toggleLike(
+                                for: videoId,
+                                userId: userID,
+                                currentLikes: currentLikes,
+                                language: language
+                            )
                         }
 
                         ActionButton(
@@ -89,6 +93,18 @@ struct VideoPlayerView: View {
                             size: 32
                         ) {
                             isSaved.toggle()
+                            let user = userSession.currentUser
+
+                            // Use Firebase Auth directly - Gerardo
+                            guard let userID = Auth.auth().currentUser?.uid else { return }
+                            // Get current saves from userSession
+                            let currentSaves = userSession.currentUser?.savedVideos ?? []
+                            videoPlayerViewModel.toggleSave(
+                                for: videoId,
+                                userId: userID,
+                                currentSaves: currentSaves,
+                                language: language
+                            )
                         }
 
                         ActionButton(
@@ -96,6 +112,17 @@ struct VideoPlayerView: View {
                             color: .white,
                             size: 32
                         ) {
+                            // Record share "intent" when user opens share sheet - Gerardo
+                            let user = userSession.currentUser 
+                            guard let userID = Auth.auth().currentUser?.uid else { return }
+
+                            Task {
+                                await videoPlayerViewModel.recordShare(
+                                    for: videoId,
+                                    userId: userID,
+                                    language: language
+                                )
+                            }
                             isShareSheetPresented = true
                         }
                     }
