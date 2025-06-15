@@ -72,22 +72,25 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         }
         
         let languageCodes: [String: String] = [
-            "Arabic": "Ar", "Chinese": "Zh", "English": "En", "French": "Fr", "German": "De",
-            "Italian": "It", "Portuguese": "Pt", "Russian": "Ru", "Spanish": "Es",
-            "Afrikaans": "Af", "Armenian": "Hy", "Azerbaijani": "Az", "Belarusian": "Be",
-            "Bosnian": "Bs", "Bulgarian": "Bg", "Catalan": "Ca", "Croatian": "Hr", "Czech": "Cs",
-            "Danish": "Da", "Dutch": "Nl", "Estonian": "Et", "Finnish": "Fi", "Galician": "Gl",
-            "Greek": "El", "Hebrew": "He", "Hindi": "Hi", "Hungarian": "Hu", "Icelandic": "Is",
-            "Indonesian": "Id", "Japanese": "Ja", "Kannada": "Kn", "Kazakh": "Kk", "Korean": "Ko",
-            "Latvian": "Lv", "Lithuanian": "Lt", "Macedonian": "Mk", "Malay": "Ms", "Maori": "Mi",
-            "Marathi": "Mr", "Nepali": "Ne", "Norwegian": "No", "Persian": "Fa", "Polish": "Pl",
-            "Romanian": "Ro", "Serbian": "Sr", "Slovak": "Sk", "Slovenian": "Sl", "Swahili": "Sw",
-            "Swedish": "Sv", "Tagalog": "Tl", "Tamil": "Ta", "Thai": "Th", "Turkish": "Tr",
-            "Ukrainian": "Uk", "Urdu": "Ur", "Vietnamese": "Vi", "Welsh": "Cy"
+              "Arabic": "ar", "Chinese": "zh", "English": "en", "French": "fr", "German": "de",
+              "Italian": "it", "Portuguese": "pt", "Russian": "ru", "Spanish": "es",
+              "Afrikaans": "af", "Armenian": "hy", "Azerbaijani": "az", "Belarusian": "be",
+              "Bosnian": "bs", "Bulgarian": "bg", "Catalan": "ca", "Croatian": "hr", "Czech": "cs",
+              "Danish": "da", "Dutch": "nl", "Estonian": "et", "Finnish": "fi", "Galician": "gl",
+              "Greek": "el", "Hebrew": "he", "Hindi": "hi", "Hungarian": "hu", "Icelandic": "is",
+              "Indonesian": "id", "Japanese": "ja", "Kannada": "kn", "Kazakh": "kk", "Korean": "ko",
+              "Latvian": "lv", "Lithuanian": "lt", "Macedonian": "mk", "Malay": "ms", "Maori": "mi",
+              "Marathi": "mr", "Nepali": "ne", "Norwegian": "no", "Persian": "fa", "Polish": "pl",
+              "Romanian": "ro", "Serbian": "sr", "Slovak": "sk", "Slovenian": "sl", "Swahili": "sw",
+              "Swedish": "sv", "Tagalog": "tl", "Tamil": "ta", "Thai": "th", "Turkish": "tr",
+              "Ukrainian": "uk", "Urdu": "ur", "Vietnamese": "vi", "Welsh": "cy"
         ]
         
         let nativeCodes = nativeLanguages.compactMap { languageCodes[$0] }
         let firstNative = nativeCodes.first ?? ""
+        
+        let targetCodes = targetLanguages.compactMap { languageCodes [$0] }
+        let firstTarget = targetCodes.first ?? ""
         
         
         let levelMapping: [String: Int] = [
@@ -125,6 +128,7 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
 
             let data: [String: Any] = [
                 "nativeLanguage": firstNative,
+                "targetLanguage" : firstTarget,
                 "nativeLanguageList": nativeCodes,
                 "languagesData": encodedLanguagesData
             ]
