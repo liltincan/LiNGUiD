@@ -2,34 +2,45 @@ import SwiftUI
 
 struct DashboardView: View {
     @EnvironmentObject var userSession: UserSessionViewModel
-        @StateObject private var viewModel: DashboardViewModel
+    @StateObject private var viewModel: DashboardViewModel
+    @StateObject private var savedWordsViewModel: SavedWordViewModel
 
-        @State private var showPopup = false
-        @State private var selectedWordIndex: Int? = nil
-        @State private var popupPosition: CGPoint = .zero
-        @State private var selectedWord: WordPair? = nil
-        @State private var translatedText: String? = nil
-        @State private var isTranslating = false
+    @Binding var selectedTab: Int
 
-    init() {
+    @State private var showPopup = false
+    @State private var selectedWordIndex: Int? = nil
+    @State private var popupPosition: CGPoint = .zero
+    @State private var selectedWord: WordPair? = nil
+    @State private var translatedText: String? = nil
+    @State private var isTranslating = false
+
+    init(userSession: UserSessionViewModel, selectedTab: Binding<Int>) {
         _viewModel = StateObject(
             wrappedValue: DashboardViewModel(
                 userSession: UserSessionViewModel()
             )
         )
+        _savedWordsViewModel = StateObject(
+            wrappedValue: SavedWordViewModel(userSession: userSession)
+        )
+
+        _selectedTab = selectedTab
+
     }
 
     var body: some View {
-            NavigationStack {
-                ZStack {
-                    Color.black.ignoresSafeArea()
+        VStack {
+            if viewModel.isLoading {
+                ProgressView("Loading...")
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .font(.headline)
+            } else {
+                NavigationStack {
+                    ZStack {
+                        Color.black.ignoresSafeArea()
 
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            if viewModel.isLoading {
-                                ProgressView("Loading...")
-                                    .foregroundColor(.white)
-                            } else {
+                        ScrollView {
+                            VStack(spacing: 20) {
                                 headerStatsSection
                                 leaderboardSection
                                     .padding(.top, -10)
@@ -37,53 +48,74 @@ struct DashboardView: View {
                                     .padding(.top, 50)
                                 savedWordsSection
                             }
+                            .padding()
                         }
-                        .padding()
-                    }
-                    .coordinateSpace(name: "SavedWordsScroll")
-                    .allowsHitTesting(selectedWord == nil) // disable scrolling when popup is shown
+                        .coordinateSpace(name: "SavedWordsScroll")
+                        .allowsHitTesting(selectedWord == nil)  // disable scrolling when popup is shown
 
-                    if let _ = selectedWord, selectedWordIndex != nil {
-                        // Background tap dismiss layer
-                        Color.black.opacity(0.001)
-                            .ignoresSafeArea()
-                            .onTapGesture {
-                                withAnimation {
-                                    selectedWord = nil
-                                    translatedText = nil
-                                    selectedWordIndex = nil
+                        if selectedWord != nil, selectedWordIndex != nil {
+                            // Background tap dismiss layer
+                            Color.black.opacity(0.001)
+                                .ignoresSafeArea()
+                                .onTapGesture {
+                                    withAnimation {
+                                        selectedWord = nil
+                                        translatedText = nil
+                                        selectedWordIndex = nil
+                                    }
                                 }
-                            }
 
-                        popupMenu(
-                            for: translatedText,
-                            from: viewModel.user?.targetLanguage ?? "",
-                            to: viewModel.user?.nativeLanguage ?? ""
-                        )
-                        .position(
-                            x: popupPosition.x + 130,
-                            y: popupPosition.y - 90
-                        )
-                        .zIndex(10)
+                            popupMenu(
+                                for: translatedText,
+                                from: viewModel.user?.targetLanguage ?? "",
+                                to: viewModel.user?.nativeLanguage ?? "",
+                                wordPair: selectedWord
+                                    ?? WordPair.init(target: "", native: "")
+                            )
+                            .position(
+                                x: popupPosition.x + 130,
+                                y: popupPosition.y - 90
+                            )
+                            .zIndex(10)
+                        }
                     }
-                }
-                .navigationTitle("DASHBOARD")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .principal) {
-                        Text("DASHBOARD")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
+                    .navigationTitle("DASHBOARD")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .principal) {
+                            Text("DASHBOARD")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .onChange(of: selectedTab) { oldTab, newTab in
+                        if newTab != 2 {
+                            withAnimation {
+                                selectedWord = nil
+                                selectedWordIndex = nil
+                                translatedText = nil
+                            }
+                        }
                     }
                 }
             }
-            .onAppear {
-                viewModel.userSession = userSession
-                Task {
-                    await viewModel.loadDashboardData()
-                }
+        }.onAppear {
+
+            selectedWord = nil
+            selectedWordIndex = nil
+            translatedText = nil
+
+            viewModel.userSession = userSession
+            Task {
+                await viewModel.loadDashboardData()
+
+                print("fetching words")
+                await savedWordsViewModel.fetchLanguageData()
+
             }
         }
+
+    }
 
     private var headerStatsSection: some View {
         HStack(spacing: 16) {
@@ -247,7 +279,11 @@ struct DashboardView: View {
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                actionFunction(index: index, geo: geo, word: word)
+                                actionFunction(
+                                    index: index,
+                                    geo: geo,
+                                    word: word
+                                )
                             }
                         }
                         .frame(height: 50)
@@ -263,15 +299,15 @@ struct DashboardView: View {
         .background(Color.white)
         .cornerRadius(16)
     }
-    
-    func actionFunction(index: Int, geo: GeometryProxy, word: WordPair){
+
+    func actionFunction(index: Int, geo: GeometryProxy, word: WordPair) {
         isTranslating = true
         withAnimation {
             translateWithMyMemory(
                 text: word.target,
                 from: viewModel.targetLanguage ?? "",
                 to: viewModel.nativeLanguage ?? ""
-            ) { result, source  in
+            ) { result, source in
                 DispatchQueue.main.async {
                     isTranslating = false
                     translatedText = result
@@ -293,26 +329,26 @@ struct DashboardView: View {
     private func popupMenu(
         for word: String?,
         from targetLanguage: String,
-        to nativeLanguage: String
+        to nativeLanguage: String,
+        wordPair: WordPair
     ) -> some View {
         return VStack(spacing: 0) {
             VStack(spacing: 0) {
                 if isTranslating {
-                    HStack(spacing: 10){
+                    HStack(spacing: 10) {
                         ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle())
-                                .padding(.top, 15)
-                        
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .padding(.top, 15)
+
                         Text("Translating...")
                             .font(.system(size: 14, weight: .medium))
                             .padding(.top, 15)
                     }
-                } else if let translated = translatedText{
+                } else if let translated = translatedText {
                     Text(translated)
                         .font(.system(size: 24, weight: .semibold))
                         .padding(.top)
                 }
-                
 
                 Spacer().frame(height: 10)
 
@@ -320,10 +356,12 @@ struct DashboardView: View {
                     .frame(height: 2)
                     .background(Color.white)
 
-                Button(action: {
-                    selectedWord = nil
-
-                }) {
+                NavigationLink {
+                    PracticeWordView(
+                        userSession: userSession,
+                        savedWordsViewModel: savedWordsViewModel
+                    )
+                } label: {
                     HStack {
                         Image(systemName: "rectangle.3.offgrid.fill")
                         Text("Practice")
@@ -377,7 +415,7 @@ struct DashboardView: View {
         switch rank {
         case 2: return CGSize(width: -140, height: 30)
         case 3: return CGSize(width: 140, height: 30)
-        case 4...Int.max: return CGSize(width: 0, height: 160) // Any rank 4 or higher goes to bottom
+        case 4...Int.max: return CGSize(width: 0, height: 160)  // Any rank 4 or higher goes to bottom
         default: return CGSize.zero
         }
     }
@@ -409,7 +447,7 @@ struct LeaderboardUserView: View {
                     )
                     .offset(x: 20, y: -20)
             }
-            
+
             VStack(spacing: 2) {
                 Text(user.name)
                     .font(.system(size: 10, weight: .medium))
@@ -417,7 +455,7 @@ struct LeaderboardUserView: View {
                     .lineLimit(2)
                     .truncationMode(.tail)
                     .multilineTextAlignment(.center)
-                
+
                 Text("\(user.minutes) mins")
                     .font(.system(size: 8))
                     .foregroundColor(.gray)
@@ -464,8 +502,8 @@ struct CalendarGridView: View {
     }
 }
 
-#Preview {
-    DashboardView()
-        .environmentObject(UserSessionViewModel())
-        .preferredColorScheme(.dark)
-}
+//#Preview {
+//    DashboardView()
+//        .environmentObject(UserSessionViewModel())
+//        .preferredColorScheme(.dark)
+//}
