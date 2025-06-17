@@ -52,7 +52,21 @@ final class FirestoreVideoRepository: VideoRepository {
 
         // logging depending if we have videos available to show
         if finalVideos.isEmpty {
-            print("No videos available after filtering")
+            print("No videos available after filtering. Showing watched videos instead")
+
+            // Re-filter all videos by level only, ignoring watched status
+            let allVideosAtLevel: [Video] = snapshot.documents.compactMap { document in
+                guard let urlString = document.data()["video_url"] as? String,
+                    let url = URL(string: urlString),
+                    let title = document.data()["title"] as? String else { return nil }
+
+                let detectedLevel = document.data()["detected_level"] as? Int ?? 2
+                guard detectedLevel >= (userLevel - 1) && detectedLevel <= (userLevel + 1) else {
+                    return nil
+                }
+                return Video(id: document.documentID, url: url, title: title, detectedLevel: detectedLevel)
+            }
+            return allVideosAtLevel
         } else {
             print("Returning \(finalVideos.count) videos to user")
         }
