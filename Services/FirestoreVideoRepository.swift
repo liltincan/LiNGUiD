@@ -19,14 +19,15 @@ final class FirestoreVideoRepository: VideoRepository {
         let userLevel = user.languagesData?[selectedLanguage]?.comprehensionLevel ?? 2
         
         let snapshot = try await db.collection(videosCollection).document(selectedLanguage).collection("items").getDocuments()
-        print("snapshot", snapshot)
-        let finalVideos: [Video] = snapshot.documents.compactMap { document in
-            // Filtering to skip already watched videos - Gerardo 06/06/2025
-            let isWatched = user.watchedVideos?.contains(document.documentID) ?? false
-            guard !isWatched else {
-                return nil // Skip this video, user has already watched it.
-            }
-            
+        //print("snapshot", snapshot)
+
+        // Filtering out watched videos at document level (more efficient)
+        let unwatchedDocuments = snapshot.documents.filter { document in
+            !(user.watchedVideos?.contains(document.documentID) ?? false)
+        }
+
+        // Convert documents to video objects
+        let unwatchedVideos: [Video] = unwatchedDocuments.compactMap { document in
             guard let urlString = document.data()["video_url"] as? String,
                   let url = URL(string: urlString),
                   let title = document.data()["title"] as? String else {
@@ -34,14 +35,41 @@ final class FirestoreVideoRepository: VideoRepository {
             }
             
             let detectedLevel = document.data()["detected_level"] as? Int ?? 2
-            // Filter: only include videos within ±1 of user's level - Gerardo De La Torre
-            guard detectedLevel >= (userLevel - 1) && detectedLevel <= (userLevel + 1) else {
-                return nil
-            }
-            
             return Video(id: document.documentID, url: url, title: title, detectedLevel: detectedLevel)
         }
-        //print("Returning \(finalVideos.count) videos to display")
+
+        // Filter: only include videos within ±1 of user's level - Gerardo De La Torre
+        let finalVideos = unwatchedVideos.filter { video in
+            video.detectedLevel >= (userLevel - 1) && video.detectedLevel <= (userLevel + 1)
+        }
+        
+        // logging for total videos available for selected language
+        print("Total videos in \(selectedLanguage): \(snapshot.documents.count)")
+        print("User comprehension level: \(userLevel)")
+        print("User watched video count: \(user.watchedVideos?.count ?? 0)")
+        print("Unwatched videos: \(unwatchedDocuments.count)")
+        print("Videos matching level \(userLevel-1)-\(userLevel+1): \(finalVideos.count)")
+
+        // logging depending if we have videos available to show
+        if finalVideos.isEmpty {
+            print("No videos available after filtering. Showing watched videos instead")
+
+            // Re-filter all videos by level only, ignoring watched status
+            let allVideosAtLevel: [Video] = snapshot.documents.compactMap { document in
+                guard let urlString = document.data()["video_url"] as? String,
+                    let url = URL(string: urlString),
+                    let title = document.data()["title"] as? String else { return nil }
+
+                let detectedLevel = document.data()["detected_level"] as? Int ?? 2
+                guard detectedLevel >= (userLevel - 1) && detectedLevel <= (userLevel + 1) else {
+                    return nil
+                }
+                return Video(id: document.documentID, url: url, title: title, detectedLevel: detectedLevel)
+            }
+            return allVideosAtLevel
+        } else {
+            print("Returning \(finalVideos.count) videos to user")
+        }
         return finalVideos
     }
 }
