@@ -10,6 +10,8 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
     @Published var email = ""
     @Published var password = ""
     @Published var errorMessage: String?
+    @Published var isLoading: Bool = false
+
 
     private let authService: AuthService
 
@@ -32,6 +34,9 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
             errorMessage = "Email is required"
             return false
         }
+        
+        isLoading = true
+        defer { isLoading = false }
 
         do {
             let result = try await authService.registerOrLogin(email: email, password: password, appState: appState)
@@ -52,7 +57,9 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
     }
 
     func loginWithGoogle(presenting: UIViewController, appState: AppState, onSuccess: @escaping () -> Void) {
+        isLoading = true
         Task {
+            defer { isLoading = false }
             do {
                 let success = try await authService.signInWithGoogle(presenting: presenting, appState: appState)
                 if success {
@@ -77,7 +84,9 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
     }
 
     func loginWithApple(credential: ASAuthorizationAppleIDCredential, appState: AppState, onSuccess: @escaping () -> Void) {
+        isLoading = true
         Task {
+            defer { isLoading = false }
             do {
                 guard let nonce = currentNonce else {
                     errorMessage = "Missing nonce"
