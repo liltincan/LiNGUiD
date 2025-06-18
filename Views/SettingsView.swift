@@ -15,6 +15,10 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 0) {
+                        GoProSection()
+                        
+                        DividerLine()
+                        
                         SettingsSection(title: "Your activity") {
                             SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumnails: likedVideos))
                             SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumnails: savedVideos))
@@ -67,6 +71,40 @@ struct SettingsView: View {
         let result = loginVM.logout()
         if result {
             state.isSignedIn = false
+        }
+    }
+}
+
+struct GoProSection: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Go Pro")
+                .font(UIConstants.sectionFont)
+                .foregroundColor(UIConstants.sectionColor)
+                .padding(.bottom, 12)
+            
+            NavigationLink(destination: GoProView()) {
+                HStack {
+                    // Use the uploaded image file
+                    Image("linguid_pro_banner") // Replace with your actual image name
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 30)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(white: 0.1))
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
         }
     }
 }
@@ -226,5 +264,11 @@ struct RequestFeatureView: View {
     var body: some View {
         Text("Request Some Feature")
             .navigationTitle("Request a Feature")
+    }
+}
+
+struct GoProView: View {
+    var body: some View {
+        Text("Go Pro")
     }
 }
