@@ -35,9 +35,15 @@ class DashboardViewModel: ObservableObject{
     
     func fetchUserData() async {
         isLoading = true
-        await userSession.refreshUser()
+        errorMessage = ""  // Clear previous error messages
         
-        if let user = userSession.currentUser {
+        do {
+            await userSession.refreshUser()
+            
+            guard let user = userSession.currentUser else {
+                throw NSError(domain: "DashboardError", code: 1, userInfo: [NSLocalizedDescriptionKey: "User information not found, please log in again"])
+            }
+            
             self.user = user
             
             // Use EXACTLY the same logic as Profile page formattedLanguagesDisplay
@@ -46,12 +52,13 @@ class DashboardViewModel: ObservableObject{
                 
                 let comprehensionLevel: Int = languagesData[targetLanugage.lowercased()]?.comprehensionLevel ?? 0
                 
-                
                 if comprehensionLevel == 0, let firstLanguageKey = languagesData.keys.first {
                     let fallbackLevel = languagesData[firstLanguageKey]?.comprehensionLevel ?? 0
                     self.userLevel = fallbackLevel
+                    print("🔍 Dashboard Debug - Using fallback level \(fallbackLevel) from language \(firstLanguageKey)")
                 } else {
                     self.userLevel = comprehensionLevel
+                    print("🔍 Dashboard Debug - Using target language level \(comprehensionLevel)")
                 }
                 
                 // Get watch time from target language data (using lowercased key)
@@ -70,6 +77,7 @@ class DashboardViewModel: ObservableObject{
                 // No language data available - default to 0 like Profile
                 self.userLevel = 0
                 self.totalWatchTime = 0
+                print("🔍 Dashboard Debug - No language data available, setting defaults")
             }
             
             // Calculate user stats and fetch real leaderboard
@@ -78,11 +86,14 @@ class DashboardViewModel: ObservableObject{
             generateStudyDates()
             await fetchRealLeaderboard()
             
-            isLoading = false
-        } else {
-            errorMessage = "User not found"
-            isLoading = false
+            print("🔍 Dashboard Debug - Successfully loaded user data: Level=\(userLevel), Hours=\(totalHours), Rank=\(userRank)")
+            
+        } catch {
+            print("🔍 Dashboard Error - Failed to load user data: \(error)")
+            errorMessage = error.localizedDescription
         }
+        
+        isLoading = false
     }
     
     func loadDashboardData() async {
