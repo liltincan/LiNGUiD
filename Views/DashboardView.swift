@@ -17,7 +17,7 @@ struct DashboardView: View {
     init(userSession: UserSessionViewModel, selectedTab: Binding<Int>) {
         _viewModel = StateObject(
             wrappedValue: DashboardViewModel(
-                userSession: UserSessionViewModel()
+                userSession: userSession
             )
         )
         _savedWordsViewModel = StateObject(
@@ -25,96 +25,122 @@ struct DashboardView: View {
         )
 
         _selectedTab = selectedTab
-
     }
 
     var body: some View {
-        VStack {
-            if viewModel.isLoading {
-                ProgressView("Loading...")
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .font(.headline)
-            } else {
-                NavigationStack {
-                    ZStack {
-                        Color.black.ignoresSafeArea()
-
-                        ScrollView {
-                            VStack(spacing: 20) {
-                                headerStatsSection
-                                leaderboardSection
-                                    .padding(.top, -10)
-                                calendarSection
-                                    .padding(.top, 50)
-                                savedWordsSection
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                if viewModel.isLoading {
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.5)
+                        
+                        Text("Loading Dashboard...")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                    }
+                } else if !viewModel.errorMessage.isEmpty {
+                    // Error state display
+                    VStack(spacing: 20) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 50))
+                            .foregroundColor(.orange)
+                        
+                        Text("Loading Failed")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                        
+                        Text(viewModel.errorMessage)
+                            .font(.body)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                        
+                        Button("Retry") {
+                            Task {
+                                await viewModel.loadDashboardData()
                             }
-                            .padding()
                         }
-                        .coordinateSpace(name: "SavedWordsScroll")
-                        .allowsHitTesting(selectedWord == nil)  // disable scrolling when popup is shown
+                        .padding()
+                        .background(Color.appPrimaryColor)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+                    .padding()
+                } else {
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            headerStatsSection
+                            leaderboardSection
+                                .padding(.top, -10)
+                            calendarSection
+                                .padding(.top, 50)
+                            savedWordsSection
+                        }
+                        .padding()
+                    }
+                    .coordinateSpace(name: "SavedWordsScroll")
+                    .allowsHitTesting(selectedWord == nil)  // disable scrolling when popup is shown
 
-                        if selectedWord != nil, selectedWordIndex != nil {
-                            // Background tap dismiss layer
-                            Color.black.opacity(0.001)
-                                .ignoresSafeArea()
-                                .onTapGesture {
-                                    withAnimation {
-                                        selectedWord = nil
-                                        translatedText = nil
-                                        selectedWordIndex = nil
-                                    }
+                    if selectedWord != nil, selectedWordIndex != nil {
+                        // Background tap dismiss layer
+                        Color.black.opacity(0.001)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                withAnimation {
+                                    selectedWord = nil
+                                    translatedText = nil
+                                    selectedWordIndex = nil
                                 }
-
-                            popupMenu(
-                                for: translatedText,
-                                from: viewModel.user?.targetLanguage ?? "",
-                                to: viewModel.user?.nativeLanguage ?? "",
-                                wordPair: selectedWord
-                                    ?? WordPair.init(target: "", native: "")
-                            )
-                            .position(
-                                x: popupPosition.x + 130,
-                                y: popupPosition.y - 90
-                            )
-                            .zIndex(10)
-                        }
-                    }
-                    .navigationTitle("DASHBOARD")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .principal) {
-                            Text("DASHBOARD")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .onChange(of: selectedTab) { oldTab, newTab in
-                        if newTab != 2 {
-                            withAnimation {
-                                selectedWord = nil
-                                selectedWordIndex = nil
-                                translatedText = nil
                             }
-                        }
+
+                        popupMenu(
+                            for: translatedText,
+                            from: viewModel.user?.targetLanguage ?? "",
+                            to: viewModel.user?.nativeLanguage ?? "",
+                            wordPair: selectedWord
+                                ?? WordPair.init(target: "", native: "")
+                        )
+                        .position(
+                            x: popupPosition.x + 130,
+                            y: popupPosition.y - 90
+                        )
+                        .zIndex(10)
                     }
                 }
             }
-        }.onAppear {
-
+            .navigationTitle("DASHBOARD")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("DASHBOARD")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+            .onChange(of: selectedTab) { oldTab, newTab in
+                if newTab != 2 {
+                    withAnimation {
+                        selectedWord = nil
+                        selectedWordIndex = nil
+                        translatedText = nil
+                    }
+                }
+            }
+        }
+        .onAppear {
             selectedWord = nil
             selectedWordIndex = nil
             translatedText = nil
 
-            viewModel.userSession = userSession
             Task {
                 await viewModel.loadDashboardData()
-
                 print("fetching words")
                 await savedWordsViewModel.fetchLanguageData()
-
             }
         }
-
     }
 
     private var headerStatsSection: some View {
@@ -152,61 +178,75 @@ struct DashboardView: View {
 
     private var leaderboardSection: some View {
         VStack(spacing: 15) {
-            ZStack {
-                if let centerUser = viewModel.leaderboardUsers.first(where: {
-                    $0.rank == 1
-                }) {
-                    VStack(spacing: 8) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 80, height: 80)
+            if viewModel.leaderboardUsers.isEmpty {
+                // Leaderboard empty state
+                VStack(spacing: 16) {
+                    Image(systemName: "chart.bar")
+                        .font(.system(size: 50))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    Text("Loading Leaderboard...")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                }
+                .frame(height: 200)
+            } else {
+                ZStack {
+                    if let centerUser = viewModel.leaderboardUsers.first(where: {
+                        $0.rank == 1
+                    }) {
+                        VStack(spacing: 8) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 80, height: 80)
 
-                            AsyncImage(url: URL(string: centerUser.avatarURL)) {
-                                image in
-                                image.resizable().scaledToFill()
-                            } placeholder: {
-                                Image(systemName: "person.crop.circle.fill")
-                                    .foregroundColor(.gray)
-                                    .font(.system(size: 60))
+                                AsyncImage(url: URL(string: centerUser.avatarURL)) {
+                                    image in
+                                    image.resizable().scaledToFill()
+                                } placeholder: {
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .foregroundColor(.gray)
+                                        .font(.system(size: 60))
+                                }
+                                .frame(width: 76, height: 76)
+                                .clipShape(Circle())
+
+                                Circle()
+                                    .fill(Color.appPrimaryColor)
+                                    .frame(width: 24, height: 24)
+                                    .overlay(
+                                        Text("1")
+                                            .font(.system(size: 12, weight: .bold))
+                                            .foregroundColor(.white)
+                                    )
+                                    .offset(x: 25, y: -25)
                             }
-                            .frame(width: 76, height: 76)
-                            .clipShape(Circle())
 
-                            Circle()
-                                .fill(Color.appPrimaryColor)
-                                .frame(width: 24, height: 24)
-                                .overlay(
-                                    Text("1")
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundColor(.white)
-                                )
-                                .offset(x: 25, y: -25)
+                            VStack(spacing: 3) {
+                                Text(centerUser.name)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                                Text("\(centerUser.minutes) mins")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(width: 100)
                         }
+                    }
 
-                        VStack(spacing: 3) {
-                            Text(centerUser.name)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                            Text("\(centerUser.minutes) mins")
-                                .font(.system(size: 10))
-                                .foregroundColor(.gray)
-                        }
-                        .frame(width: 100)
+                    ForEach(
+                        viewModel.leaderboardUsers.filter { $0.rank != 1 },
+                        id: \.id
+                    ) { user in
+                        LeaderboardUserView(user: user)
+                            .offset(offsetForRank(user.rank))
                     }
                 }
-
-                ForEach(
-                    viewModel.leaderboardUsers.filter { $0.rank != 1 },
-                    id: \.id
-                ) { user in
-                    LeaderboardUserView(user: user)
-                        .offset(offsetForRank(user.rank))
-                }
+                .frame(height: 320)
             }
-            .frame(height: 320)
         }
     }
 
@@ -243,53 +283,72 @@ struct DashboardView: View {
                 }
             }
 
-            VStack(spacing: 10) {
-                ForEach(viewModel.savedWords.indices, id: \.self) { index in
-                    let word = viewModel.savedWords[index]
+            if viewModel.savedWords.isEmpty {
+                // Empty state display
+                VStack(spacing: 12) {
+                    Image(systemName: "book.closed")
+                        .font(.system(size: 40))
+                        .foregroundColor(.gray)
+                    
+                    Text("No Saved Words")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.gray)
+                    
+                    Text("Save words while watching videos, they will appear here")
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.vertical, 30)
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(viewModel.savedWords.indices, id: \.self) { index in
+                        let word = viewModel.savedWords[index]
 
-                    VStack(alignment: .leading) {
-                        GeometryReader { geo in
-                            HStack(spacing: 20) {
-                                Circle()
-                                    .fill(Color.gray.opacity(0.1))
-                                    .frame(width: 30, height: 30)
-                                    .overlay(
-                                        Text("\(index + 1)")
-                                            .font(
-                                                .system(
-                                                    size: 16,
-                                                    weight: .medium
+                        VStack(alignment: .leading) {
+                            GeometryReader { geo in
+                                HStack(spacing: 20) {
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.1))
+                                        .frame(width: 30, height: 30)
+                                        .overlay(
+                                            Text("\(index + 1)")
+                                                .font(
+                                                    .system(
+                                                        size: 16,
+                                                        weight: .medium
+                                                    )
                                                 )
-                                            )
-                                            .foregroundStyle(Color.black)
-                                    )
-
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(word.target)
-                                        .font(
-                                            .system(size: 16, weight: .medium)
+                                                .foregroundStyle(Color.black)
                                         )
-                                        .foregroundColor(.black)
-                                    Text(word.native)
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.gray)
+
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(word.target)
+                                            .font(
+                                                .system(size: 16, weight: .medium)
+                                            )
+                                            .foregroundColor(.black)
+                                        Text(word.native)
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.gray)
+                                    }
+
+                                    Spacer()
                                 }
-
-                                Spacer()
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    actionFunction(
+                                        index: index,
+                                        geo: geo,
+                                        word: word
+                                    )
+                                }
                             }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                actionFunction(
-                                    index: index,
-                                    geo: geo,
-                                    word: word
-                                )
-                            }
-                        }
-                        .frame(height: 50)
+                            .frame(height: 50)
 
-                        if index < viewModel.savedWords.count - 1 {
-                            Divider()
+                            if index < viewModel.savedWords.count - 1 {
+                                Divider()
+                            }
                         }
                     }
                 }
