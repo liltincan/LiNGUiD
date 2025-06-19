@@ -12,11 +12,9 @@
 		138F1B962DEE0DF700F3B31B /* VideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B952DEE0DF300F3B31B /* VideoView.swift */; };
 		138F1B982DEF6D2F00F3B31B /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B972DEF6D2900F3B31B /* EditProfileView.swift */; };
 		139ABECE2DF2271100EB45FD /* ChangePasswordViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139ABECD2DF2270C00EB45FD /* ChangePasswordViewModel.swift */; };
-
-		603628C22DFA91CE00C6D0E5 /* AppTextTranslate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 603628C12DFA91C900C6D0E5 /* AppTextTranslate.swift */; };
 		13F4B15F2DFC99A70019BE81 /* ChangeLanguageFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13F4B15E2DFC99A20019BE81 /* ChangeLanguageFlowView.swift */; };
 		13F4B1612DFCB87A0019BE81 /* ChangeLanguageLevelFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13F4B1602DFCB86C0019BE81 /* ChangeLanguageLevelFlow.swift */; };
-
+		603628C22DFA91CE00C6D0E5 /* AppTextTranslate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 603628C12DFA91C900C6D0E5 /* AppTextTranslate.swift */; };
 		604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */; };
 		60974D5F2DE6561A0075CAAE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60974D5E2DE656130075CAAE /* AppDelegate.swift */; };
 		60974D862DE79BE70075CAAE /* AppTitleText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60974D852DE79BDF0075CAAE /* AppTitleText.swift */; };
@@ -105,12 +103,9 @@
 		138F1B952DEE0DF300F3B31B /* VideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoView.swift; sourceTree = "<group>"; };
 		138F1B972DEF6D2900F3B31B /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		139ABECD2DF2270C00EB45FD /* ChangePasswordViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangePasswordViewModel.swift; sourceTree = "<group>"; };
-
-		603628C12DFA91C900C6D0E5 /* AppTextTranslate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTextTranslate.swift; sourceTree = "<group>"; };
-
 		13F4B15E2DFC99A20019BE81 /* ChangeLanguageFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeLanguageFlowView.swift; sourceTree = "<group>"; };
 		13F4B1602DFCB86C0019BE81 /* ChangeLanguageLevelFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeLanguageLevelFlow.swift; sourceTree = "<group>"; };
-
+		603628C12DFA91C900C6D0E5 /* AppTextTranslate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTextTranslate.swift; sourceTree = "<group>"; };
 		604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonceGenerator.swift; sourceTree = "<group>"; };
 		60974D5E2DE656130075CAAE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		60974D852DE79BDF0075CAAE /* AppTitleText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTitleText.swift; sourceTree = "<group>"; };
@@ -282,6 +277,7 @@
 				8FB9296C2DE1169D0020AFCD /* DashboardView.swift */,
 				8FB9296A2DE116820020AFCD /* ChatListView.swift */,
 				8FB929662DE1162E0020AFCD /* MainTabView.swift */,
+				60974D872DE79D100075CAAE /* AppColors.swift */,
 				81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */,
 				81F436462DF2835100DA9BDA /* OnboardingPageView.swift */,
 				8F51F2382DE0247000397726 /* VideoFeedView.swift */,
@@ -308,7 +304,6 @@
 			isa = PBXGroup;
 			children = (
 				603628C12DFA91C900C6D0E5 /* AppTextTranslate.swift */,
-				60974D872DE79D100075CAAE /* AppColors.swift */,
 				60974D852DE79BDF0075CAAE /* AppTitleText.swift */,
 				604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */,
 				60C7E5B72DE2B51B00C1AAF2 /* AppSocialLoginButton.swift */,
@@ -536,11 +531,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				8FB929582DE02A8A0020AFCD /* DependencyContainer.swift in Sources */,
-
 				603628C22DFA91CE00C6D0E5 /* AppTextTranslate.swift in Sources */,
-
 				8177D3E62DF8D4B100FA6800 /* UploadView.swift in Sources */,
-
 				8FB9294D2DE02A320020AFCD /* VideoFeedView.swift in Sources */,
 				D69E51D62DE6735A00329D64 /* VideoCache.swift in Sources */,
 				60974D8A2DE803810075CAAE /* PracticeWordView.swift in Sources */,

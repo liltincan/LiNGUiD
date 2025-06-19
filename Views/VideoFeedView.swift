@@ -68,6 +68,7 @@ struct VerticalVideoFeed: View {
                                         }
                                 }
                             )
+                            
                         }
                     }
                 }
@@ -116,7 +117,8 @@ struct FeedVideoPage: View {
                 language: language,
                 containerWidth: containerWidth,
                 containerHeight: containerHeight,
-                isActive: isActive
+                isActive: isActive,
+                captions: video.captions
             )
             .environmentObject(userSession)
         }
