@@ -55,6 +55,7 @@ struct ChangeLanguageFlowView: View {
         .background(Color.black.ignoresSafeArea())
         .navigationTitle("Change Language")
         .navigationBarTitleDisplayMode(.inline)
+        
         if currentPage < selectedLanguagesArray.count {
             let currentLanguage = selectedLanguagesArray[currentPage]
             LanguageLevelSelectionView(
@@ -78,7 +79,29 @@ struct ChangeLanguageFlowView: View {
     }
     
     private func saveLanguages() async {
+        
+        let languageCodes: [String: String] = [
+              "Arabic": "ar", "Chinese": "zh", "English": "en", "French": "fr", "German": "de",
+              "Italian": "it", "Portuguese": "pt", "Russian": "ru", "Spanish": "es",
+              "Afrikaans": "af", "Armenian": "hy", "Azerbaijani": "az", "Belarusian": "be",
+              "Bosnian": "bs", "Bulgarian": "bg", "Catalan": "ca", "Croatian": "hr", "Czech": "cs",
+              "Danish": "da", "Dutch": "nl", "Estonian": "et", "Finnish": "fi", "Galician": "gl",
+              "Greek": "el", "Hebrew": "he", "Hindi": "hi", "Hungarian": "hu", "Icelandic": "is",
+              "Indonesian": "id", "Japanese": "ja", "Kannada": "kn", "Kazakh": "kk", "Korean": "ko",
+              "Latvian": "lv", "Lithuanian": "lt", "Macedonian": "mk", "Malay": "ms", "Maori": "mi",
+              "Marathi": "mr", "Nepali": "ne", "Norwegian": "no", "Persian": "fa", "Polish": "pl",
+              "Romanian": "ro", "Serbian": "sr", "Slovak": "sk", "Slovenian": "sl", "Swahili": "sw",
+              "Swedish": "sv", "Tagalog": "tl", "Tamil": "ta", "Thai": "th", "Turkish": "tr",
+              "Ukrainian": "uk", "Urdu": "ur", "Vietnamese": "vi", "Welsh": "cy"
+        ]
+        
+        
+        let targetLanguage : String
+        let targetLanguageCode = selectedLanguages.compactMap { languageCodes[$0] }
+        targetLanguage = targetLanguageCode.first ?? ""
         let db = Firestore.firestore()
+        
+        
         
         var languagesDataUpdates: [String: Any] = [:]
         
@@ -96,7 +119,8 @@ struct ChangeLanguageFlowView: View {
                     "comprehensionLevel": levelsDictionary[level] ?? 1,
                     "timestamp": Timestamp(date: Date()),
                 ]
-                languagesDataUpdates[language] = languageDetails
+                let languageKey = languageCodes.first(where: { $0.key == language })?.value ?? ""
+                languagesDataUpdates[languageKey] = languageDetails
             }
         }
         
@@ -105,7 +129,8 @@ struct ChangeLanguageFlowView: View {
         }
         
         let dataToSave: [String: Any] = [
-            "languagesData": languagesDataUpdates
+            "languagesData": languagesDataUpdates,
+            "targetLanguage": targetLanguage
         ]
         
         do {
