@@ -1,3 +1,9 @@
+//
+// ChatListView.swift
+// LiNGUiD
+//
+// Created by Christian Hernandez 5/15/2025
+//
 
 import SwiftUI
 
