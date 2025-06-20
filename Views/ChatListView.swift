@@ -194,6 +194,8 @@ enum FocusField {
     case sendMessage
 }
 //MARK: - Conversation View
+//precondition: pass in the model
+//postcondition: will show the full conversation with friend
 struct ChatMessagesConvo: View {
     let conversation: ChatConversation
     //closure function that allows user to go back to the main
