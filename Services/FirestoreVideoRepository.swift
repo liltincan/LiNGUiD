@@ -18,18 +18,7 @@ final class FirestoreVideoRepository: VideoRepository {
         
         let userLevel = user.languagesData?[selectedLanguage]?.comprehensionLevel ?? 2
         
-        private let languageMap: [String: String] = [
-            "english": "en",
-            "spanish": "es",
-            "french": "fr",
-            "russian": "ru",
-            "en": "en",
-            "es": "es",
-            "fr": "fr",
-            "ru": "ru"
-        ]
-
-        let langCode = languageMap[selectedLanguage.lowercased()] ?? selectedLanguage.lowercased()
+        let langCode = selectedLanguage.lowercased()
         let snapshot = try await db.collection(videosCollection).document(langCode).collection("items").getDocuments()
 
         //print("snapshot", snapshot)
