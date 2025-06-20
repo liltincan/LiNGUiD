@@ -318,14 +318,6 @@ struct VideoPlayerView: View {
                 isPlaying = true
             }
         }
-
-        Task {
-            guard let userID = userSession.currentUser?.id else { return }
-            await videoPlayerViewModel.markVideoAsWatched(
-                videoId,
-                userID: userID
-            )
-        }
     }
 
     private func configureAudioSession() {
