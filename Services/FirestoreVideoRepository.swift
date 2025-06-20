@@ -22,7 +22,11 @@ final class FirestoreVideoRepository: VideoRepository {
             "english": "en",
             "spanish": "es",
             "french": "fr",
-            "russian": "ru"
+            "russian": "ru",
+            "en": "en",
+            "es": "es",
+            "fr": "fr",
+            "ru": "ru"
         ]
 
         let langCode = languageMap[selectedLanguage.lowercased()] ?? selectedLanguage.lowercased()
