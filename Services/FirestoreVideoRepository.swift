@@ -8,7 +8,7 @@ final class FirestoreVideoRepository: VideoRepository {
 //        var query = db.collection(videosCollection)
 //            .order(by: "createdAt", descending: true)
 //            .limit(to: limit)
-        
+
         if let afterID = afterID {
             let doc = try await db.collection(videosCollection).document(afterID).collection("items").getDocuments()
 //            query = query.start(afterDocument: lastDoc)
