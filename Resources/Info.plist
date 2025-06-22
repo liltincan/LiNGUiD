@@ -15,6 +15,9 @@
 	<key>NSPhotoLibraryUsageDescription</key>
     <string>This app needs access to your photo library to upload videos.</string>
 
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app uses your location to improve personalization.</string>
+
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIAppFonts</key>

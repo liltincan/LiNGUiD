@@ -38,6 +38,7 @@
 		81F436432DF2831300DA9BDA /* LanguageSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436422DF2831300DA9BDA /* LanguageSelectionView.swift */; };
 		81F436452DF2831D00DA9BDA /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */; };
 		81F436472DF2835100DA9BDA /* OnboardingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436462DF2835100DA9BDA /* OnboardingPageView.swift */; };
+		81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F731932E0A1C8C0057786F /* CountrySelectionView.swift */; };
 		8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F1FE2DE0183300397726 /* LiNGUiDApp.swift */; };
 		8F51F2052DE0183300397726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F1F62DE0183300397726 /* Assets.xcassets */; };
 		8F51F2122DE01A1C00397726 /* .README in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F2112DE01A1800397726 /* .README */; };
@@ -125,6 +126,7 @@
 		81F436422DF2831300DA9BDA /* LanguageSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageSelectionView.swift; sourceTree = "<group>"; };
 		81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
 		81F436462DF2835100DA9BDA /* OnboardingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageView.swift; sourceTree = "<group>"; };
+		81F731932E0A1C8C0057786F /* CountrySelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountrySelectionView.swift; sourceTree = "<group>"; };
 		8F51F1F62DE0183300397726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F51F1FC2DE0183300397726 /* LiNGUiD.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiNGUiD.entitlements; sourceTree = "<group>"; };
 		8F51F1FD2DE0183300397726 /* LiNGUiD.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = LiNGUiD.xcodeproj; sourceTree = "<group>"; };
@@ -263,6 +265,7 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				81F731932E0A1C8C0057786F /* CountrySelectionView.swift */,
 				8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */,
 				8177D3E52DF8D4AC00FA6800 /* UploadView.swift */,
 				13F4B1602DFCB86C0019BE81 /* ChangeLanguageLevelFlow.swift */,
@@ -548,6 +551,7 @@
 				8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */,
 				8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */,
 				13F4B15F2DFC99A70019BE81 /* ChangeLanguageFlowView.swift in Sources */,
+				81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */,
 				D69E53EC2DEA4B5000329D64 /* UserSessionViewModel.swift in Sources */,
 				8FB929522DE02A600020AFCD /* VideoFeedCoordinatorView.swift in Sources */,
 				8FB9294B2DE02A260020AFCD /* RootCoordinatorView.swift in Sources */,

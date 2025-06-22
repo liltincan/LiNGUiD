@@ -4,44 +4,78 @@ struct OnboardingPageView: View {
     let index: Int
 
     var body: some View {
-        ZStack{
-            Color.black.edgesIgnoringSafeArea(.all)
-            VStack(spacing: 00) {
+        //VStack{
+            //Color.black.edgesIgnoringSafeArea(.all)
+            //VStack(spacing: 00) {
 
                 Group {
                     switch index {
                     case 0:
-                        VStack(spacing: 00) {
-                            Text("Select your native Language")
+                        VStack{
+                            Text("Let's get to know you")
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
-                                .padding(.top, 20)
+                                .padding(.bottom, 5)
                                 .drawingGroup()
                             
-                            Text("You may select one or more")
+                            Text("Select your first language(s)")
                                 .font(.system(size: 17))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
-                                .padding(.top, 10)
                                 .drawingGroup()
-                            
                         }
+                        .frame(maxHeight: .infinity, alignment: .top)
                         
                         
                         
                     case 1:
-                        VStack(spacing: 00) {
-                            Text("Select your \n target Language")
+                        VStack{
+                            Text("Where are you from?")
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
-                                .padding(.top, 20)
+                                .padding(.bottom, 5)
+                                .drawingGroup()
+                            
+                            Text("This step helps clarify dialectal differences")
+                                .font(.system(size: 17))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
                                 .drawingGroup()
                             
                         }
+                        .frame(maxHeight: .infinity, alignment: .top)
+                        
 
                     case 2:
+                        VStack{
+                            Text("Select your")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .drawingGroup()
+                            
+                            Text("target language")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .drawingGroup()
+                        }
+                        .frame(maxHeight: .infinity, alignment: .top)
+                        
+                    case 3:
+                        VStack{
+                            Text("What should we call you?")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .drawingGroup()
+                            
+                        }
+                        .frame(alignment: .top)
+                        
+                    case 4:
                         VStack(spacing: 00) {
                             Image("AppLogoPdf")
                                 .resizable()
@@ -83,13 +117,13 @@ struct OnboardingPageView: View {
                 }
                 Spacer()
             }
-        }
-    }
+        //}
+    //}
 }
 
 
 //struct OnboardingPageView_Previews: PreviewProvider {
 //    static var previews: some View {
-//        OnboardingPageView(index: 2)
+//        OnboardingPageView(index: 3)
 //    }
 //}

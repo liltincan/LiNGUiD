@@ -33,19 +33,19 @@ struct LanguageSelectionView: View {
     var body: some View {
         VStack(spacing: 24) {
             // Header with Search
-            VStack(spacing: 0) {
+            VStack{
                 HStack {
                     Text("Languages")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
-                        .padding(.vertical, 10)
+                        .padding(.leading, 15)
 
                     Spacer()
 
                     if isSearching {
                         TextField("Search", text: $searchText)
                             .textFieldStyle(PlainTextFieldStyle())
-                            .padding(6)
+                            .padding(5)
                             .background(Color.white)
                             .cornerRadius(8)
                             .foregroundColor(.black)
@@ -63,16 +63,16 @@ struct LanguageSelectionView: View {
                         Image(systemName: isSearching ? "xmark.circle.fill" : "magnifyingglass")
                             .foregroundColor(.white)
                             .font(.system(size: 24, weight: .bold))
-                            .padding(.horizontal, 5)
+                            .padding(.trailing, 15)
                     }
                 }
-                .padding()
+                .padding(.vertical, 30)
                 .background(Color.white.opacity(0.2))
                 .cornerRadius(8)
 
                 // Scrollable Language List
                 ScrollView {
-                    LazyVStack(spacing: 0) {
+                    LazyVStack{
                         ForEach(filteredLanguages, id: \.self) { language in
                             HStack {
                                 Image(systemName: selectedLanguages.contains(language) ? "checkmark.square.fill" : "square")
@@ -91,7 +91,7 @@ struct LanguageSelectionView: View {
                                 Spacer()
                             }
                             .padding(.horizontal)
-                            .padding(.vertical, 25)
+                            .padding(.vertical, 18.5)
                             .font(.system(size: 17))
                             .background(Color(red: 124/255, green: 58/255, blue: 237/255))
                             .contentShape(Rectangle())
@@ -104,22 +104,24 @@ struct LanguageSelectionView: View {
                                 insertion: .scale(scale: 0.8).combined(with: .opacity).combined(with: .move(edge: .top)),
                                 removal: .scale(scale: 0.8).combined(with: .opacity).combined(with: .move(edge: .bottom))
                             ))
+                            Divider()
+                                .background(Color.white.opacity(1.0))
 
-                            if language != filteredLanguages.last {
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.2))
-                                    .frame(height: 1)
-                                    .padding(.horizontal)
-                            }
+//                            if language != filteredLanguages.last {
+//                                Rectangle()
+//                                    .fill(Color.white.opacity(0.2))
+//                                    .frame(height: 1)
+//                                    .padding(.horizontal)
+//                            }
                         }
                         .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: selectedLanguages)
                     }
                 }
-                .frame(maxHeight: 800)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .background(Color(red: 124/255, green: 58/255, blue: 237/255))
             .cornerRadius(8)
-            .padding(.horizontal)
+            .padding(.bottom, 20)
 
             // Continue Button
             if !selectedLanguages.isEmpty {
@@ -134,11 +136,11 @@ struct LanguageSelectionView: View {
                         .background(Color(red: 124/255, green: 58/255, blue: 237/255))
                         .cornerRadius(8)
                 }
-                .padding(.horizontal)
+                //.padding(.horizontal)
                 .transition(.opacity)
             }
 
-            Spacer()
+            //Spacer()
         }
         .padding()
         .background(Color.black.ignoresSafeArea())
@@ -206,3 +208,29 @@ struct LanguageSelectionView: View {
         }
     }
 }
+
+
+//struct LanguageSelectionView_Previews: PreviewProvider {
+//    struct PreviewWrapper: View {
+//        @State private var selectedLanguages: Set<String> = []
+//
+//        var body: some View {
+//            LanguageSelectionView(
+//                onContinue: { selected in
+//                    print("Selected: \(selected)")
+//                },
+//                selectionLimit: 3,
+//                selectedLanguages: $selectedLanguages,
+//                excludeLanguages: ["English", "Spanish"], // optional
+//                onDeselect: { lang in
+//                    print("Deselected: \(lang)")
+//                }
+//            )
+//        }
+//    }
+//
+//    static var previews: some View {
+//        PreviewWrapper()
+//            .preferredColorScheme(.dark)
+//    }
+//}

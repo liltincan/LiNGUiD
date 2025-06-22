@@ -14,7 +14,7 @@ struct LanguageLevelSelectionView: View {
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
-                    .padding(.vertical, 15)
+                    .padding(.vertical, 10)
             }
             .frame(maxWidth: .infinity)
             
@@ -30,7 +30,7 @@ struct LanguageLevelSelectionView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(red: 124/255, green: 58/255, blue: 237/255))
             .cornerRadius(8)
-            .padding(.top, 60)
+            .padding(.top, 30)
             
             VStack(alignment: .leading){
                 ForEach(levels, id: \.self) { level in
@@ -47,41 +47,42 @@ struct LanguageLevelSelectionView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color(red: 124/255, green: 58/255, blue: 237/255))
                     .cornerRadius(8)
+//                    .onTapGesture {
+//                        selectedLevel = level
+//                    }
                     .onTapGesture {
-                        selectedLevel = level
+                        withAnimation {
+                            if selectedLevel == level {
+                                selectedLevel = nil    // unselect if tapping the same one
+                            } else {
+                                selectedLevel = level
+                            }
+                        }
                     }
+
                 }
                 
-                if  selectedLevel != nil {
-                    Button(action: {
-                        onContinue?()
-                    }) {
-                        Text("Continue")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
-                            .cornerRadius(8)
-                    }
-                    .padding(.top, 75)
-                    .transition(.opacity)
+                Button(action: {
+                    onContinue?()
+                }) {
+                    Text("Continue")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                        .cornerRadius(8)
                 }
+                .padding(.top, 45)
+                .opacity(selectedLevel != nil ? 1 : 0) // Hide/show without layout shift
+                .disabled(selectedLevel == nil)        // Prevent interaction when not ready
                 
                 Spacer()
             }
         }
         .padding()
         .background(Color.black.ignoresSafeArea())
-        //.animation(.easeInOut, value: selectedLevel)
+
     }
 }
 
-//struct LanguageLevelSelectionView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        LanguageLevelSelectionView(
-//            selectedLevel: .constant("Beginner"),
-//            languageName: "Jibon"
-//        )
-//    }
-//}

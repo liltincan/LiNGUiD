@@ -46,7 +46,7 @@ struct VideoThumbnailSelectableView: View {
         options.isSynchronous = false
 
         manager.requestImage(for: asset,
-                             targetSize: CGSize(width: 900, height: 1600),
+                             targetSize: CGSize(width: 225, height: 400),
                              contentMode: .aspectFill,
                              options: options) { image, _ in
             self.thumbnail = image
