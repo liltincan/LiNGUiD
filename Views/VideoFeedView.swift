@@ -121,6 +121,7 @@ struct FeedVideoPage: View {
                 captions: video.captions
             )
             .environmentObject(userSession)
+            .id(video.id)
         }
         .frame(width: containerWidth, height: containerHeight)
     }

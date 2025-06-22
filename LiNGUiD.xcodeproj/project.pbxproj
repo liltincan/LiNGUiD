@@ -20,6 +20,7 @@
 		60974D862DE79BE70075CAAE /* AppTitleText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60974D852DE79BDF0075CAAE /* AppTitleText.swift */; };
 		60974D882DE79D130075CAAE /* AppColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60974D872DE79D100075CAAE /* AppColors.swift */; };
 		60974D8A2DE803810075CAAE /* PracticeWordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60974D892DE803760075CAAE /* PracticeWordView.swift */; };
+		609F7A442E0763110031682A /* SwiftUIFlow in Frameworks */ = {isa = PBXBuildFile; productRef = 609F7A432E0763110031682A /* SwiftUIFlow */; };
 		609FE7C92DE2D42600F6DE0E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F23D2DE0257500397726 /* Info.plist */; };
 		609FE7CA2DE2D42600F6DE0E /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F23D2DE0257500397726 /* Info.plist */; };
 		60C7E5B62DE1B0BD00C1AAF2 /* AppTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C7E5B52DE1B0B700C1AAF2 /* AppTextField.swift */; };
@@ -187,6 +188,7 @@
 				8FB9295F2DE10B910020AFCD /* FirebaseFirestore in Frameworks */,
 				8FB9295D2DE10B860020AFCD /* FirebaseAuth in Frameworks */,
 				8F51F22C2DE022D200397726 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
+				609F7A442E0763110031682A /* SwiftUIFlow in Frameworks */,
 				60C7E5BD2DE2C0C500C1AAF2 /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -395,6 +397,7 @@
 				8FB929602DE10B9B0020AFCD /* FirebaseStorage */,
 				60C7E5BA2DE2C0C500C1AAF2 /* GoogleSignIn */,
 				60C7E5BC2DE2C0C500C1AAF2 /* GoogleSignInSwift */,
+				609F7A432E0763110031682A /* SwiftUIFlow */,
 			);
 			productName = LiNGUiD;
 			productReference = 8F823B4C2DD987F8007B6E5E /* LiNGUiD.app */;
@@ -476,6 +479,7 @@
 			packageReferences = (
 				8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				60C7E5B92DE2C0C500C1AAF2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8F823B4D2DD987F8007B6E5E /* Products */;
@@ -954,6 +958,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ciaranrobrien/SwiftUIFlow";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		60C7E5B92DE2C0C500C1AAF2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
@@ -973,6 +985,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		609F7A432E0763110031682A /* SwiftUIFlow */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */;
+			productName = SwiftUIFlow;
+		};
 		60C7E5BA2DE2C0C500C1AAF2 /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 60C7E5B92DE2C0C500C1AAF2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;

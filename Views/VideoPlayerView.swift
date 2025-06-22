@@ -1,6 +1,7 @@
 import AVFoundation
 import FirebaseAuth
 import SwiftUI
+import SwiftUIFlow
 
 struct VideoPlayerView: View {
     let url: URL
@@ -61,6 +62,14 @@ struct VideoPlayerView: View {
     @State var words: [String] = []
     @State private var timeObserverToken: Any?
 
+    @State private var isTranslatingCaption: Bool = false
+    @State private var translatedText: String? = nil
+    @State private var selectedWord: String? = nil
+    @State private var showWordPopup: Bool = false
+    @State private var wordFrames: [String: CGRect] = [:]
+    @State private var popupPosition: CGPoint = .zero
+
+
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
 
@@ -84,20 +93,26 @@ struct VideoPlayerView: View {
                     VStack(spacing: 24) {
                         ActionButton(
                             icon: isCaptionVisible
-                                ? "captions.bubble.fill" : "captions.bubble",
+                                ? "caption-on" : "caption-off",
+
                             color: .white,
-                            size: 30
+                            size: 30,
+                            isSystemImage: false,
                         ) {
                             isCaptionVisible.toggle()
-                            if(isCaptionVisible && !currentCaptionText.isEmpty){
-                                words = currentCaptionText.components(separatedBy: .whitespacesAndNewlines)
-//                                print(words)
+
+                            if isCaptionVisible && !currentCaptionText.isEmpty {
+                                words = currentCaptionText.components(
+                                    separatedBy: .whitespacesAndNewlines
+                                )
+                                //                                print(words)
                             }
                         }
                         ActionButton(
                             icon: isLiked ? "heart.fill" : "heart",
                             color: isLiked ? .red : .white,
-                            size: 32
+                            size: 32,
+                            isSystemImage: true
                         ) {
                             isLiked.toggle()
 
@@ -119,13 +134,15 @@ struct VideoPlayerView: View {
                         ActionButton(
                             icon: "bubble.right",
                             color: .white,
-                            size: 30
+                            size: 30,
+                            isSystemImage: true
                         ) {}
 
                         ActionButton(
                             icon: isSaved ? "bookmark.fill" : "bookmark",
                             color: isSaved ? .yellow : .white,
-                            size: 32
+                            size: 32,
+                            isSystemImage: true
                         ) {
                             isSaved.toggle()
                             let user = userSession.currentUser
@@ -147,7 +164,8 @@ struct VideoPlayerView: View {
                         ActionButton(
                             icon: "square.and.arrow.up",
                             color: .white,
-                            size: 32
+                            size: 32,
+                            isSystemImage: true
                         ) {
                             // Record share "intent" when user opens share sheet - Gerardo
                             let user = userSession.currentUser
@@ -165,28 +183,78 @@ struct VideoPlayerView: View {
                         }
                     }
                     .padding(.trailing, 20)
-                    .padding(.bottom, 100)
+                    .padding(.bottom, 200)
                 }
+
             }
-            
+
             if isCaptionVisible && !words.isEmpty {
                 VStack {
                     Spacer()
-                    FlowLayout(words: words) { selectedWord in
-                        print(selectedWord)
+                    Flow(.vertical, alignment: .leading, spacing: 0) {
+                        ForEach(words, id: \.self) { word in
+                            Text(word)
+                                .font(.system(size: 20))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 4)
+                                .foregroundColor(.white)
+                                .fixedSize(horizontal: true, vertical: false)
+                                .background(
+                                    GeometryReader { geo in
+                                        Color.clear
+                                            .onAppear {
+                                                wordFrames[word] = geo.frame(
+                                                    in: .global
+                                                )
+                                            }
+                                    }
+                                )
+                                .onTapGesture {
+                                    if(isPlaying){
+                                        togglePlayPause()
+                                    }
+                                    print(word)
+                                    actionFunction(word: word)
+                                }
+
+                        }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 60)
+                    .background(Color.black.opacity(0.6))
+                    .cornerRadius(8)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 100)  // or .top for upper display
+
                 }
-                .frame(
-                    width: containerWidth ?? UIScreen.main.bounds.width,
-                    height: containerHeight ?? UIScreen.main.bounds.height,
-                    alignment: .bottom
-                )
+
             }
+            
+            if showWordPopup, let word = selectedWord {
+                Color.black.opacity(0.2)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation {
+                            selectedWord = nil
+                            translatedText = nil
+                            showWordPopup = false
+                        }
+                    }
+                
+                VStack{
+                    Spacer()
+                    wordPopup(
+                        for: word,
+                        from: "fr",
+                        to: "en"
+                    )
+                    .padding(.bottom, 200)
+//                    .position(x: popupPosition.x + 10, y: popupPosition.y - 150) // ⬅ adjust these offsets as needed
+                }
+                }
 
         }
         .onAppear {
+            words = []  // Clear stale words
+            currentCaptionText = ""
             if !hasBeenSetup {
                 setupPlayer()
                 hasBeenSetup = true
@@ -214,52 +282,19 @@ struct VideoPlayerView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+//        .overlay(
+//            Group {
+//                if showWordPopup, let word = selectedWord {
+//                    wordPopup(
+//                        for: word,
+//                        from: "fr",
+//                        to: "en",
+//                    )
+//                    .padding()
+//                }
+//            }
+//        )
     }
-    
-    struct FlowLayout: View {
-        let words: [String]
-        let wordTapped: (String) -> Void
-
-        var body: some View {
-            GeometryReader { geometry in
-                self.generateContent(in: geometry)
-            }
-        }
-
-        private func generateContent(in geometry: GeometryProxy) -> some View {
-            var width: CGFloat = 0
-            var height: CGFloat = 0
-
-            return ZStack(alignment: .bottomLeading) {
-                ForEach(words, id: \.self) { word in
-                    Text(word)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 4)
-                        .background(Color.black.opacity(0.7))
-                        .foregroundColor(.white)
-                        .font(.system(size: 18, weight: .medium))
-                        .fixedSize() // prevent shrinking
-                        .alignmentGuide(.leading, computeValue: { d in
-                            if abs(width - d.width) > geometry.size.width {
-                                width = 0
-                                height -= d.height
-                            }
-                            let result = width
-                            width -= d.width
-                            return result
-                        })
-                        .alignmentGuide(.bottom, computeValue: { _ in
-                            let result = height
-                            return result
-                        })
-                        .onTapGesture {
-                            wordTapped(word)
-                        }
-                }
-            }
-        }
-    }
-
 
     private func setupPlayer() {
         configureAudioSession()
@@ -290,10 +325,15 @@ struct VideoPlayerView: View {
                 $0.start <= seconds && seconds <= $0.end
             }) {
                 currentCaptionText = caption.text
-                
-                if(isCaptionVisible && !currentCaptionText.isEmpty){
-                    words = currentCaptionText.components(separatedBy: .whitespacesAndNewlines)
-//                                print(words)
+
+                if isCaptionVisible && !currentCaptionText.isEmpty {
+                    words =
+                        currentCaptionText
+                        .replacingOccurrences(of: "\n", with: " ")  // avoid vertical breaks
+                        .components(separatedBy: .whitespaces)
+                        .filter { !$0.isEmpty }
+
+                    //                                print(words)
                 }
             } else {
                 currentCaptionText = ""
@@ -422,17 +462,122 @@ struct VideoPlayerView: View {
             )
         }
     }
+    
+    func actionFunction(word: String) {
+        isTranslatingCaption = true
+        withAnimation {
+            translateWithMyMemory(
+                text: word,
+                from: userSession.currentUser?.targetLanguage ?? "",
+                to: userSession.currentUser?.nativeLanguage ?? ""
+            ) { result, source in
+                DispatchQueue.main.async {
+                    isTranslatingCaption = false
+                    translatedText = result
+                    print(
+                        "Translated: \(result ?? "Failed")\nSource: \(source ?? "Failed")"
+                    )
+
+                }
+            }
+            selectedWord = word
+            showWordPopup = true
+        }
+    }
+
+    private func wordPopup(
+        for word: String?,
+        from targetLanguage: String,
+        to nativeLanguage: String,
+    ) -> some View {
+        return VStack(spacing: 0) {
+            VStack(spacing: 0) {
+                if isTranslatingCaption {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .padding(.top, 15)
+
+                        Text("Translating...")
+                            .font(.system(size: 14, weight: .medium))
+                            .padding(.top, 15)
+                    }
+                } else if let translated = translatedText {
+                    Text(translated)
+                        .font(.system(size: 24, weight: .semibold))
+                        .padding(.top)
+                }
+
+                Spacer().frame(height: 10)
+
+                Divider()
+                    .frame(height: 2)
+                    .background(Color.white)
+
+                NavigationLink {
+
+                } label: {
+                    HStack {
+                        Image(systemName: "bookmark.fill")
+                        Text("Save")
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                Divider()
+                    .background(Color.white)
+
+                Button(action: {
+                    // see in context logic
+                    //                    selectedWord = nil
+                }) {
+                    HStack {
+                        Image(systemName: "info.circle.fill")
+                        Text("See in context")
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .background(Color.appPrimaryColor)
+            .foregroundColor(.white)
+            .cornerRadius(16)
+            .shadow(radius: 8)
+            .frame(width: 200)
+
+//            Triangle()
+//                .fill(Color.appPrimaryColor)
+//                .frame(width: 30, height: 15)
+//                .rotationEffect(.degrees(180))
+//                .offset(x: -60, y: -1)
+        }
+
+    }
+
+    struct Triangle: Shape {
+        func path(in rect: CGRect) -> Path {
+            var path = Path()
+            path.move(to: CGPoint(x: rect.midX, y: 0))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+            path.closeSubpath()
+            return path
+        }
+    }
+
 }
 
 struct ActionButton: View {
     let icon: String
     let color: Color
     let size: CGFloat
+    let isSystemImage: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: icon)
+            (isSystemImage ? Image(systemName: icon) : Image(icon))
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: size, height: size)
