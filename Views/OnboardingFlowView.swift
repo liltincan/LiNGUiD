@@ -15,7 +15,7 @@ struct OnboardingFlowView: View {
     @State private var languageLevels: [String: String] = [:]
     @State private var selectedCountry: String? = nil
     @State private var username: String = ""
-    @StateObject private var locationPermissionManager = LocationPermissionManager()
+    @State private var locationManager = CLLocationManager()
     
     
     private let total = 0  // number of pages
@@ -37,18 +37,8 @@ struct OnboardingFlowView: View {
                         selectedTargetLanguages.subtract(overlap)
                         targetLanguages.removeAll { overlap.contains($0) }
                         overlap.forEach { languageLevels.removeValue(forKey: $0) }
-                        locationPermissionManager.requestPermission()
-                        locationPermissionManager.onAuthorizationChanged = { status in
-                            if case .authorizedWhenInUse = status {
-                                // Save to Firestore if available
-                                if let uid = Auth.auth().currentUser?.uid {
-                                    let db = Firestore.firestore()
-                                    db.collection("users").document(uid).setData(["location_permission": true], merge: true)
-                                }
-                            }
-                            // Move to the next page regardless
-                            page += 1
-                        }
+                        locationManager.requestWhenInUseAuthorization()
+                        page += 1
                     }, selectionLimit: 3, selectedLanguages: $selectedNativeLanguages, excludeLanguages: [])
                     .layoutPriority(1)
                 
@@ -305,24 +295,6 @@ struct CustomProgressBar: View {
         .frame(height: height)
         .padding(.horizontal, 20)
         .padding(.top, 20)
-    }
-}
-
-class LocationPermissionManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let locationManager = CLLocationManager()
-    var onAuthorizationChanged: ((CLAuthorizationStatus) -> Void)?
-
-    override init() {
-        super.init()
-        locationManager.delegate = self
-    }
-
-    func requestPermission() {
-        locationManager.requestWhenInUseAuthorization()
-    }
-
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        onAuthorizationChanged?(status)
     }
 }
 
