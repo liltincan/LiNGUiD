@@ -229,7 +229,7 @@ class DashboardViewModel: ObservableObject{
     
     private func loadSavedWords(from user: User) {
         if let targetLanguage = user.languagesData?[user.targetLanguage]?.savedWords {
-            savedWords = Array(targetLanguage.unknownWords.prefix(5))
+            savedWords = Array(targetLanguage.unknownWords)
         } else {
             savedWords = []
         }

@@ -49,7 +49,7 @@ struct PracticeView: View {
                         .foregroundColor(.gray)
                         .multilineTextAlignment(.center)
 
-                        savedWordsHeader
+//                        savedWordsHeader
                     }
                     .padding()
                     .alert("Alert", isPresented: $showAlert) {
@@ -83,7 +83,7 @@ struct PracticeView: View {
                                     }
                             }
 
-                            savedWordsHeader
+//                            savedWordsHeader
 
                             savedWordsList
                         }

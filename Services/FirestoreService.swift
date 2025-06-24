@@ -34,6 +34,24 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         }
     }
     
+    func addUnknownWord(forUserId uid: String, targetLanguage: String, languagesData: [String: LanguagesData], completion: @escaping (Result<Void, Error>) -> Void) {
+        do {
+            let encoded = try Firestore.Encoder().encode(languagesData)
+            db.collection("users").document(uid).updateData([
+                "languagesData": encoded
+            ]) { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
+                }
+            }
+        } catch {
+            completion(.failure(error))
+        }
+    }
+
+    
     func updateLikedVideos(forUserId uid: String, likedVideos: [String], completion: @escaping (Result<Void, Error>) -> Void) {
         db.collection("users").document(uid).updateData(["likedVideos": likedVideos]) { error in
             if let error = error {

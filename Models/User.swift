@@ -181,7 +181,7 @@ struct LanguagesData: Codable {
 }
 
 struct WrappedSavedWords: Codable {
-    let savedWords: WordLists
+    var savedWords: WordLists
 }
 
 struct WordLists: Codable {

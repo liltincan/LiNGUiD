@@ -14,6 +14,40 @@ import FirebaseFirestore
 class VideoPlayerViewModel: ObservableObject {
     private let firestoreService = FirestoreService.shared
     @Published var errorMessage: String?
+    @Published var isSavingWord: Bool = false
+    @Published var wordSaved: Bool = false
+    @Published var word: String?
+
+    
+    func saveUnknownWord(to userId: String, targetLanguage: String, savedWord:String, languagesData: [String: LanguagesData]) {
+        isSavingWord = true
+        word = savedWord
+        wordSaved = false
+
+        firestoreService.addUnknownWord(
+            forUserId: userId,
+            targetLanguage: targetLanguage,
+            languagesData: languagesData
+        ) { result in
+            DispatchQueue.main.async {
+                self.isSavingWord = false
+                switch result {
+                case .success:
+                    self.wordSaved = true
+
+                    // Auto-hide message after 2 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        self.wordSaved = false
+                    }
+                case .failure(let error):
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+
+
+
 
     
     func toggleLike(for videoId: String, userId: String, currentLikes: [String], language: String?) {

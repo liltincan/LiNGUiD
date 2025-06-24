@@ -243,8 +243,8 @@ struct VideoPlayerView: View {
                     Spacer()
                     wordPopup(
                         for: word,
-                        from: "fr",
-                        to: "en"
+                        from: userSession.currentUser?.targetLanguage ?? "",
+                        to: userSession.currentUser?.nativeLanguage ?? ""
                     )
                     .padding(.bottom, 200)
 //                    .position(x: popupPosition.x + 10, y: popupPosition.y - 150) // ⬅ adjust these offsets as needed
@@ -484,7 +484,8 @@ struct VideoPlayerView: View {
             showWordPopup = true
         }
     }
-
+    
+    @ViewBuilder
     private func wordPopup(
         for word: String?,
         from targetLanguage: String,
@@ -513,13 +514,34 @@ struct VideoPlayerView: View {
                 Divider()
                     .frame(height: 2)
                     .background(Color.white)
-
-                NavigationLink {
-
-                } label: {
+                
+                Button(action: {
+                    guard let userID = Auth.auth().currentUser?.uid
+                    else { return }
+                    
+                    addUnknownWordInUserSession(word: word ?? "", userId: userID)
+                    
+                    
+                }) {
                     HStack {
                         Image(systemName: "bookmark.fill")
-                        Text("Save")
+                        if videoPlayerViewModel.isSavingWord {
+                            ProgressView()
+//                                .background(Color.white)
+//                                .cornerRadius(10)
+//                                .shadow(radius: 5)
+                        }else{
+                            let videoPlayerWord = videoPlayerViewModel.word ?? ""
+                            if videoPlayerViewModel.wordSaved && videoPlayerWord == word {
+                                Text("Word Saved! ")
+                                .transition(.opacity)
+                                .animation(.easeInOut(duration: 0.3), value: videoPlayerViewModel.wordSaved)
+                            }else{
+                                Text("Save")
+                            }
+                            
+                        }
+                        
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -554,6 +576,44 @@ struct VideoPlayerView: View {
         }
 
     }
+    
+    func addUnknownWordInUserSession(word: String, userId: String) {
+        guard let language = userSession.currentUser?.targetLanguage else { return }
+        let newWord = WordPair(target: word, native: translatedText ?? "")
+
+        // Ensure we have a mutable copy of currentUser
+        guard var currentUser = userSession.currentUser else { return }
+
+        // Ensure languagesData dictionary exists
+        var languagesData = currentUser.languagesData ?? [:]
+
+        // Get or create LanguagesData for the target language
+        var langData = languagesData[language] ?? LanguagesData(savedWords: WordLists(knownWords: [], unknownWords: []))
+
+        // Get or create savedWords
+        var savedWords = langData.savedWords ?? WordLists(knownWords: [], unknownWords: [])
+
+        // Append new word to unknownWords
+        savedWords.unknownWords.append(newWord)
+
+        // Save it back into LanguagesData and languagesData map
+        langData.savedWords = savedWords
+        languagesData[language] = langData
+        currentUser.languagesData = languagesData
+
+        // Update the in-memory user session to trigger UI updates
+        userSession.currentUser = currentUser
+
+        // Save to Firestore
+        videoPlayerViewModel.saveUnknownWord(
+            to: userId,
+            targetLanguage: language,
+            savedWord: word,
+            languagesData: languagesData
+        )
+    }
+
+
 
     struct Triangle: Shape {
         func path(in rect: CGRect) -> Path {
