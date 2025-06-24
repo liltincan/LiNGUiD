@@ -19,6 +19,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         AppCheck.setAppCheckProviderFactory(AppCheckDebugProviderFactory())
         
         FirebaseApp.configure()
+
+        // 🔑 Log out user if app is freshly installed
+        LaunchManager.shared.checkFirstLaunchAndLogoutIfNeeded()
+        
         return true
     }
 }
