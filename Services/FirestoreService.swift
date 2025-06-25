@@ -100,7 +100,9 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             completion(.failure(NSError(domain: "NoUID", code: -1)))
             return
         }
-        
+
+        let db = Firestore.firestore()
+
         let languageCodes: [String: String] = [
             "Afrikaans": "af", "Arabic": "ar", "Armenian": "hy", "Azerbaijani": "az", "Belarusian": "be",
             "Bosnian": "bs", "Bulgarian": "bg", "Catalan": "ca", "Chinese": "zh", "Croatian": "hr",
@@ -115,55 +117,56 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             "Tamil": "ta", "Thai": "th", "Turkish": "tr", "Ukrainian": "uk", "Urdu": "ur",
             "Vietnamese": "vi", "Welsh": "cy"
         ]
-        
-        let nativeCodes = nativeLanguages.compactMap { languageCodes[$0] }
-        let firstNative = nativeCodes.first ?? ""
-        
-        let targetCodes = targetLanguages.compactMap { languageCodes [$0] }
-        let firstTarget = targetCodes.first ?? ""
-        
-        
+
         let levelMapping: [String: Int] = [
             "Just Starting": 1,
             "Beginner": 2,
             "Intermediate": 3,
             "Advanced": 4,
-            "Fluent": 5
+            "Expert": 5
         ]
-        
+
+        // 1. First native language code
+        let firstNative = nativeLanguages.first.flatMap { languageCodes[$0] } ?? ""
+
+        // 2. First target language code
+        let firstTarget = targetLanguages.first.flatMap { languageCodes[$0] } ?? ""
+
+        // 3. Native language list (converted to codes)
+        let nativeLanguageList = nativeLanguages.compactMap { languageCodes[$0] }
+
+        // 4. Build languagesData dictionary
         var languagesData: [String: LanguagesData] = [:]
-        for target in targetLanguages {
-            guard let code = languageCodes[target] else {
-                print("⚠️ Missing code for \(target)")
-                continue
-            }
-            guard let levelStr = languageLevels[target] else {
-                print("⚠️ Missing level for \(target)")
-                continue
-            }
-            guard let level = levelMapping[levelStr] else {
-                print("⚠️ Invalid level string: \(levelStr)")
+        for language in targetLanguages {
+            //print("⚠️ Not Skipping \(language) \(languageLevels[language]): Missing code or level")
+            guard
+                let code = languageCodes[language],
+                let levelStr = languageLevels[language],
+                let level = levelMapping[levelStr]
+                
+            else {
+                //print("⚠️ Skipping \(language) \(languageLevels[language]): Missing code or level")
                 continue
             }
 
             languagesData[code] = LanguagesData(comprehensionLevel: level, timestamp: Date())
         }
 
+        // 5. Encode to Firestore format
         do {
             var encodedLanguagesData: [String: [String: Any]] = [:]
             for (code, data) in languagesData {
-                let encodedData = try Firestore.Encoder().encode(data)
-                encodedLanguagesData[code] = encodedData
+                encodedLanguagesData[code] = try Firestore.Encoder().encode(data)
             }
 
-            let data: [String: Any] = [
+            let dataToSave: [String: Any] = [
                 "nativeLanguage": firstNative,
-                "targetLanguage" : firstTarget,
-                "nativeLanguageList": nativeCodes,
+                "targetLanguage": firstTarget,
+                "nativeLanguageList": nativeLanguageList,
                 "languagesData": encodedLanguagesData
             ]
 
-            db.collection("users").document(uid).updateData(data) { error in
+            db.collection("users").document(uid).updateData(dataToSave) { error in
                 if let error = error {
                     completion(.failure(error))
                 } else {
@@ -197,7 +200,6 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             }
         }
     }
-    
     
     func updateUsername(username: String, completion: @escaping (Result<Void, Error>) -> Void) {
         guard let userID = Auth.auth().currentUser?.uid else {

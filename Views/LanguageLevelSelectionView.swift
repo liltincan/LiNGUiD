@@ -51,13 +51,12 @@ struct LanguageLevelSelectionView: View {
 //                        selectedLevel = level
 //                    }
                     .onTapGesture {
-                        withAnimation {
-                            if selectedLevel == level {
-                                selectedLevel = nil    // unselect if tapping the same one
-                            } else {
-                                selectedLevel = level
-                            }
+                        if selectedLevel == level {
+                            selectedLevel = nil
+                        } else {
+                            selectedLevel = level
                         }
+                        print("Level '\(selectedLevel ?? "nil")' selected for \(languageName)")
                     }
 
                 }

@@ -147,6 +147,7 @@ struct OnboardingFlowView: View {
                             ),
                             languageName: currentLanguage,
                             onContinue: {
+                                print("🚀 Saved '\(languageLevels[currentLanguage] ?? "nil")' for \(currentLanguage)")
                                 selectPage += 1
                                 if selectPage >= targetLanguages.count {
                                     page += 1
