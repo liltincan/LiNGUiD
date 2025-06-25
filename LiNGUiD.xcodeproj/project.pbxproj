@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		047C2F532E0C5FA40052C0C3 /* VideoUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */; };
 		132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1320204F2DE8D07100DD8AF1 /* SettingsView.swift */; };
 		138018E52DF0AD01003FC3D6 /* ChangePasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */; };
 		138F1B962DEE0DF700F3B31B /* VideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B952DEE0DF300F3B31B /* VideoView.swift */; };
@@ -100,6 +101,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoUploadService.swift; sourceTree = "<group>"; };
 		1320204F2DE8D07100DD8AF1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangePasswordView.swift; sourceTree = "<group>"; };
 		138F1B952DEE0DF300F3B31B /* VideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoView.swift; sourceTree = "<group>"; };
@@ -238,6 +240,7 @@
 		8F51F2192DE01C2C00397726 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */,
 				8F51F2332DE023DF00397726 /* FirestoreVideoRepository.swift */,
 				8F51F2322DE023C300397726 /* VideoRepository.swift */,
 				8F51F2312DE023A600397726 /* FirebaseAuthService.swift */,
@@ -561,6 +564,7 @@
 				D69E53EE2DEA4C5E00329D64 /* FirestoreService.swift in Sources */,
 				8FB929542DE02A790020AFCD /* FirestoreVideoRepository.swift in Sources */,
 				8FB929552DE02A790020AFCD /* AuthService.swift in Sources */,
+				047C2F532E0C5FA40052C0C3 /* VideoUploadService.swift in Sources */,
 				138F1B982DEF6D2F00F3B31B /* EditProfileView.swift in Sources */,
 				60F930CE2DEA83F300E37156 /* SavedWordsViewModel.swift in Sources */,
 				60974D882DE79D130075CAAE /* AppColors.swift in Sources */,
