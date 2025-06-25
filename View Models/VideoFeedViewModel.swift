@@ -72,6 +72,12 @@ class VideoFeedViewModel: ObservableObject {
                 selectedLanguage: targetLanguage
             )
             
+            for video in newVideos {
+                DispatchQueue.global(qos: .background).async {
+                    _ = VideoAssetCache.shared.asset(for: video.url)
+                }
+            }
+            
             videos = newVideos
             lastID = newVideos.last?.id
         } catch {

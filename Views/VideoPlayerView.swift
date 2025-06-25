@@ -299,21 +299,12 @@ struct VideoPlayerView: View {
     private func setupPlayer() {
         configureAudioSession()
 
-        if let cached = VideoCache.shared.player(for: url) as? AVQueuePlayer {
-            player = cached
-            looper = AVPlayerLooper(
-                player: cached,
-                templateItem: AVPlayerItem(url: url)
-            )
-        } else {
-            let queuePlayer = AVQueuePlayer()
-            looper = AVPlayerLooper(
-                player: queuePlayer,
-                templateItem: AVPlayerItem(url: url)
-            )
-            VideoCache.shared.setPlayer(queuePlayer, for: url)
-            player = queuePlayer
-        }
+        let asset = VideoAssetCache.shared.asset(for: url)
+        let item = AVPlayerItem(asset: asset)
+
+        let queuePlayer = AVQueuePlayer()
+        looper = AVPlayerLooper(player: queuePlayer, templateItem: item)
+        player = queuePlayer
 
         player.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 0.25, preferredTimescale: 600),
@@ -652,3 +643,23 @@ struct ActionButton: View {
         .contentShape(Rectangle())
     }
 }
+
+final class VideoAssetCache {
+    static let shared = VideoAssetCache()
+    private var cache: [URL: AVAsset] = [:]
+
+    func asset(for url: URL) -> AVAsset {
+        if let cached = cache[url] {
+            return cached
+        } else {
+            let asset = AVURLAsset(url: url)
+            cache[url] = asset
+            return asset
+        }
+    }
+
+    func clear() {
+        cache.removeAll()
+    }
+}
+
