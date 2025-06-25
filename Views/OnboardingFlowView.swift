@@ -16,6 +16,8 @@ struct OnboardingFlowView: View {
     @State private var selectedCountry: String? = nil
     @State private var username: String = ""
     @State private var locationManager = CLLocationManager()
+    @State private var isUsernameAvailable: Bool? = nil
+    @State private var isCheckingUsername = false
     
     
     private let total = 0  // number of pages
@@ -184,9 +186,17 @@ struct OnboardingFlowView: View {
                         TextField("Enter your username", text: $username)
                             .padding()
                             .background(Color.white)
-                            //.cornerRadius(8)
                             .foregroundColor(.black)
                             .multilineTextAlignment(.center)
+                            .onChange(of: username) {
+                                checkUsernameAvailability(username)
+                            }
+                        if let available = isUsernameAvailable, !available {
+                            Text("Username is already taken !")
+                                .foregroundColor(.red)
+                                .font(.system(size: 12, weight: .bold))
+                                .padding(.top, 5)
+                        }
                     }
                     .padding(.horizontal, 15)
                     .padding(.bottom, 15)
@@ -204,17 +214,21 @@ struct OnboardingFlowView: View {
                         page += 1
                         print("Username: \(username)")
                     }) {
-                        Text("Continue")
+                        Text(isCheckingUsername ? "Checking..." : "Continue")
                             .foregroundColor(.white)
                             .font(.headline)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(username.isEmpty ? Color(red: 62/255, green: 29/255, blue: 119/255) : Color(red: 124/255, green: 58/255, blue: 237/255))
+                            .background(
+                                (isUsernameAvailable == true && !username.isEmpty) ?
+                                Color(red: 124/255, green: 58/255, blue: 237/255) :
+                                Color(red: 62/255, green: 29/255, blue: 119/255)
+                            )
                             .cornerRadius(8)
                     }
                     .padding(.horizontal, 10)
                     .padding(.bottom, 40)
-                    .disabled(username.isEmpty) // prevent tap when empty
+                    .disabled(username.isEmpty || isUsernameAvailable != true || isCheckingUsername)
                 
                     
                 
@@ -233,6 +247,12 @@ struct OnboardingFlowView: View {
                     OnboardingPageView(index: 4)
                     
                     Button(action: {
+                        // Use a DispatchGroup to wait for both Firestore operations to complete
+                        let dispatchGroup = DispatchGroup()
+                        var allSucceeded = true
+
+                        // 1. Save Language Preferences (existing call)
+                        dispatchGroup.enter()
                         FirestoreService.shared.updateUserLanguagePreferences(
                             nativeLanguages: selectedNativeLanguages,
                             targetLanguages: selectedTargetLanguages,
@@ -240,11 +260,52 @@ struct OnboardingFlowView: View {
                         ) { result in
                             switch result {
                             case .success:
-                                print("User preferences saved.")
+                                print("User language preferences saved successfully.")
                             case .failure(let error):
-                                print("Error saving preferences: \(error.localizedDescription)")
+                                print("Error saving language preferences: \(error.localizedDescription)")
+                                allSucceeded = false
                             }
-                            onComplete()
+                            dispatchGroup.leave()
+                        }
+
+                        // 2. Save Country Data (new call)
+                        if let country = selectedCountry {
+                            dispatchGroup.enter()
+                            FirestoreService.shared.updateUserCountry(country: country) { result in
+                                switch result {
+                                case .success:
+                                    print("User country data saved successfully.")
+                                case .failure(let error):
+                                    print("Error saving country data: \(error.localizedDescription)")
+                                    allSucceeded = false
+                                }
+                                dispatchGroup.leave()
+                            }
+                        } else {
+                            print("No country selected, skipping country data save.")
+                        }
+                        
+                        dispatchGroup.enter()
+                        FirestoreService.shared.updateUsername(username: username) { result in
+                            switch result {
+                            case .success:
+                                print("Username saved successfully.")
+                            case .failure(let error):
+                                print("Error saving username: \(error.localizedDescription)")
+                                allSucceeded = false
+                            }
+                            dispatchGroup.leave()
+                        }
+
+                        // Notify when all operations are done
+                        dispatchGroup.notify(queue: .main) {
+                            if allSucceeded {
+                                print("All onboarding data saved successfully!")
+                                onComplete() // Complete the onboarding flow only if all operations succeeded
+                            } else {
+                                print("One or more errors occurred during onboarding data save.")
+                                // You might want to show an alert to the user here
+                            }
                         }
                     }) {
                         Text("Begin")
@@ -270,6 +331,46 @@ struct OnboardingFlowView: View {
         }
         .background(Color.black.ignoresSafeArea())
     }
+    
+    func checkUsernameAvailability(_ name: String) {
+        guard !name.isEmpty else {
+            isUsernameAvailable = nil
+            return
+        }
+
+        isCheckingUsername = true
+        let db = Firestore.firestore()
+
+        guard let currentUserID = Auth.auth().currentUser?.uid else {
+            isUsernameAvailable = nil
+            isCheckingUsername = false
+            return
+        }
+
+        db.collection("users")
+            .whereField("userName", isEqualTo: name)
+            .getDocuments { snapshot, error in
+                isCheckingUsername = false
+
+                if let error = error {
+                    print("Error checking username: \(error.localizedDescription)")
+                    isUsernameAvailable = nil
+                    return
+                }
+
+                if let documents = snapshot?.documents {
+                    // Check if any other user (not the current user) has this username
+                    let takenByAnotherUser = documents.contains { doc in
+                        doc.documentID != currentUserID
+                    }
+
+                    isUsernameAvailable = !takenByAnotherUser
+                } else {
+                    isUsernameAvailable = true
+                }
+            }
+    }
+
 }
 
 

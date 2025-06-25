@@ -36,7 +36,7 @@ struct User: Codable, Identifiable {
         case id, email, userName, createdAt, flameDate, flameStatus,
             globalWatchTime, interests, targetLanguage, languagesData,
             likedVideos, savedVideos, watchedVideos, uploadedVideos,
-             nativeLanguage, nativeLanguageList,
+            nativeLanguage, nativeLanguageList,
             followers, following, chats, country, streak, profilePhotoUrl
     }
 

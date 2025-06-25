@@ -175,6 +175,73 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         }
     }
     
+    func updateUserCountry(
+        country: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            completion(.failure(NSError(domain: "AuthError", code: 0, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])))
+            return
+        }
+
+        let userRef = db.collection("users").document(userId)
+
+        // Use updateData to add/modify only the 'country' field
+        userRef.updateData(["country": country]) { error in
+            if let error = error {
+                print("Error updating country for user \(userId): \(error.localizedDescription)")
+                completion(.failure(error))
+            } else {
+                print("Country '\(country)' successfully added/updated for user \(userId).")
+                completion(.success(()))
+            }
+        }
+    }
+    
+    func checkIfUsernameExists(
+        username: String,
+        excludeUserId: String?, // <-- Add this new parameter
+        completion: @escaping (Result<Bool, Error>) -> Void
+    ) {
+        var query: Query = db.collection("users")
+            .whereField("userName", isEqualTo: username) // Assuming your username field is "userName"
+
+        // If an excludeUserId is provided, add a condition to filter out that user's document
+        if let idToExclude = excludeUserId {
+            query = query.whereField(FieldPath.documentID(), isNotEqualTo: idToExclude)
+        }
+
+        query.getDocuments { (querySnapshot, error) in
+            if let error = error {
+                print("Error checking username existence: \(error.localizedDescription)")
+                completion(.failure(error))
+                return
+            }
+
+            // If querySnapshot is not nil and contains any documents, the username exists (for *another* user)
+            let exists = !(querySnapshot?.documents.isEmpty ?? true)
+            completion(.success(exists))
+        }
+    }
+    
+    func updateUsername(username: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            completion(.failure(NSError(domain: "auth", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])))
+            return
+        }
+
+        let db = Firestore.firestore()
+        let userRef = db.collection("users").document(userID)
+
+        userRef.updateData(["userName": username]) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+    
 }
 
 
