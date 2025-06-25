@@ -9,30 +9,16 @@ import SwiftUI
 
 //MARK: - View (Main View)
 struct ChatListView: View {
-    //hardcode data for testing
-    let sampleChats = [
-        Chat(username: "starryskies23", message: "Coucou", status: "active now", flag: "🇫🇷", profileimage: "GoogleLogo", isActive: true),
-        Chat(username: "nebulaNomad", message: "t es là où?", status: "active now", flag: "🇲🇽", profileimage: "profile2", isActive: true),
-        Chat(username: "Eloïse", message: "tu fais quoi là", status: "active now", flag: "🇨🇦", profileimage: "profile3", isActive: true),
-        Chat(username: "lunaVoyager", message: "Bonsoir", status: "1 minute ago", flag: "🇫🇷", profileimage: "profile4", isActive: false)
-    ]
+    @StateObject private var viewModel = ChatListViewModel()
     //controls what chat it is at -> currently empty
     @State private var selectedChat: ChatConversation? = nil
-    //computed property-> when this access it runs this code inside the {...}
-    private var sampleConversations: [ChatConversation] {
-        //now you map the user chat with their messages (key->value)
-        sampleChats.map { chat in
-            ChatConversation(
-                friend: chat,
-                messages: generateMessages(for: chat.username)
-            )
-        }
-    }
+    @State private var discoveryPage = false
+    
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
             if let conversation = selectedChat {
-                ChatMessagesConvo(conversation:conversation) {
+                ChatMessagesConvoView(chatID:conversation.friend.id, viewModel: viewModel) {
                     //then set it back to nil once they go back
                     selectedChat = nil
                 }
@@ -48,97 +34,89 @@ struct ChatListView: View {
                         Spacer()
                         //once click the button then it goes to
                         Button(action: {
-                            
+                            discoveryPage = true
                         }) {
-                            Text("Make friends +")
+                            Text("Find friends +")
                                 .padding(8)
                                 .padding(.horizontal)
-                                .background(Color.purple)
+                                .background(Color.linguidPurple)
                                 .foregroundColor(.white)
                                 .cornerRadius(20)
                         }
                     }
                     .padding()
                     lineDivider()
-                    //create the chats to be in a lists
-                    List(sampleConversations) { conversation in
-                        Button(action: {
-                            selectedChat = conversation
-                        }) {
-                            ChatRowView(chat: conversation.friend)
+                    //checking if user has any conversations
+                    if (viewModel.conversations.isEmpty) {
+                        Spacer()
+                        VStack(spacing: 16) {
+                            Text("No Partners Yet...")
+                                .foregroundColor(.gray)
+                                .font(.headline)
+                            
+                            Button(action: {
+                                discoveryPage = true
+                            }) {
+                                Text("Find friends +")
+                                    .padding(10)
+                                    .padding(.horizontal)
+                                    .background(Color.linguidPurple)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(20)
+                            }
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .listRowBackground(Color.black)
+                        Spacer()
                     }
-                    .background(Color.black)
-                    .listStyle(PlainListStyle())
+                    else {
+                        List {
+                            ForEach(viewModel.conversations) { conversation in
+                                Button(action: {
+                                    selectedChat = conversation
+                                }) {
+                                    ChatRowView(chat: conversation.friend)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .listRowBackground(Color.black)
+                                .listRowSeparatorTint(.gray)
+                            }
+                            //will create the swipe option to delete
+                            .onDelete(perform: deleteChat)
+                        }
+                        .background(Color.black)
+                        .listStyle(PlainListStyle())
+                    }
                 }
                 .padding(.top,30)
                 .background(Color.black)
             }
         }
-    }
-    //MARK: - Function to get messages (testing data)
-    //precondition: call the ChatMessages since we need it in array
-    //postcondition: going to return the conversation for that specific user
-    private func generateMessages(for username: String) -> [ChatMessages] {
-        switch username {
-        case "starryskies23":
-            return [
-                ChatMessages(text: "Coucou!", isFromCurrentUser: false),
-                ChatMessages(text: "Salut toi", isFromCurrentUser: true),
-                ChatMessages(text: "Tu fais quoi?", isFromCurrentUser: false)
-            ]
-        case "nebulaNomad":
-            return [
-                ChatMessages(text: "t es là où?", isFromCurrentUser: false),
-                ChatMessages(text: "J'arrive !", isFromCurrentUser: true),
-                ChatMessages(text: "Ramène du café stp", isFromCurrentUser: false)
-            ]
-        case "Eloïse":
-            return [
-                ChatMessages(text: "tu fais quoi là", isFromCurrentUser: false),
-                ChatMessages(text: "je code 🧠, do you speak enlgish? can you help", isFromCurrentUser: true),
-                ChatMessages(text: "cool tu me montres?", isFromCurrentUser: false)
-            ]
-        case "lunaVoyager":
-            return [
-                ChatMessages(text: "Bonsoir", isFromCurrentUser: false),
-                ChatMessages(text: "Hey hey !", isFromCurrentUser: true),
-                ChatMessages(text: "Tu veux sortir ce soir?", isFromCurrentUser: false)
-            ]
-        default:
-            return [
-                ChatMessages(text: "Message par défaut", isFromCurrentUser: false)
-            ]
+        .fullScreenCover(isPresented: $discoveryPage){
+            DiscoveryView(viewModel: viewModel) {
+                discoveryPage = false
+            }
         }
     }
-}
-//MARK: - Model for Users Friends Information
-struct Chat: Identifiable {
-    let id = UUID()
-    var username: String
-    var message: String
-    var status: String
-    var flag: String
-    var profileimage: String
-    var isActive: Bool
+    //this function will delete the chat
+    private func deleteChat(at offsets: IndexSet) {
+        for index in offsets {
+            let conversation = viewModel.conversations[index]
+            //going to delete the id of the user
+            viewModel.softDeleteChatForCurrentUser(chatID: conversation.friend.id)
+        }
+    }
+
 }
 //MARK: - Chat Row View
 //precondition: pass in the model
 //postcondition: will show the chats of the users so contains the username , message, status, flag, profileimage, and isactive
 struct ChatRowView: View {
     let chat: Chat
+    
     var body: some View {
         HStack(spacing: 12) {
             //the profile image should be overlayed with the flag and the active
             ZStack(alignment: .bottom){
-                Image(chat.profileimage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 50, height: 50)
-                    .clipShape(Circle())
-                
+                ProfileImageView(imageUrl: chat.profileimage)
                 //now the flag and the active need to be side to side
                 HStack(spacing: 4) {
                     Text(chat.flag)
@@ -148,7 +126,6 @@ struct ChatRowView: View {
                         Circle()
                             .fill(Color.green)
                             .frame(width:10, height:10)
-                        
                     }
                 }
                 .padding(.bottom, -8)
@@ -158,10 +135,10 @@ struct ChatRowView: View {
                 Text(chat.username)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
-                Text(chat.message)
+                Text(chat.lastMessage)
                     .foregroundColor(.gray)
                     .font(.subheadline)
-                Text(chat.status)
+                Text(formattedLastSeenText(isActive: chat.isActive, lastSeen: chat.lastSeen))
                     .font(.caption)
                     .foregroundColor(.gray)
                     .italic(true)
@@ -174,32 +151,16 @@ struct ChatRowView: View {
         
     }
 }
-
-//MARK: - Model for Chat Messages
-struct ChatMessages: Identifiable {
-    let id = UUID()
-    var text: String
-    //who is replying
-    var isFromCurrentUser: Bool
-    //TODO: add a 'read' status option to determine if it was read by the friend
-}
-//MARK: - Model for which Conversation it is with their messages
-struct ChatConversation: Identifiable {
-    let id = UUID()
-    var friend: Chat
-    var messages: [ChatMessages]
-}
-//MARK: - Focus Field to control the keyboard typing
-enum FocusField {
-    case sendMessage
-}
 //MARK: - Conversation View
 //precondition: pass in the model
 //postcondition: will show the full conversation with friend
-struct ChatMessagesConvo: View {
-    let conversation: ChatConversation
+struct ChatMessagesConvoView: View {
+    let chatID: String
+    @ObservedObject var viewModel: ChatListViewModel
     //closure function that allows user to go back to the main
     var onBack: () -> Void
+    
+    @State private var messages: [ChatMessages] = []
     @State private var sendMessage = ""
     @State private var isMessageEmtpy = false
     //controls the input
@@ -208,80 +169,91 @@ struct ChatMessagesConvo: View {
     var body: some View {
         //everything has to be vertical
         VStack {
-            //this is for the profile,name, active, and phone and facetime
-            HStack(spacing: 12) {
-                Button(action: onBack) {
-                    Image(systemName:"chevron.left")
-                        .foregroundColor(.white)
+            if let chat = viewModel.chats.first(where: {$0.id == chatID}){
+                //this is for the profile,name, active, and phone and facetime
+                HStack(spacing: 12) {
+                    Button(action: onBack) {
+                        Image(systemName:"chevron.left")
+                            .foregroundColor(.white)
+                    }
+                    ProfileImageView(imageUrl:chat.profileimage)
+                    //this has to be together
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(chat.username)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                        Text(formattedLastSeenText(isActive: chat.isActive, lastSeen: chat.lastSeen))
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                            .italic(true)
+                    }
+                    Spacer()
+                    HStack(spacing: 20) {
+                        Image(systemName: "phone.fill")
+                        Image(systemName: "video.fill")
+                    }
+                    .foregroundColor(.white)
                 }
-                Image(conversation.friend.profileimage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 50, height: 50)
-                    .clipShape(Circle())
-                //this has to be together
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(conversation.friend.username)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                    Text(conversation.friend.status)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .italic(true)
-                }
-                Spacer()
-                HStack(spacing: 20) {
-                    Image(systemName: "phone.fill")
-                    Image(systemName: "video.fill")
-                }
-                .foregroundColor(.white)
+                .padding(.horizontal, 10)
+                .padding(.top, 12)
+                .padding(.bottom, 2)
             }
-            .padding()
             lineDivider()
-            
-            //make the messages scrollable
-            ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(conversation.messages) { msg in
-                        HStack {
-                            //this is the users message
-                            if (msg.isFromCurrentUser) {
-                                Spacer()
-                                Text(msg.text)
-                                    .padding()
-                                    .background(Color.purple)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(20)
-                                    .frame(maxWidth:260, alignment: .trailing)
+            ScrollViewReader { proxy in
+                //make the messages scrollable
+                ScrollView {
+                    VStack(spacing: 4) {
+                        ForEach(messages) { msg in
+                            HStack {
+                                //this is the users message
+                                if (msg.isFromCurrentUser) {
+                                    Spacer()
+                                    Text(msg.text)
+                                        .padding(10)
+                                        .background(Color.linguidPurple)
+                                        .foregroundColor(.white)
+                                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                                        .frame(maxWidth: 280, alignment: .trailing)
+                                }
+                                else {
+                                    Text(msg.text)
+                                        .padding(10)
+                                        .background(Color.white)
+                                        .foregroundColor(.black)
+                                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                                        .frame(maxWidth: 280, alignment: .leading)
+                                    Spacer()
+                                }
                             }
-                            else {
-                                Text(msg.text)
-                                    .padding()
-                                    .background(Color.white)
-                                    .foregroundColor(.black)
-                                    .cornerRadius(20)
-                                    .frame(maxWidth: 260, alignment: .leading)
-                                Spacer()
+                            .padding(.horizontal,10)
+                            .id(msg.id)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+                //get updates while the value is changing so it loads to the bottom
+                .onChange(of: messages) {_ in
+                    if let last = messages.last {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            withAnimation {
+                                proxy.scrollTo(last.id, anchor: .bottom)
                             }
                         }
-                        .padding(.horizontal)
                     }
                 }
-                .padding(.top)
             }
-            ZStack {
+            //message over the text field
+            ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 15)
                     .fill(Color.white)
-                    .frame(height: 45)
+                    .frame(height: 50)
                 HStack {
                     if(sendMessage.isEmpty) {
                         Text("Message...")
                             .foregroundColor(.black)
-                        
+                        Spacer()
                     }
                     TextField("", text: $sendMessage)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
                         .foregroundColor(.black)
                     Image(systemName: "mic.fill")
                         .foregroundColor(.black)
@@ -290,17 +262,132 @@ struct ChatMessagesConvo: View {
             }
             .padding(.horizontal)
             .focused($focusfield, equals: .sendMessage)
-            .submitLabel(.done)
+            .submitLabel(.send)
             .onSubmit {
+                send()
                 focusfield = nil
             }
         }
         .padding(.bottom, 10)
         .background(Color.black)
+        //when this view loads-> it will then load up the convos as they update
+        .onAppear {
+            viewModel.listenToMessages(for: chatID) {msg in
+                self.messages = msg
+            }
+        }
         .onTapGesture {
             //dismiss the keyboard when user touches the chat
             focusfield = nil
         }
+    }
+    //precondition: call the sendMessage() from the viewmodel
+    //postcondition: going to allow user to send a message
+    private func send() {
+        let trimmed = sendMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        
+        viewModel.sendMessage(trimmed, to: chatID)
+        sendMessage = ""
+    }
+}
+//MARK: - Discovery Page View
+//precondition: none
+//postcondition: going to make the discover page where user can send a simple 'Hi!' to another user
+struct DiscoveryView : View {
+    @ObservedObject var viewModel: ChatListViewModel
+    //closure function that allows user to go back to the main
+    var onBack: () -> Void
+    
+    var body: some View {
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
+            VStack {
+                HStack {
+                    Button(action: onBack) {
+                        Image(systemName:"chevron.left")
+                            .foregroundColor(.white)
+                    }
+                    Text("Discover")
+                        .foregroundColor(.white)
+                        .font(.title)
+                        .fontWeight(.bold)
+                    Spacer()
+                }
+                .padding()
+                lineDivider()
+                
+                List(viewModel.discoverableUsers) { user in
+                    //check if the user already messaged them
+                    let hasMessaged = viewModel.chattedUserIDs.contains(user.id)
+                    HStack {
+                        ProfileImageView(imageUrl: user.profileimage)
+                        VStack(alignment: .leading) {
+                            Text(user.username)
+                                .foregroundColor(.white)
+                            Text(formattedLastSeenText(isActive: user.isActive, lastSeen: user.lastSeen))
+                                .font(.caption)
+                                .italic()
+                                .foregroundColor(.gray)
+                        }
+                        Spacer()
+                        Button(action: {
+                            //this is the data that going to go in the database of the user
+                            let userInfo: [String: Any] = [
+                                "username": user.username,
+                                "status": user.status,
+                                "flag": user.flag,
+                                "profilePhotoUrl": user.profileimage,
+                                "isActive": user.isActive
+                            ]
+                            //now get thier id and put the info with their id
+                            viewModel.startChat(with: user.id, otherUserInfo: userInfo) { _ in
+                                onBack()
+                            }
+                        }) {
+                            Text(hasMessaged ? "Messaged" : "Say Hi!")
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .background(hasMessaged ? Color.gray : Color.linguidPurple)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                            
+                        }
+                        .disabled(hasMessaged)
+                        
+                    }
+                    .listRowBackground(Color.black)
+                    .listRowSeparatorTint(.gray)
+                }
+                //will load the users when this view appears right away
+                .onAppear {
+                    viewModel.fetchDiscoverableUsersFromUsers()
+                }
+                .background(Color.black)
+                .listStyle(PlainListStyle())
+            }
+        }
+    }
+}
+//MARK: - Profile image reusable
+//precondition: none
+//postcondition: allowed this to reuse so it can determine if users has a profile or not
+struct ProfileImageView: View {
+    var imageUrl: String
+    var body: some View {
+        AsyncImage(url: URL(string: imageUrl)) { phase in
+            if let image = phase.image {
+                image
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                Image("defaultProfile")
+                    .resizable()
+                    .scaledToFit()
+            }
+        }
+        .frame(width: 50, height: 50)
+        .clipShape(Circle())
     }
 }
 //precondition: none
@@ -311,6 +398,31 @@ func lineDivider() -> some View{
         .frame(maxWidth: .infinity)
         .background(Color.white)
 }
+//precondition: none
+//postcondition: going to check when the user was last active and return the prompt
+func formattedLastSeenText(isActive: Bool, lastSeen: Date?) -> String {
+    if (isActive) {
+        return "Active now"
+    }
+    else if let lastSeen = lastSeen {
+        let minutesAgo = Int(Date().timeIntervalSince(lastSeen) / 60)
+        if minutesAgo < 1 {
+            return "Just now"
+        }
+        else if minutesAgo < 60 {
+            return "\(minutesAgo) minutes ago"
+        }
+        else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d, h:mm a"
+            return "Last seen \(formatter.string(from: lastSeen))"
+        }
+    }
+    else {
+        return "Offline"
+    }
+}
+
 
 //MARK: - Previewing
 struct ChatListView_Previews: PreviewProvider {

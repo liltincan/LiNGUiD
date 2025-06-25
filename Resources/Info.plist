@@ -2,22 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleURLTypes</key>
-    <array>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>com.googleusercontent.apps.46600094458-e8n7cfvr3oqldvi9822khma02p8fgs27</string>
-        </array>
-      </dict>
-    </array>
-
-	<key>NSPhotoLibraryUsageDescription</key>
-    <string>This app needs access to your photo library to upload videos.</string>
-
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app uses your location to improve personalization.</string>
-
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.46600094458-e8n7cfvr3oqldvi9822khma02p8fgs27</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIAppFonts</key>
