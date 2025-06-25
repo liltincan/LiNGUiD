@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		047C2F532E0C5FA40052C0C3 /* VideoUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */; };
+		0493FF562E0C614700D6F989 /* LaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0493FF552E0C614700D6F989 /* LaunchManager.swift */; };
 		132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1320204F2DE8D07100DD8AF1 /* SettingsView.swift */; };
 		138018E52DF0AD01003FC3D6 /* ChangePasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */; };
 		138F1B962DEE0DF700F3B31B /* VideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B952DEE0DF300F3B31B /* VideoView.swift */; };
@@ -102,6 +103,7 @@
 
 /* Begin PBXFileReference section */
 		047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoUploadService.swift; sourceTree = "<group>"; };
+		0493FF552E0C614700D6F989 /* LaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchManager.swift; sourceTree = "<group>"; };
 		1320204F2DE8D07100DD8AF1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangePasswordView.swift; sourceTree = "<group>"; };
 		138F1B952DEE0DF300F3B31B /* VideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoView.swift; sourceTree = "<group>"; };
@@ -311,6 +313,7 @@
 		8F51F2222DE01CB500397726 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				0493FF552E0C614700D6F989 /* LaunchManager.swift */,
 				603628C12DFA91C900C6D0E5 /* AppTextTranslate.swift */,
 				60974D852DE79BDF0075CAAE /* AppTitleText.swift */,
 				604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */,
@@ -556,6 +559,7 @@
 				13F4B15F2DFC99A70019BE81 /* ChangeLanguageFlowView.swift in Sources */,
 				81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */,
 				D69E53EC2DEA4B5000329D64 /* UserSessionViewModel.swift in Sources */,
+				0493FF562E0C614700D6F989 /* LaunchManager.swift in Sources */,
 				8FB929522DE02A600020AFCD /* VideoFeedCoordinatorView.swift in Sources */,
 				8FB9294B2DE02A260020AFCD /* RootCoordinatorView.swift in Sources */,
 				604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */,
@@ -755,7 +759,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = WBXZ64TNQB;
+				DEVELOPMENT_TEAM = K998M9N8YF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
@@ -800,7 +804,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = WBXZ64TNQB;
+				DEVELOPMENT_TEAM = K998M9N8YF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
