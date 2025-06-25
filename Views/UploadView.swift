@@ -1,11 +1,13 @@
 import SwiftUI
 import Photos
+import AVFoundation
 
 struct UploadView: View {
     @State private var videoAssets: [PHAsset] = []
     @State private var selectedAssets: [PHAsset] = []
     @State private var isMultiSelect = false
     @State private var navigateToThumbnail = false
+    @State private var uploadService = VideoUploadService()
 
     let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 3)
 
@@ -107,6 +109,128 @@ struct UploadView: View {
         .onAppear {
             loadVideos()
         }
+
+        // Temporary video upload testing
+        VStack {
+            Button("Test API Connection") {
+                testAPIConnection()
+            }
+
+            Button("Test Video Upload") {
+                testVideoUpload()
+            }
+            Button("Test Mock Upload") {
+                testWithMockVideo()
+            }
+        }
+    }
+
+    private func testAPIConnection() {
+        Task {
+            await uploadService.testConnection()
+        }
+    }
+
+    // Helped function to convert PHAsset to Data
+    private func convertAssetToData(asset: PHAsset) async throws -> Data {
+        return try await withCheckedThrowingContinuation { continuation in
+            let options = PHVideoRequestOptions()
+            options.deliveryMode = .highQualityFormat
+            options.isNetworkAccessAllowed = true
+            
+            PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
+                guard let urlAsset = avAsset as? AVURLAsset else {
+                    continuation.resume(throwing: VideoUploadError(
+                        message: "Could not get video URL from asset",
+                        code: "asset_conversion_failed",
+                        details: nil
+                    ))
+                    return
+                }
+                
+                do {
+                    let videoData = try Data(contentsOf: urlAsset.url)
+                    continuation.resume(returning: videoData)
+                } catch {
+                    continuation.resume(throwing: VideoUploadError(
+                        message: "Could not read video data",
+                        code: "data_read_failed", 
+                        details: error.localizedDescription
+                    ))
+                }
+            }
+        }
+    }
+
+    private func testVideoUpload() {
+        // Check if we have a selected video
+        guard let firstAsset = selectedAssets.first else {
+            print("No video selected. Please select a video first")
+            return
+        }
+
+        print("Testing upload with selected video")
+
+        Task {
+            do {
+                // Step 1: Convert PHAsset to Data
+            let videoData = try await convertAssetToData(asset: firstAsset)
+            print("Converted video to data: \(videoData.count) bytes")
+            
+            // Step 2: Upload to your Python API
+            let response = try await uploadService.uploadVideo(
+                videoData: videoData,
+                filename: "test_video_\(Date().timeIntervalSince1970).mp4",
+                category: "conversation", // Required by your API
+                language: "auto",
+                uploaderId: "test_user_123"
+            )
+            
+            // Step 3: Success!
+            print("UPLOAD SUCCESS!")
+            print("Video ID: \(response.documentId)")
+            print("Difficulty Level: \(response.level)")
+            print("Language: \(response.language)")
+            print("Keywords: \(response.keywords)")
+            print("Transcript preview: \(response.transcript.prefix(100))...")
+            print("Video URL: \(response.videoUrl)")
+            
+            } catch {
+                print("UPLOAD FAILED:")
+                print("   Error: \(error)")
+                
+                if let uploadError = error as? VideoUploadError {
+                    print("   Code: \(uploadError.code ?? "unknown")")
+                    print("   Details: \(uploadError.details ?? "none")")
+                }
+            }
+        }
+    }
+
+    // Alternative: Test with a mock video
+    private func testWithMockVideo() {
+        print("Testing with mock video data...")
+        
+        // Create small mock video data (just for testing API communication)
+        let mockVideoData = "mock video content".data(using: .utf8) ?? Data()
+        
+        Task {
+            do {
+                let response = try await uploadService.uploadVideo(
+                    videoData: mockVideoData,
+                    filename: "mock_test.mp4",
+                    category: "test",
+                    language: "auto",
+                    uploaderId: "test_user"
+                )
+                
+                print("Mock upload successful!")
+                print("Response: \(response)")
+                
+            } catch {
+                print("Mock upload failed: \(error)")
+            }
+        }
     }
 
     private func handleSelection(for asset: PHAsset) {
@@ -122,14 +246,18 @@ struct UploadView: View {
     }
 
     private func loadVideos() {
-        PHPhotoLibrary.requestAuthorization(for: .readWrite) { _ in
+        PHPhotoLibrary.requestAuthorization(for: .readWrite) { authStatus in
+            print("Photo library authorization status: \(authStatus)")
+        
             let options = PHFetchOptions()
             options.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.video.rawValue)
             options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
 
             let results = PHAsset.fetchAssets(with: options)
+            print("Found \(results.count) videos in photo library")
             DispatchQueue.main.async {
                 videoAssets = results.objects(at: IndexSet(0..<results.count))
+                print("Loaded \(videoAssets.count) video assets")
             }
         }
     }
@@ -227,7 +355,6 @@ struct AddThumbnailView: View {
         .background(Color.black.ignoresSafeArea()) // whole screen black
     }
 }
-
 //struct UploadView_Previews: PreviewProvider {
 //    static var previews: some View {
 //        UploadView()
