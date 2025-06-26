@@ -198,31 +198,6 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         }
     }
     
-    func checkIfUsernameExists(
-        username: String,
-        excludeUserId: String?, // <-- Add this new parameter
-        completion: @escaping (Result<Bool, Error>) -> Void
-    ) {
-        var query: Query = db.collection("users")
-            .whereField("userName", isEqualTo: username) // Assuming your username field is "userName"
-
-        // If an excludeUserId is provided, add a condition to filter out that user's document
-        if let idToExclude = excludeUserId {
-            query = query.whereField(FieldPath.documentID(), isNotEqualTo: idToExclude)
-        }
-
-        query.getDocuments { (querySnapshot, error) in
-            if let error = error {
-                print("Error checking username existence: \(error.localizedDescription)")
-                completion(.failure(error))
-                return
-            }
-
-            // If querySnapshot is not nil and contains any documents, the username exists (for *another* user)
-            let exists = !(querySnapshot?.documents.isEmpty ?? true)
-            completion(.success(exists))
-        }
-    }
     
     func updateUsername(username: String, completion: @escaping (Result<Void, Error>) -> Void) {
         guard let userID = Auth.auth().currentUser?.uid else {
