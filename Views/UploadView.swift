@@ -1,6 +1,7 @@
 import SwiftUI
 import Photos
 import AVFoundation
+import FirebaseAuth
 
 struct UploadView: View {
     @State private var videoAssets: [PHAsset] = []
@@ -131,7 +132,7 @@ struct UploadView: View {
         }
     }
 
-    // Helped function to convert PHAsset to Data
+    // Helper function to convert PHAsset to Data
     private func convertAssetToData(asset: PHAsset) async throws -> Data {
         return try await withCheckedThrowingContinuation { continuation in
             let options = PHVideoRequestOptions()
@@ -302,6 +303,8 @@ struct VideoThumbnailMiniView: View {
 
 struct AddThumbnailView: View {
     let assets: [PHAsset]
+    @State private var uploadService = VideoUploadService()
+    @State private var isUploading = false
 
     var body: some View {
         VStack {
@@ -338,9 +341,10 @@ struct AddThumbnailView: View {
             
             Button(action: {
                 // Handle continue action
-                print("Continue tapped")
+                //print("Continue tapped")
+                uploadSelectedVideo()
             }) {
-                Text("Upload")
+                Text(isUploading ? "Uploading..." : "Upload")
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -348,11 +352,87 @@ struct AddThumbnailView: View {
                     .background(Color(red: 124/255, green: 58/255, blue: 237/255))
 
             }
+            .disabled(isUploading)
             .padding(.vertical, 20)
             .padding(.horizontal, 10)
 
         }
         .background(Color.black.ignoresSafeArea()) // whole screen black
+    }
+
+    private func uploadSelectedVideo() {
+        guard let firstAsset = assets.first else {
+            print("No video to upload")
+            return
+        }
+
+        isUploading = true
+
+        Task {
+            do {
+                // Convert PSAsset to Data
+                let videoData = try await convertAssetToData(asset: firstAsset)
+
+                // Upload to Python API
+                let response = try await uploadService.uploadVideo(
+                    videoData: videoData,
+                    filename: getVideoFilename(from: firstAsset),
+                    category: "general",
+                    language: "auto",
+                    uploaderId: Auth.auth().currentUser?.uid
+                )
+
+                print("UPLOAD SUCCESS!")
+                print("Filename: \(getVideoFilename(from: firstAsset))")
+                print("Level: \(response.level)")
+                print("Language: \(response.language)")
+                print("Keywords: \(response.keywords)")
+                
+                isUploading = false
+            } catch {
+                print("Upload failed: \(error)")
+                isUploading = false
+            }
+        }
+    }
+
+    private func getVideoFilename(from asset: PHAsset) -> String {
+        let resources = PHAssetResource.assetResources(for: asset)
+        if let resource = resources.first {
+            return resource.originalFilename
+        }
+        // Fallback if we can't get the original filename
+        return "video_\(Date().timeIntervalSince1970).mp4"
+    }
+
+    private func convertAssetToData(asset: PHAsset) async throws -> Data {
+        return try await withCheckedThrowingContinuation { continuation in
+            let options = PHVideoRequestOptions()
+            options.deliveryMode = .highQualityFormat
+            options.isNetworkAccessAllowed = true
+            
+            PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
+                guard let urlAsset = avAsset as? AVURLAsset else {
+                    continuation.resume(throwing: VideoUploadError(
+                        message: "Could not get video URL from asset",
+                        code: "asset_conversion_failed",
+                        details: nil
+                    ))
+                    return
+                }
+                
+                do {
+                    let videoData = try Data(contentsOf: urlAsset.url)
+                    continuation.resume(returning: videoData)
+                } catch {
+                    continuation.resume(throwing: VideoUploadError(
+                        message: "Could not read video data",
+                        code: "data_read_failed", 
+                        details: error.localizedDescription
+                    ))
+                }
+            }
+        }
     }
 }
 //struct UploadView_Previews: PreviewProvider {

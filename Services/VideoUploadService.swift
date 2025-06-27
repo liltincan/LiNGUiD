@@ -20,7 +20,8 @@ struct VideoUploadResponse: Codable {
     let documentId: String
     
     enum CodingKeys: String, CodingKey {
-        case success, level, transcript, captions, keywords, language
+        case success, level, transcript, captions, keywords
+        case language = "language_detected"
         case videoUrl = "video_url"
         case thumbnailUrl = "thumbnail_url"
         case documentId = "document_id"
@@ -237,7 +238,7 @@ class VideoUploadService {
                 
                 guard 200...299 ~= httpResponse.statusCode else {
                     let responseString = String(data: data, encoding: .utf8) ?? "No response data"
-                    print("❌ Error response: \(responseString)")
+                    print("Error response: \(responseString)")
                     throw VideoUploadError(
                         message: "HTTP \(httpResponse.statusCode)",
                         code: "http_error",
@@ -249,10 +250,9 @@ class VideoUploadService {
             // Step 7: Parse the response
             print("Received response, parsing...")
             let responseString = String(data: data, encoding: .utf8) ?? "No data"
-            print("Response: \(responseString)")
+            //print("Response: \(responseString)") Clutters a lot but uncomment if needed
             
             let uploadResponse = try JSONDecoder().decode(VideoUploadResponse.self, from: data)
-            print("Upload successful! Level: \(uploadResponse.level)")
             
             return uploadResponse
             
@@ -308,7 +308,7 @@ class VideoUploadService {
         // Close boundary
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
         
-        print("📝 Created multipart body with \(body.count) bytes")
+        print("Created multipart body with \(body.count) bytes")
         return body
     }
     
