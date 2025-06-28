@@ -8,7 +8,9 @@ struct MainTabView: View {
     @State private var deepLinkedVideoURL: URL?
     
     @StateObject var userSession = UserSessionViewModel()
-
+    
+    // Add logout closure parameter
+    let onLogout: () -> Void
 
     var body: some View {
         TabView(selection: $selection) {
@@ -25,11 +27,12 @@ struct MainTabView: View {
                 .tabItem { Label("Dashboard", systemImage: "chart.bar.fill") }
                 .tag(2)
 
-            PracticeView(userSession:  userSession)
+            PracticeView(userSession: userSession)
                 .tabItem { Label("Practice", systemImage: "rectangle.3.offgrid.fill") }
                 .tag(3)
 
-            ProfileView(userSession: userSession)
+            // Pass logout closure to ProfileView
+            ProfileView(userSession: userSession, onLogout: onLogout)
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
                 .tag(4)
         }
@@ -52,6 +55,5 @@ struct MainTabView: View {
                 VideoPlayerView(url: url, videoId: id)
             }
         }
-
     }
 }

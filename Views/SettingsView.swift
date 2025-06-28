@@ -1,14 +1,21 @@
 import SwiftUI
+import Photos
+import FirebaseAuth
 import FirebaseFirestore
 
 struct SettingsView: View {
     var likedVideos: [String]
+    var likedVideoURLs: [String]
     var savedVideos: [String]
+    var savedVideoURLs: [String]
     var languages: Set<String>
     var uid: String?
     @State private var showLogoutAlert = false
     @StateObject private var loginVM = LoginViewModel()
     @EnvironmentObject var state: AppState
+    @Environment(\.dismiss) var dismiss
+    
+    let onLogout: () -> Void
 
     var body: some View {
         NavigationStack {
@@ -20,15 +27,19 @@ struct SettingsView: View {
                         DividerLine()
                         
                         SettingsSection(title: "Your activity") {
-                            SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumnails: likedVideos))
-                            SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumnails: savedVideos))
+                            SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumbnails: likedVideos, videoURLs: likedVideoURLs))
+                            SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumbnails: savedVideos, videoURLs: savedVideoURLs))
+                        }
+                        .onAppear{
+                            print(likedVideos)
+                            print(likedVideoURLs)
                         }
 
                         DividerLine()
 
                         SettingsSection(title: "Content") {
                             SettingsRowLink(title: "Change Level", destination: ChangeLanguageLevelFlow(selectedLanguagesArray: Array(languages), uid: uid!))
-                            SettingsRowLink(title: "Change Language", destination: ChangeLanguageFlowView(existingLanguages: languages, uid: uid!))
+                            SettingsRowLink(title: "Change Language", destination: ChangeLanguageFlowView(uid: uid!, preselectedLanguageCodes: languages))
                         }
 
                         DividerLine()
@@ -69,8 +80,10 @@ struct SettingsView: View {
 
     func logout() {
         let result = loginVM.logout()
+        
         if result {
-            state.isSignedIn = false
+            onLogout()
+            dismiss()
         }
     }
 }
@@ -85,8 +98,7 @@ struct GoProSection: View {
             
             NavigationLink(destination: GoProView()) {
                 HStack {
-                    // Use the uploaded image file
-                    Image("linguid_pro_banner") // Replace with your actual image name
+                    Image("linguid_pro_banner")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(height: 30)
@@ -207,28 +219,32 @@ struct UIConstants {
     static let sectionFont = Font.custom("Inter-Regular", size: 16)
     static let sectionColor = Color(red: 148/255, green: 148/255, blue: 148/255)
     static let redColor = Color(red: 255/255, green: 69/255, blue: 58/255)
+    static let appPrimaryColor = Color(red: 90/255, green: 200/255, blue: 250/255)
 }
 
+// MARK: - Liked and Saved Views
+
 struct LikedView: View {
-    var videoThumnails: [String] = []
+    var videoThumbnails: [String]
+    var videoURLs: [String]
+    
     var body: some View {
-        Text("Liked Videos")
-            .navigationTitle(Text("Liked Videos"))
+        ScrollView {
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, emptyMsg: "No liked videos yet.")
+        }
+        .navigationTitle("Liked Videos")
     }
 }
 
 struct SavedView: View {
-    var videoThumnails: [String] = []
+    var videoThumbnails: [String]
+    var videoURLs: [String]
+    
     var body: some View {
-        Text("Saved Videos")
-            .navigationTitle(Text("Saved Videos"))
-    }
-}
-
-struct ChangeLevelView: View {
-    var body: some View {
-        Text("Change Level Settings")
-            .navigationTitle("Change Level")
+        ScrollView {
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, emptyMsg: "No saved videos yet.")
+        }
+        .navigationTitle("Saved Videos")
     }
 }
 
@@ -241,34 +257,35 @@ struct DeleteAccountConfirmationView: View {
 
 struct AboutView: View {
     var body: some View {
-        Text("About")
+        Text("About Linguid")
             .navigationTitle("About")
     }
 }
 
 struct PrivacyView: View {
     var body: some View {
-        Text("Privacy Policy")
+        Text("Linguid Privacy Policy")
             .navigationTitle("Privacy")
     }
 }
 
 struct HelpView: View {
     var body: some View {
-        Text("Help")
+        Text("Linguid Help Center")
             .navigationTitle("Help")
     }
 }
 
 struct RequestFeatureView: View {
     var body: some View {
-        Text("Request Some Feature")
+        Text("Request a New Feature")
             .navigationTitle("Request a Feature")
     }
 }
 
 struct GoProView: View {
     var body: some View {
-        Text("Go Pro")
+        Text("Go Pro Features")
+            .navigationTitle("Go Pro")
     }
 }

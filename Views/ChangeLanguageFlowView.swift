@@ -2,8 +2,9 @@ import SwiftUI
 import FirebaseFirestore
 
 struct ChangeLanguageFlowView: View {
-    var existingLanguages: Set<String>
+    var existingLanguages: Set<String>?
     var uid: String
+    var preselectedLanguageCodes: Set<String>? // New optional parameter for short codes
     @Environment(\.dismiss) private var dismiss
     
     @State private var selectedLanguages: Set<String> = []
@@ -11,6 +12,21 @@ struct ChangeLanguageFlowView: View {
     @State private var languageLevels: [String: String] = [:]
     @State private var currentPage = 0
     @State private var isSelectingLevels = false
+    
+    let languageCodes: [String: String] = [
+          "Arabic": "ar", "Chinese": "zh", "English": "en", "French": "fr", "German": "de",
+          "Italian": "it", "Portuguese": "pt", "Russian": "ru", "Spanish": "es",
+          "Afrikaans": "af", "Armenian": "hy", "Azerbaijani": "az", "Belarusian": "be",
+          "Bosnian": "bs", "Bulgarian": "bg", "Catalan": "ca", "Croatian": "hr", "Czech": "cs",
+          "Danish": "da", "Dutch": "nl", "Estonian": "et", "Finnish": "fi", "Galician": "gl",
+          "Greek": "el", "Hebrew": "he", "Hindi": "hi", "Hungarian": "hu", "Icelandic": "is",
+          "Indonesian": "id", "Japanese": "ja", "Kannada": "kn", "Kazakh": "kk", "Korean": "ko",
+          "Latvian": "lv", "Lithuanian": "lt", "Macedonian": "mk", "Malay": "ms", "Maori": "mi",
+          "Marathi": "mr", "Nepali": "ne", "Norwegian": "no", "Persian": "fa", "Polish": "pl",
+          "Romanian": "ro", "Serbian": "sr", "Slovak": "sk", "Slovenian": "sl", "Swahili": "sw",
+          "Swedish": "sv", "Tagalog": "tl", "Tamil": "ta", "Thai": "th", "Turkish": "tr",
+          "Ukrainian": "uk", "Urdu": "ur", "Vietnamese": "vi", "Welsh": "cy"
+    ]
     
     var body: some View {
         VStack {
@@ -21,13 +37,13 @@ struct ChangeLanguageFlowView: View {
                     onContinue: { selectedArray in
                         let selectedSet = Set(selectedArray)
 
-                        let newLanguages = selectedSet.filter { !existingLanguages.contains($0) }
+                        let newLanguages = selectedSet.filter { !(existingLanguages ?? []).contains($0) }
                         
                         selectedLanguages = selectedSet
                         selectedLanguagesArray = Array(newLanguages)
                         
                         if newLanguages.isEmpty {
-                            if selectedSet.isSubset(of: existingLanguages) {
+                            if selectedSet.isSubset(of: existingLanguages ?? []) {
                                 Task {
                                     await saveLanguages()
                                 }
@@ -50,7 +66,13 @@ struct ChangeLanguageFlowView: View {
             }
         }
         .onAppear {
-            selectedLanguages = existingLanguages
+            // Convert preselected language codes to full names if provided
+            if let preselectedCodes = preselectedLanguageCodes {
+                let convertedLanguages = convertLanguageCodesToNames(preselectedCodes)
+                selectedLanguages = (existingLanguages ?? []).union(convertedLanguages)
+            } else {
+                selectedLanguages = existingLanguages ?? []
+            }
         }
         .background(Color.black.ignoresSafeArea())
         .navigationTitle("Change Language")
@@ -78,65 +100,45 @@ struct ChangeLanguageFlowView: View {
         }
     }
     
-    private func saveLanguages() async {
+    // Helper function to convert language codes to full names
+    private func convertLanguageCodesToNames(_ codes: Set<String>) -> Set<String> {
+        var languageNames: Set<String> = []
         
-        let languageCodes: [String: String] = [
-              "Arabic": "ar", "Chinese": "zh", "English": "en", "French": "fr", "German": "de",
-              "Italian": "it", "Portuguese": "pt", "Russian": "ru", "Spanish": "es",
-              "Afrikaans": "af", "Armenian": "hy", "Azerbaijani": "az", "Belarusian": "be",
-              "Bosnian": "bs", "Bulgarian": "bg", "Catalan": "ca", "Croatian": "hr", "Czech": "cs",
-              "Danish": "da", "Dutch": "nl", "Estonian": "et", "Finnish": "fi", "Galician": "gl",
-              "Greek": "el", "Hebrew": "he", "Hindi": "hi", "Hungarian": "hu", "Icelandic": "is",
-              "Indonesian": "id", "Japanese": "ja", "Kannada": "kn", "Kazakh": "kk", "Korean": "ko",
-              "Latvian": "lv", "Lithuanian": "lt", "Macedonian": "mk", "Malay": "ms", "Maori": "mi",
-              "Marathi": "mr", "Nepali": "ne", "Norwegian": "no", "Persian": "fa", "Polish": "pl",
-              "Romanian": "ro", "Serbian": "sr", "Slovak": "sk", "Slovenian": "sl", "Swahili": "sw",
-              "Swedish": "sv", "Tagalog": "tl", "Tamil": "ta", "Thai": "th", "Turkish": "tr",
-              "Ukrainian": "uk", "Urdu": "ur", "Vietnamese": "vi", "Welsh": "cy"
-        ]
-        
-        
-        let targetLanguage : String
-        let targetLanguageCode = selectedLanguages.compactMap { languageCodes[$0] }
-        targetLanguage = targetLanguageCode.first ?? ""
-        let db = Firestore.firestore()
-        
-        
-        
-        var languagesDataUpdates: [String: Any] = [:]
-        
-        let languagesToRemove = existingLanguages.subtracting(selectedLanguages)
-        for language in languagesToRemove {
-            languagesDataUpdates[language] = FieldValue.delete()
-        }
-        
-        for language in selectedLanguages {
-            if !existingLanguages.contains(language) {
-                let level = languageLevels[language] ?? ""
-                let levelsDictionary: [String: Int] = ["Just Starting": 1, "Beginner": 2, "Intermediate": 3, "Advanced": 4, "Expert": 5]
-                
-                let languageDetails: [String: Any] = [
-                    "comprehensionLevel": levelsDictionary[level] ?? 1,
-                    "timestamp": Timestamp(date: Date()),
-                ]
-                let languageKey = languageCodes.first(where: { $0.key == language })?.value ?? ""
-                languagesDataUpdates[languageKey] = languageDetails
+        for code in codes {
+            if let languageName = languageCodes.someKey(forValue: code) {
+                languageNames.insert(languageName)
             }
         }
         
-        guard !languagesDataUpdates.isEmpty else {
-            return
-        }
+        return languageNames
+    }
+    
+    private func saveLanguages() async {
+        // Assuming native languages are not being changed in this flow
+        // You may need to adjust this based on your app's logic
+        let selectedNativeLanguages: [String] = [] // Add your native languages logic here
+        let selectedTargetLanguages = Array(selectedLanguages)
         
-        let dataToSave: [String: Any] = [
-            "languagesData": languagesDataUpdates,
-            "targetLanguage": targetLanguage
-        ]
-        
-        do {
-            try await db.collection("users").document(uid).setData(dataToSave, merge: true)
-        } catch {
-            print("Error saving profile data to Firestore: \(error.localizedDescription)")
+        await withCheckedContinuation { continuation in
+            FirestoreService.shared.updateUserLanguagePreferences(
+                nativeLanguages: Set(selectedNativeLanguages),
+                targetLanguages: Set(selectedTargetLanguages),
+                languageLevels: languageLevels
+            ) { result in
+                switch result {
+                case .success:
+                    print("User preferences saved.")
+                case .failure(let error):
+                    print("Error saving preferences: \(error.localizedDescription)")
+                }
+                continuation.resume()
+            }
         }
+    }
+}
+
+extension Dictionary where Value: Equatable {
+    func someKey(forValue val: Value) -> Key? {
+        return first(where: { $1 == val })?.key
     }
 }

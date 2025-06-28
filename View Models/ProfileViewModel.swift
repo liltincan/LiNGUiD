@@ -12,7 +12,9 @@ class ProfileViewModel: ObservableObject {
     @Published var videoThumbnails: [String] = []
     @Published var videoURLs: [String] = []
     @Published var likedVideoThumbnails: [String] = []
+    @Published var likedVideoURLs: [String] = []
     @Published var savedVideoThumbnails: [String] = []
+    @Published var savedVideoURLs: [String] = []
     
     private let db = Firestore.firestore()
     private let userSession: UserSessionViewModel
@@ -66,8 +68,6 @@ class ProfileViewModel: ObservableObject {
             let nativeLanugage: String = user?.nativeLanguage?.capitalized ?? ""
             let targetLanugage: String = user?.targetLanguage.capitalized ?? languagesData.keys.first?.capitalized ?? ""
             
-        
-            
             let comprehensionLevel: Int = languagesData[targetLanugage.lowercased()]?.comprehensionLevel ?? 0
             
  
@@ -111,7 +111,8 @@ class ProfileViewModel: ObservableObject {
         }
         
         await fetchVideoThumbnails()
-        await fetchLikedAndSavedThumbnails()
+        await fetchLikedVideoThumbnails()
+        await fetchSavedVideoThumbnails()
         
         await MainActor.run {
             self.dataReady = true
@@ -138,7 +139,8 @@ class ProfileViewModel: ObservableObject {
             }
             
             await fetchVideoThumbnails()
-            await fetchLikedAndSavedThumbnails()
+            await fetchLikedVideoThumbnails()
+            await fetchSavedVideoThumbnails()
             
             await MainActor.run {
                 self.dataReady = true
@@ -272,18 +274,11 @@ class ProfileViewModel: ObservableObject {
             return
         }
         
-        let processedVideos = uploadedVideos.map { videoPath in
-            videoPath.replacingOccurrences(of: "en/", with: "english/")
-                .replacingOccurrences(of: "fr/", with: "french/")
-                .replacingOccurrences(of: "ru/", with: "russian/")
-                .replacingOccurrences(of: "es/", with: "spanish/")
-        }
-        
-        var thumbnails = Array(repeating: "", count: processedVideos.count)
-        var videoURLs = Array(repeating: "", count: processedVideos.count)
+        var thumbnails = Array(repeating: "", count: uploadedVideos.count)
+        var videoURLs = Array(repeating: "", count: uploadedVideos.count)
         
         await withTaskGroup(of: Void.self) { group in
-            for (index, path) in processedVideos.enumerated() {
+            for (index, path) in uploadedVideos.enumerated() {
                 group.addTask { [weak self] in
                     await self?.fetchSingleVideoThumbnail(path: path, index: index, thumbnails: &thumbnails, videoURLs: &videoURLs)
                 }
@@ -293,6 +288,62 @@ class ProfileViewModel: ObservableObject {
         await MainActor.run {
             self.videoThumbnails = thumbnails
             self.videoURLs = videoURLs
+        }
+    }
+    
+    private func fetchLikedVideoThumbnails() async {
+        guard let likedVideos = user?.likedVideos, !likedVideos.isEmpty else {
+            await MainActor.run {
+                self.likedVideoThumbnails = []
+                self.likedVideoURLs = []
+            }
+            return
+        }
+        
+        var thumbnails = Array(repeating: "", count: likedVideos.count)
+        var videoURLs = Array(repeating: "", count: likedVideos.count)
+        
+        await withTaskGroup(of: Void.self) { group in
+            for (index, path) in likedVideos.enumerated() {
+                group.addTask { [weak self] in
+                    await self?.fetchSingleVideoThumbnail(path: path, index: index, thumbnails: &thumbnails, videoURLs: &videoURLs)
+                }
+            }
+        }
+        
+        await MainActor.run {
+            self.likedVideoThumbnails = thumbnails
+            self.likedVideoURLs = videoURLs
+            print("Liked video thumbnails: \(thumbnails)")
+            print("Liked video URLs: \(videoURLs)")
+        }
+    }
+    
+    private func fetchSavedVideoThumbnails() async {
+        guard let savedVideos = user?.savedVideos, !savedVideos.isEmpty else {
+            await MainActor.run {
+                self.savedVideoThumbnails = []
+                self.savedVideoURLs = []
+            }
+            return
+        }
+        
+        var thumbnails = Array(repeating: "", count: savedVideos.count)
+        var videoURLs = Array(repeating: "", count: savedVideos.count)
+        
+        await withTaskGroup(of: Void.self) { group in
+            for (index, path) in savedVideos.enumerated() {
+                group.addTask { [weak self] in
+                    await self?.fetchSingleVideoThumbnail(path: path, index: index, thumbnails: &thumbnails, videoURLs: &videoURLs)
+                }
+            }
+        }
+        
+        await MainActor.run {
+            self.savedVideoThumbnails = thumbnails
+            self.savedVideoURLs = videoURLs
+            print("Saved video thumbnails: \(thumbnails)")
+            print("Saved video URLs: \(videoURLs)")
         }
     }
     
@@ -328,66 +379,6 @@ class ProfileViewModel: ObservableObject {
             
         } catch {
             print("Error fetching thumbnail for \(path):", error.localizedDescription)
-        }
-    }
-    
-    private func fetchLikedAndSavedThumbnails() async {
-        // Fetch liked video thumbnails
-        if let likedVideos = user?.likedVideos, !likedVideos.isEmpty {
-            await fetchThumbnailsForVideos(likedVideos) { thumbnails in
-                self.likedVideoThumbnails = thumbnails
-            }
-        }
-        
-        // Fetch saved video thumbnails
-        if let savedVideos = user?.savedVideos, !savedVideos.isEmpty {
-            await fetchThumbnailsForVideos(savedVideos) { thumbnails in
-                self.savedVideoThumbnails = thumbnails
-            }
-        }
-    }
-    
-    private func fetchThumbnailsForVideos(_ videoPaths: [String], completion: @escaping ([String]) -> Void) async {
-        let processedVideos = videoPaths.map { videoPath in
-            videoPath.replacingOccurrences(of: "en/", with: "english/")
-                .replacingOccurrences(of: "fr/", with: "french/")
-                .replacingOccurrences(of: "ru/", with: "russian/")
-                .replacingOccurrences(of: "es/", with: "spanish/")
-        }
-        
-        var thumbnails = Array(repeating: "", count: processedVideos.count)
-        
-        await withTaskGroup(of: Void.self) { group in
-            for (index, path) in processedVideos.enumerated() {
-                group.addTask { [weak self] in
-                    let components = path.split(separator: "/")
-                    guard components.count == 3 else { return }
-                    
-                    let lang = String(components[0])
-                    let docId = String(components[2])
-                    
-                    do {
-                        let document = try await self?.db.collection("videos")
-                            .document(lang)
-                            .collection("items")
-                            .document(docId)
-                            .getDocument()
-                        
-                        guard let document = document, document.exists, let data = document.data() else { return }
-                        
-                        if let thumbnailURL = data["thumbnail_url"] as? String {
-                            thumbnails[index] = thumbnailURL
-                        }
-                        
-                    } catch {
-                        print("Error fetching thumbnail for \(path):", error.localizedDescription)
-                    }
-                }
-            }
-        }
-        
-        await MainActor.run {
-            completion(thumbnails)
         }
     }
 }

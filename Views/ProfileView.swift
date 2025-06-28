@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseAuth
+import FirebaseFirestore
 
 struct ProfileView: View {
     @StateObject private var vm: ProfileViewModel
@@ -10,7 +11,10 @@ struct ProfileView: View {
     @State private var showingFullScreenProfilePicture: Bool = false
     @State private var fullScreenProfilePictureURL: String?
     
-    init(userSession: UserSessionViewModel) {
+    let onLogout: () -> Void
+
+    init(userSession: UserSessionViewModel, onLogout: @escaping () -> Void = {}) {
+        self.onLogout = onLogout
         _userSession = StateObject(wrappedValue: userSession)
         _vm = StateObject(wrappedValue: ProfileViewModel(userSession: userSession))
         _viewModel = StateObject(wrappedValue: SavedWordViewModel(userSession: userSession))
@@ -26,6 +30,7 @@ struct ProfileView: View {
                             profilePictureURL: vm.profilePictureURL,
                             languageDisplay: vm.formattedLanguagesDisplay,
                             vm: vm,
+                            onLogout: onLogout,
                             showingFullScreenProfilePicture: $showingFullScreenProfilePicture,
                             fullScreenProfilePictureURL: $fullScreenProfilePictureURL
                         )
@@ -105,7 +110,7 @@ struct ProfileView: View {
     private func loadData() async {
         if let currentUser = Auth.auth().currentUser {
             print("Loading data for user: \(currentUser.uid)")
-            await vm.fetchUserData(uid: currentUser.uid)
+            await vm.fetchUserData()
             print("Loaded liked video thumbnails: \(vm.likedVideoThumbnails)")
         } else {
             print("Error: No current user on appear.")
@@ -128,8 +133,9 @@ struct ProfileHeaderView: View {
     let userName: String
     let profilePictureURL: String
     let languageDisplay: String
-    let vm: ProfileViewModel
+    @StateObject var vm: ProfileViewModel
     let uid: String = Auth.auth().currentUser?.uid ?? ""
+    var onLogout: () -> Void
     @Binding var showingFullScreenProfilePicture: Bool
     @Binding var fullScreenProfilePictureURL: String?
     
@@ -145,9 +151,12 @@ struct ProfileHeaderView: View {
                     NavigationLink {
                         SettingsView(
                             likedVideos: vm.likedVideoThumbnails,
+                            likedVideoURLs: vm.likedVideoURLs,
                             savedVideos: vm.savedVideoThumbnails,
+                            savedVideoURLs: vm.savedVideoURLs,
                             languages: vm.allLanguageNames,
-                            uid: uid
+                            uid: uid,
+                            onLogout: onLogout
                         )
                     } label: {
                         Image(systemName: "gearshape.fill")
@@ -156,6 +165,9 @@ struct ProfileHeaderView: View {
                             .foregroundColor(.primary)
                     }
                 }
+            }
+            .onAppear{
+                print("LIKED VIDEOS _ \(vm.likedVideoURLs)")
             }
             
             Button {
@@ -231,21 +243,25 @@ struct VideoGridSection: View {
     var emptyMsg: String = "No videos uploaded yet."
     
     var body: some View {
-        if videoThumbnails.isEmpty {
+        if videoURLs.count == 0 {
             Text(emptyMsg)
                 .foregroundColor(.secondary)
                 .padding(.bottom, 15)
+                .onAppear{
+                    print("\(videoURLs), \(videoURLs.count)")
+                }
         } else {
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3),
                 spacing: 0
             ) {
-                ForEach(Array(videoThumbnails.enumerated()), id: \.element) { index, thumbnailURL in
+                // Use `id: \.offset` for unique identification within ForEach
+                ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
                     Videos(
                         thumbnailURL: thumbnailURL,
-                        videoURL: videoURLs[index],
+                        videoURL: videoURLs[index], // Use the video URL at the same index
                         index: index,
-                        videoURLs: videoURLs
+                        videoURLs: videoURLs // Pass the full array for VideoView navigation
                     )
                     .overlay(
                         VStack {
@@ -302,6 +318,7 @@ struct Videos: View {
         if URL(string: videoURL) != nil {
             NavigationLink {
                 VideoView(videos: videoURLs, startIndex: index)
+                    .environmentObject(UserSessionViewModel())
             } label: {
                 AsyncImage(url: URL(string: thumbnailURL)) { phase in
                     if let image = phase.image {
@@ -337,3 +354,4 @@ struct Buttons: View{
             .cornerRadius(10)
     }
 }
+

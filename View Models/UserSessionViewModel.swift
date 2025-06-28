@@ -26,7 +26,6 @@ class UserSessionViewModel: ObservableObject {
         return await FirebaseAuthService.shared.userDocumentExists(uid: uid)
     }
 
-
     func getCurrentUser() {  //talks to firebase service to fetch user data
         firestoreService.getCurrentUser { result in
             DispatchQueue.main.async {
@@ -58,5 +57,9 @@ class UserSessionViewModel: ObservableObject {
                 }
             }
         }
+    }
+    
+    func clearUserData() {
+        currentUser = nil
     }
 }

@@ -62,7 +62,7 @@ struct RootCoordinatorView: View {
     
     @ViewBuilder
     private var mainTabView: some View {
-        MainTabView()
+        MainTabView(onLogout: logout) // Pass logout closure to MainTabView
             .environmentObject(userSession)
     }
     
@@ -111,10 +111,23 @@ struct RootCoordinatorView: View {
         }
     }
 
+    // Updated logout function that properly updates app state
     func logout() {
         let result = vm.logout()
         if result {
-            print("Logout successful")
+            // Clear user session data
+            userSession.clearUserData()
+            
+            // Reset app state to show login screen
+            appState.isSignedIn = false
+            appState.needsOnboarding = UserDefaults.standard.bool(forKey: "didCompleteOnboarding") == false
+            
+            // Clear navigation path
+            navigationPath = NavigationPath()
+            
+            print("Logout successful - navigating to login")
+        } else {
+            print("Logout failed")
         }
     }
 }

@@ -14,16 +14,37 @@ struct ChangeLanguageLevelFlow: View {
     @State private var currentPage: Int = 0
     @State private var isLoading: Bool = true
 
-    let selectedLanguagesArray: [String]
+    var selectedLanguagesArray: [String]
     let uid: String
-
+    
     @Environment(\.dismiss) private var dismiss
-
+    
+    let languageCodes: [String: String] = [
+          "Arabic": "ar", "Chinese": "zh", "English": "en", "French": "fr", "German": "de",
+          "Italian": "it", "Portuguese": "pt", "Russian": "ru", "Spanish": "es",
+          "Afrikaans": "af", "Armenian": "hy", "Azerbaijani": "az", "Belarusian": "be",
+          "Bosnian": "bs", "Bulgarian": "bg", "Catalan": "ca", "Croatian": "hr", "Czech": "cs",
+          "Danish": "da", "Dutch": "nl", "Estonian": "et", "Finnish": "fi", "Galician": "gl",
+          "Greek": "el", "Hebrew": "he", "Hindi": "hi", "Hungarian": "hu", "Icelandic": "is",
+          "Indonesian": "id", "Japanese": "ja", "Kannada": "kn", "Kazakh": "kk", "Korean": "ko",
+          "Latvian": "lv", "Lithuanian": "lt", "Macedonian": "mk", "Malay": "ms", "Maori": "mi",
+          "Marathi": "mr", "Nepali": "ne", "Norwegian": "no", "Persian": "fa", "Polish": "pl",
+          "Romanian": "ro", "Serbian": "sr", "Slovak": "sk", "Slovenian": "sl", "Swahili": "sw",
+          "Swedish": "sv", "Tagalog": "tl", "Tamil": "ta", "Thai": "th", "Turkish": "tr",
+          "Ukrainian": "uk", "Urdu": "ur", "Vietnamese": "vi", "Welsh": "cy"
+    ]
+    
     init(selectedLanguagesArray: [String], uid: String) {
         self.selectedLanguagesArray = selectedLanguagesArray
         self.uid = uid
+        for (index, lang) in selectedLanguagesArray.enumerated() {
+            
+            if let key = languageCodes.someKey(forValue: lang) {
+                self.selectedLanguagesArray[index] = key
+            }
+        }
     }
-
+    
     var body: some View {
         ZStack {
             VStack {
@@ -119,8 +140,8 @@ struct ChangeLanguageLevelFlow: View {
         for language in selectedLanguagesArray {
             if let selectedLevel = languageLevels[language] {
                 let comprehensionLevel = levelsDictionary[selectedLevel] ?? 1
-
-                updates["languagesData.\(language).comprehensionLevel"] = comprehensionLevel
+                let lang = languageCodes[language] ?? ""
+                updates["languagesData.\(lang).comprehensionLevel"] = comprehensionLevel
             }
         }
         

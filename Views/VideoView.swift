@@ -11,72 +11,93 @@ struct VideoView: View {
     }
 
     var body: some View {
-        Group {
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
+
             if videos.isEmpty {
-                NoVideosView()
+                Text("No videos found.")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.gray)
             } else {
-                VideoPlayerTabView(videos: videos, currentIndex: $currentIndex)
+                VerticalVideoScrollView(videos: videos, currentIndex: $currentIndex)
             }
         }
         .ignoresSafeArea()
-        .background(Color.black.edgesIgnoringSafeArea(.all))
     }
 }
 
-struct NoVideosView: View {
-    var body: some View {
-        Text("No videos found.")
-            .font(.title3)
-            .fontWeight(.semibold)
-            .foregroundColor(.gray)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.black.edgesIgnoringSafeArea(.all))
-    }
-}
-
-struct VideoPlayerTabView: View {
+struct VerticalVideoScrollView: View {
     let videos: [String]
     @Binding var currentIndex: Int
-
+    
     var body: some View {
-        let screenWidth = UIScreen.main.bounds.width
-        let screenHeight = UIScreen.main.bounds.height
-
-        TabView(selection: $currentIndex) {
-            ForEach(videos.indices, id: \.self) { idx in
-                SingleVideoPageView(
-                    urlString: videos[idx],
-                    isActive: idx == currentIndex
-                )
-                .rotationEffect(.degrees(-90)) // Rotate individual page content back
-                .tag(idx)
+        GeometryReader { geometry in
+            let screenWidth = geometry.size.width
+            let screenHeight = geometry.size.height
+            
+            ScrollViewReader { proxy in
+                ScrollView(.vertical, showsIndicators: false) {
+                    LazyVStack(spacing: 0) {
+                        ForEach(videos.indices, id: \.self) { index in
+                            SingleVideoPageView(
+                                urlString: videos[index],
+                                isActive: index == currentIndex,
+                                containerWidth: screenWidth,
+                                containerHeight: screenHeight
+                            )
+                            .frame(width: screenWidth, height: screenHeight)
+                            .id(index)
+                            .background(
+                                GeometryReader { itemGeo in
+                                    Color.clear
+                                        .onAppear {
+                                            checkIfCentered(index: index, geometry: itemGeo, screenHeight: screenHeight)
+                                        }
+                                        .onChange(of: itemGeo.frame(in: .global)) { oldFrame, newFrame in
+                                            checkIfCentered(index: index, geometry: itemGeo, screenHeight: screenHeight)
+                                        }
+                                }
+                            )
+                        }
+                    }
+                }
+                .scrollTargetBehavior(.paging)
+                .onAppear {
+                    if currentIndex >= videos.count {
+                        currentIndex = 0
+                    }
+                }
+                .onChange(of: videos) { oldVideos, newVideos in
+                    if currentIndex >= newVideos.count {
+                        currentIndex = 0
+                    }
+                }
             }
         }
-        .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-        .rotationEffect(.degrees(90)) // Rotate TabView for vertical swipe
-        .frame(
-            width: screenHeight,
-            height: screenWidth
-        )
-        .ignoresSafeArea()
         .background(Color.black)
-        .onAppear {
-            if currentIndex >= videos.count {
-                currentIndex = 0
+    }
+    
+    private func checkIfCentered(index: Int, geometry: GeometryProxy, screenHeight: CGFloat) {
+        let frame = geometry.frame(in: .global)
+        let screenCenter = screenHeight / 2
+        let itemCenter = frame.midY
+        let distanceFromCenter = abs(itemCenter - screenCenter)
+        
+        if distanceFromCenter < screenHeight / 4 {
+            if index != currentIndex {
+                currentIndex = index
             }
         }
-        .onChange(of: videos) { newVideos in
-            if currentIndex >= newVideos.count {
-                currentIndex = 0
-            }
-        }
-        .animation(.easeInOut(duration: 0.3), value: currentIndex)
     }
 }
 
 struct SingleVideoPageView: View {
     let urlString: String
     let isActive: Bool
+    let containerWidth: CGFloat
+    let containerHeight: CGFloat
+    
     @State private var player: AVPlayer? = nil
     @State private var isPlaying: Bool = false
     @State private var isLoading: Bool = true
@@ -84,60 +105,24 @@ struct SingleVideoPageView: View {
     var body: some View {
         ZStack {
             Color.black
-                .edgesIgnoringSafeArea(.all)
-
+            
             if let player = player {
-                CustomVideoPlayer(player: player)
+                VideoPlayerLayerView(player: player)
+                    .frame(width: containerWidth, height: containerHeight)
+                    .clipped()
                     .onAppear {
-                        if isActive {
-                            player.play()
-                            isPlaying = true
-                        } else {
-                            player.pause()
-                            isPlaying = false
-                        }
-                        // Add observer for video end
-                        NotificationCenter.default.addObserver(
-                            forName: .AVPlayerItemDidPlayToEndTime,
-                            object: player.currentItem,
-                            queue: .main
-                        ) { _ in
-                            player.seek(to: .zero) // Restart video
-                            player.play() // Play again
-                        }
+                        setupPlayer()
                     }
                     .onDisappear {
-                        player.pause()
-                        isPlaying = false
-                        // Remove observer
-                        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: player.currentItem)
+                        cleanupPlayer()
                     }
-                    .onChange(of: isActive) { active in
-                        if active {
-                            player.seek(to: .zero)
-                            player.play()
-                            isPlaying = true
-                        } else {
-                            player.pause()
-                            isPlaying = false
-                        }
+                    .onChange(of: isActive) { oldValue, newValue in
+                        handleActiveStateChange(newValue)
                     }
                     .onTapGesture {
-                        if isPlaying {
-                            player.pause()
-                            isPlaying = false
-                        } else {
-                            player.play()
-                            isPlaying = true
-                        }
+                        togglePlayPause()
                     }
-                    .transition(.opacity)
-                    .edgesIgnoringSafeArea(.all)
-                    .clipped()
-                    .frame(
-                        width: UIScreen.main.bounds.width - 20,
-                        height: UIScreen.main.bounds.height - 20
-                    )
+                
             } else {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
@@ -147,12 +132,9 @@ struct SingleVideoPageView: View {
                     }
             }
         }
-        .frame(
-            width: UIScreen.main.bounds.width,
-            height: UIScreen.main.bounds.height
-        )
+        .frame(width: containerWidth, height: containerHeight)
     }
-
+    
     private func loadPlayer() {
         guard let url = URL(string: urlString) else {
             print("Invalid video URL: \(urlString)")
@@ -162,31 +144,59 @@ struct SingleVideoPageView: View {
         self.player = newPlayer
         isLoading = false
     }
-}
-
-
-struct CustomVideoPlayer: UIViewControllerRepresentable {
-    var player: AVPlayer
-
-    func makeUIViewController(context: Context) -> AVPlayerViewController {
-        let controller = AVPlayerViewController()
-        controller.player = player
-        controller.showsPlaybackControls = false
-        controller.videoGravity = .resizeAspect    // Fit inside frame, no cropping
-        return controller
+    
+    private func setupPlayer() {
+        guard let player = player else { return }
+        
+        if isActive {
+            player.play()
+            isPlaying = true
+        } else {
+            player.pause()
+            isPlaying = false
+        }
+        
+        // Add observer for video end
+        NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { _ in
+            player.seek(to: .zero) // Restart video
+            player.play() // Play again
+        }
     }
-
-    func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
-        uiViewController.player = player
+    
+    private func cleanupPlayer() {
+        guard let player = player else { return }
+        player.pause()
+        isPlaying = false
+        // Remove observer
+        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: player.currentItem)
     }
-}
-
-struct VideoView_Previews: PreviewProvider {
-    static var previews: some View {
-        VideoView(videos: [
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
-        ])
+    
+    private func handleActiveStateChange(_ active: Bool) {
+        guard let player = player else { return }
+        
+        if active {
+            player.seek(to: .zero)
+            player.play()
+            isPlaying = true
+        } else {
+            player.pause()
+            isPlaying = false
+        }
+    }
+    
+    private func togglePlayPause() {
+        guard let player = player else { return }
+        
+        if isPlaying {
+            player.pause()
+            isPlaying = false
+        } else {
+            player.play()
+            isPlaying = true
+        }
     }
 }
