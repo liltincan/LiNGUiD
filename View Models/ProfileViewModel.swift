@@ -15,6 +15,7 @@ class ProfileViewModel: ObservableObject {
     @Published var likedVideoURLs: [String] = []
     @Published var savedVideoThumbnails: [String] = []
     @Published var savedVideoURLs: [String] = []
+    @Published var nativeLanguage: String? = nil
     
     private let db = Firestore.firestore()
     private let userSession: UserSessionViewModel
@@ -62,15 +63,16 @@ class ProfileViewModel: ObservableObject {
         return user?.profilePhotoUrl ?? ""
     }
     
+    var nativeLanguageDisplay: String {
+        print(user?.nativeLanguage?.capitalized ?? "")
+        return user?.nativeLanguage?.capitalized ?? ""
+    }
+    
     var formattedLanguagesDisplay: String {
-        
-        if let languagesData = user?.languagesData{
+        if let languagesData = user?.languagesData {
             let nativeLanugage: String = user?.nativeLanguage?.capitalized ?? ""
             let targetLanugage: String = user?.targetLanguage.capitalized ?? languagesData.keys.first?.capitalized ?? ""
-            
             let comprehensionLevel: Int = languagesData[targetLanugage.lowercased()]?.comprehensionLevel ?? 0
-            
- 
             
             // If we didn't find the level for target language, try the first available language
             if comprehensionLevel == 0, let firstLanguageKey = languagesData.keys.first {
@@ -90,7 +92,6 @@ class ProfileViewModel: ObservableObject {
             return Set<String>()
         }
         return Set(languagesData.keys)
-        
     }
     
     // MARK: - Data Fetching
@@ -107,6 +108,7 @@ class ProfileViewModel: ObservableObject {
         
         await MainActor.run {
             self.user = currentUser
+            self.nativeLanguage = currentUser.nativeLanguage?.capitalized
             self.errorMessage = nil
         }
         
@@ -135,6 +137,7 @@ class ProfileViewModel: ObservableObject {
             
             await MainActor.run {
                 self.user = fetchedUser
+                self.nativeLanguage = fetchedUser.nativeLanguage?.capitalized
                 self.errorMessage = nil
             }
             
@@ -168,6 +171,7 @@ class ProfileViewModel: ObservableObject {
             
             await MainActor.run {
                 self.user = updatedUser
+                self.nativeLanguage = updatedUser.nativeLanguage?.capitalized
                 self.errorMessage = nil
             }
             

@@ -156,7 +156,8 @@ struct ProfileHeaderView: View {
                             savedVideoURLs: vm.savedVideoURLs,
                             languages: vm.allLanguageNames,
                             uid: uid,
-                            onLogout: onLogout
+                            selectedNativeLanguages: Set([vm.nativeLanguage?.lowercased() ?? ""]),
+                            onLogout: onLogout,
                         )
                     } label: {
                         Image(systemName: "gearshape.fill")
@@ -166,10 +167,6 @@ struct ProfileHeaderView: View {
                     }
                 }
             }
-            .onAppear{
-                print("LIKED VIDEOS _ \(vm.likedVideoURLs)")
-            }
-            
             Button {
                 showingFullScreenProfilePicture = true
                 fullScreenProfilePictureURL = profilePictureURL

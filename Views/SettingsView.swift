@@ -10,6 +10,7 @@ struct SettingsView: View {
     var savedVideoURLs: [String]
     var languages: Set<String>
     var uid: String?
+    var selectedNativeLanguages: Set<String>
     @State private var showLogoutAlert = false
     @StateObject private var loginVM = LoginViewModel()
     @EnvironmentObject var state: AppState
@@ -39,7 +40,7 @@ struct SettingsView: View {
 
                         SettingsSection(title: "Content") {
                             SettingsRowLink(title: "Change Level", destination: ChangeLanguageLevelFlow(selectedLanguagesArray: Array(languages), uid: uid!))
-                            SettingsRowLink(title: "Change Language", destination: ChangeLanguageFlowView(uid: uid!, preselectedLanguageCodes: languages))
+                            SettingsRowLink(title: "Change Language", destination: ChangeLanguageFlowView(uid: uid!, preselectedLanguageCodes: languages, selectedNativeLanguages: selectedNativeLanguages))
                         }
 
                         DividerLine()

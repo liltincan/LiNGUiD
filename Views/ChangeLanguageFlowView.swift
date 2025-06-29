@@ -5,13 +5,14 @@ struct ChangeLanguageFlowView: View {
     var existingLanguages: Set<String>?
     var uid: String
     var preselectedLanguageCodes: Set<String>? // New optional parameter for short codes
+    @State private var selectedNativeLanguages: Set<String> = []
     @Environment(\.dismiss) private var dismiss
     
     @State private var selectedLanguages: Set<String> = []
     @State private var selectedLanguagesArray: [String] = []
     @State private var languageLevels: [String: String] = [:]
-    @State private var currentPage = 0
-    @State private var isSelectingLevels = false
+    @State private var page = 0 // Start at 0 for language selection
+    @State private var selectPage = 0 // For level selection pagination
     
     let languageCodes: [String: String] = [
           "Arabic": "ar", "Chinese": "zh", "English": "en", "French": "fr", "German": "de",
@@ -28,41 +29,116 @@ struct ChangeLanguageFlowView: View {
           "Ukrainian": "uk", "Urdu": "ur", "Vietnamese": "vi", "Welsh": "cy"
     ]
     
+    // Add initializer to accept selectedNativeLanguages parameter
+    init(existingLanguages: Set<String>? = nil,
+         uid: String,
+         preselectedLanguageCodes: Set<String>? = nil,
+         selectedNativeLanguages: Set<String>) {
+        self.existingLanguages = existingLanguages
+        self.uid = uid
+        self.preselectedLanguageCodes = preselectedLanguageCodes
+        self._selectedNativeLanguages = State(initialValue: selectedNativeLanguages)
+    }
+    
     var body: some View {
         VStack {
-            if !isSelectingLevels {
-                OnboardingPageView(index: 1)
+            switch page {
+            case 0:
+                // Language Selection (mirrors onboarding case 2)
+                CustomProgressBar(progress: 0.6, height: 10)
+                    .padding(.bottom, 25)
+                
+                OnboardingPageView(index: 2)
+                    .padding(.bottom, 7.5)
                 
                 LanguageSelectionView(
-                    onContinue: { selectedArray in
-                        let selectedSet = Set(selectedArray)
-
+                    onContinue: { selected in
+                        let selectedSet = Set(selected)
                         let newLanguages = selectedSet.filter { !(existingLanguages ?? []).contains($0) }
                         
                         selectedLanguages = selectedSet
                         selectedLanguagesArray = Array(newLanguages)
                         
                         if newLanguages.isEmpty {
-                            if selectedSet.isSubset(of: existingLanguages ?? []) {
-                                Task {
-                                    await saveLanguages()
-                                }
-                                dismiss()
-                            } else {
+                            // No new languages, just save current selection and dismiss
+                            Task {
+                                await saveLanguages()
+                            }
+                            dismiss()
+                        } else {
+                            // New languages detected, proceed to level selection
+                            page = 1
+                        }
+                    },
+                    selectionLimit: 50,
+                    selectedLanguages: $selectedLanguages,
+                    excludeLanguages: [],
+                    onDeselect: { language in
+                        languageLevels.removeValue(forKey: language)
+                    }
+                )
+                .layoutPriority(1)
+                
+            case 1:
+                // Language Level Selection (mirrors onboarding case 3)
+                if selectPage > 0 {
+                    HStack {
+                        Button(action: {
+                            selectPage -= 1
+                        }) {
+                            Image("Return_Button")
+                                .frame(width: 25, height: 25)
+                                .padding(.leading, 10)
+                        }
+                        Spacer()
+                    }
+                } else {
+                    HStack {
+                        Button(action: {
+                            selectPage = 0
+                            page -= 1
+                        }) {
+                            Image("Return_Button")
+                                .frame(width: 25, height: 25)
+                                .padding(.leading, 10)
+                        }
+                        Spacer()
+                    }
+                }
+                
+                let baseProgress = 0.6
+                let step = 0.2 / Double(selectedLanguagesArray.count)
+                let progress = baseProgress + (Double(selectPage + 1) * step)
+                
+                CustomProgressBar(progress: progress, height: 10)
+                    .padding(.bottom, 10)
+                
+                if selectPage < selectedLanguagesArray.count {
+                    let currentLanguage = selectedLanguagesArray[selectPage]
+                    
+                    LanguageLevelSelectionView(
+                        selectedLevel: Binding(
+                            get: { languageLevels[currentLanguage] },
+                            set: { languageLevels[currentLanguage] = $0 }
+                        ),
+                        languageName: currentLanguage,
+                        onContinue: {
+                            print("🚀 Saved '\(languageLevels[currentLanguage] ?? "nil")' for \(currentLanguage)")
+                            selectPage += 1
+                            if selectPage >= selectedLanguagesArray.count {
+                                // Finished all level selections, save and dismiss
                                 Task {
                                     await saveLanguages()
                                 }
                                 dismiss()
                             }
-                        } else {
-                            isSelectingLevels = true
                         }
-                    },
-                    selectionLimit: 5,
-                    selectedLanguages: $selectedLanguages
-                )
-                .padding(.top, -250)
-                .padding(.horizontal, -15)
+                    )
+                    .padding(.top, 10)
+                }
+                
+            default:
+                EmptyView()
             }
         }
         .onAppear {
@@ -73,31 +149,10 @@ struct ChangeLanguageFlowView: View {
             } else {
                 selectedLanguages = existingLanguages ?? []
             }
+            let convertedNativeLanguages = convertLanguageCodesToNames(selectedNativeLanguages)
+            selectedNativeLanguages = convertedNativeLanguages
         }
         .background(Color.black.ignoresSafeArea())
-        .navigationTitle("Change Language")
-        .navigationBarTitleDisplayMode(.inline)
-        
-        if currentPage < selectedLanguagesArray.count {
-            let currentLanguage = selectedLanguagesArray[currentPage]
-            LanguageLevelSelectionView(
-                selectedLevel: Binding(
-                    get: { languageLevels[currentLanguage] ?? "" },
-                    set: { languageLevels[currentLanguage] = $0 }
-                ),
-                languageName: currentLanguage,
-                onContinue: {
-                    currentPage += 1
-                    if currentPage >= selectedLanguagesArray.count {
-                        isSelectingLevels = false
-                        Task {
-                            await saveLanguages()
-                        }
-                        dismiss()
-                    }
-                }
-            )
-        }
     }
     
     // Helper function to convert language codes to full names
@@ -114,28 +169,27 @@ struct ChangeLanguageFlowView: View {
     }
     
     private func saveLanguages() async {
-        // Assuming native languages are not being changed in this flow
-        // You may need to adjust this based on your app's logic
-        let selectedNativeLanguages: [String] = [] // Add your native languages logic here
-        let selectedTargetLanguages = Array(selectedLanguages)
-        
+        // Get existing native languages (you may need to fetch these from Firestore)
+        // For now, assuming we're only updating target languages
+        let selectedTargetLanguages = selectedLanguages
         await withCheckedContinuation { continuation in
             FirestoreService.shared.updateUserLanguagePreferences(
-                nativeLanguages: Set(selectedNativeLanguages),
-                targetLanguages: Set(selectedTargetLanguages),
+                nativeLanguages: selectedNativeLanguages,
+                targetLanguages: selectedTargetLanguages,
                 languageLevels: languageLevels
             ) { result in
                 switch result {
                 case .success:
-                    print("User preferences saved.")
+                    print("User language preferences updated successfully.")
                 case .failure(let error):
-                    print("Error saving preferences: \(error.localizedDescription)")
+                    print("Error updating language preferences: \(error.localizedDescription)")
                 }
                 continuation.resume()
             }
         }
     }
 }
+
 
 extension Dictionary where Value: Equatable {
     func someKey(forValue val: Value) -> Key? {

@@ -127,8 +127,7 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         ]
 
         // 1. First native language code
-        let firstNative = nativeLanguages.first.flatMap { languageCodes[$0] } ?? ""
-
+        let firstNative = nativeLanguages.first.flatMap { languageCodes[$0.capitalized] } ?? ""
         // 2. First target language code
         let firstTarget = targetLanguages.first.flatMap { languageCodes[$0] } ?? ""
 
