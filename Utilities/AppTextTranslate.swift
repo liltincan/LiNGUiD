@@ -7,48 +7,44 @@
 
 import Foundation
 
-func translateWithMyMemory(text: String, from source: String, to target: String, completion: @escaping (String?, String?) -> Void) {
-    let escapedText = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-    let urlString = "https://api.mymemory.translated.net/get?q=\(escapedText)&langpair=\(source)|\(target)"
-
+func translateTextV2(
+    text: String,
+    sourceLang: String,
+    targetLang: String,
+    completion: @escaping (String?) -> Void
+) {
+    let urlString = "https://translation.googleapis.com/language/translate/v2?key=AIzaSyBR7Sy_Bvf80sZaVx8uZrur3T419LOgGq4"
     guard let url = URL(string: urlString) else {
-        completion(nil, nil)
+        completion(nil)
         return
     }
 
-    URLSession.shared.dataTask(with: url) { data, _, error in
-        guard let data = data, error == nil else {
-            completion(nil, nil)
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    let body: [String: Any] = [
+        "q": text,
+        "source": sourceLang,
+        "target": targetLang,
+        "format": "text"
+    ]
+
+    request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+    URLSession.shared.dataTask(with: request) { data, _, error in
+        guard
+            error == nil,
+            let data = data,
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let dataDict = json["data"] as? [String: Any],
+            let translations = dataDict["translations"] as? [[String: Any]],
+            let translatedText = translations.first?["translatedText"] as? String
+        else {
+            completion(nil)
             return
         }
 
-        do {
-            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let responseData = json["responseData"] as? [String: Any],
-               let matches = json["matches"] as? [[String: Any]] {
-                
-                
-                let filtered = matches.filter {
-                    guard
-                        let matchScore = $0["match"] as? Double,
-                        let translation = $0["translation"] as? String
-                    else { return false }
-
-                    return matchScore >= 0.7 && !translation.lowercased().contains("google tranlator")
-                }
-
-                let bestTranslation = filtered.first?["translation"] as? String
-                let source = filtered.first?["created-by"] as? String ?? "unknown"
-                
-                
-                let safeResult = bestTranslation ?? (responseData["translatedText"] as? String ?? "N/A")
-                completion(safeResult, source)
-
-            } else {
-                completion(nil, nil)
-            }
-        } catch {
-            completion(nil, nil)
-        }
+        completion(translatedText)
     }.resume()
 }

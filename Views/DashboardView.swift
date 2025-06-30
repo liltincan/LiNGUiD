@@ -362,18 +362,31 @@ struct DashboardView: View {
     func actionFunction(index: Int, geo: GeometryProxy, word: WordPair) {
         isTranslating = true
         withAnimation {
-            translateWithMyMemory(
-                text: word.target,
-                from: viewModel.targetLanguage ?? "",
-                to: viewModel.nativeLanguage ?? ""
-            ) { result, source in
-                DispatchQueue.main.async {
+//            translateWithMyMemory(
+//                text: word.target,
+//                from: viewModel.targetLanguage ?? "",
+//                to: viewModel.nativeLanguage ?? ""
+//            ) { result, source in
+//                DispatchQueue.main.async {
+//                    isTranslating = false
+//                    translatedText = result
+//                    print(
+//                        "Translated: \(result ?? "Failed")\nSource: \(source ?? "Failed")"
+//                    )
+//
+//                }
+//            }
+            translateTextV2(
+                text: "Bonjour, comment ça va ?",
+                sourceLang: viewModel.targetLanguage ?? "",
+                targetLang: viewModel.nativeLanguage ?? "",
+            ) { result in
+                if let translated = result {
                     isTranslating = false
-                    translatedText = result
-                    print(
-                        "Translated: \(result ?? "Failed")\nSource: \(source ?? "Failed")"
-                    )
-
+                    translatedText = translated
+                    print("🇩🇪 Translated Text: \(translated)")
+                } else {
+                    print("❌ Translation failed.")
                 }
             }
             selectedWordIndex = index

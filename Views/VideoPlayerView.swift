@@ -69,7 +69,6 @@ struct VideoPlayerView: View {
     @State private var wordFrames: [String: CGRect] = [:]
     @State private var popupPosition: CGPoint = .zero
 
-
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
 
@@ -210,7 +209,7 @@ struct VideoPlayerView: View {
                                     }
                                 )
                                 .onTapGesture {
-                                    if(isPlaying){
+                                    if isPlaying {
                                         togglePlayPause()
                                     }
                                     print(word)
@@ -227,7 +226,7 @@ struct VideoPlayerView: View {
                 }
 
             }
-            
+
             if showWordPopup, let word = selectedWord {
                 Color.black.opacity(0.2)
                     .ignoresSafeArea()
@@ -238,8 +237,8 @@ struct VideoPlayerView: View {
                             showWordPopup = false
                         }
                     }
-                
-                VStack{
+
+                VStack {
                     Spacer()
                     wordPopup(
                         for: word,
@@ -247,9 +246,9 @@ struct VideoPlayerView: View {
                         to: userSession.currentUser?.nativeLanguage ?? ""
                     )
                     .padding(.bottom, 200)
-//                    .position(x: popupPosition.x + 10, y: popupPosition.y - 150) // ⬅ adjust these offsets as needed
+                    //                    .position(x: popupPosition.x + 10, y: popupPosition.y - 150) // ⬅ adjust these offsets as needed
                 }
-                }
+            }
 
         }
         .onAppear {
@@ -282,18 +281,18 @@ struct VideoPlayerView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-//        .overlay(
-//            Group {
-//                if showWordPopup, let word = selectedWord {
-//                    wordPopup(
-//                        for: word,
-//                        from: "fr",
-//                        to: "en",
-//                    )
-//                    .padding()
-//                }
-//            }
-//        )
+        //        .overlay(
+        //            Group {
+        //                if showWordPopup, let word = selectedWord {
+        //                    wordPopup(
+        //                        for: word,
+        //                        from: "fr",
+        //                        to: "en",
+        //                    )
+        //                    .padding()
+        //                }
+        //            }
+        //        )
     }
 
     private func setupPlayer() {
@@ -453,29 +452,43 @@ struct VideoPlayerView: View {
             )
         }
     }
-    
+
     func actionFunction(word: String) {
         isTranslatingCaption = true
         withAnimation {
-            translateWithMyMemory(
+            translateTextV2(
                 text: word,
-                from: userSession.currentUser?.targetLanguage ?? "",
-                to: userSession.currentUser?.nativeLanguage ?? ""
-            ) { result, source in
-                DispatchQueue.main.async {
+                sourceLang: userSession.currentUser?.targetLanguage ?? "",
+                targetLang: userSession.currentUser?.nativeLanguage ?? "",
+            ) { result in
+                if let translated = result {
                     isTranslatingCaption = false
                     translatedText = result
-                    print(
-                        "Translated: \(result ?? "Failed")\nSource: \(source ?? "Failed")"
-                    )
-
+                    print("🇩🇪 Translated Text: \(translated)")
+                } else {
+                    print("❌ Translation failed.")
                 }
             }
+
+            //            translateWithMyMemory(
+            //                text: word,
+            //                from: userSession.currentUser?.targetLanguage ?? "",
+            //                to: userSession.currentUser?.nativeLanguage ?? ""
+            //            ) { result, source in
+            //                DispatchQueue.main.async {
+            //                    isTranslatingCaption = false
+            //                    translatedText = result
+            //                    print(
+            //                        "Translated: \(result ?? "Failed")\nSource: \(source ?? "Failed")"
+            //                    )
+            //
+            //                }
+            //            }
             selectedWord = word
             showWordPopup = true
         }
     }
-    
+
     @ViewBuilder
     private func wordPopup(
         for word: String?,
@@ -505,34 +518,42 @@ struct VideoPlayerView: View {
                 Divider()
                     .frame(height: 2)
                     .background(Color.white)
-                
+
                 Button(action: {
                     guard let userID = Auth.auth().currentUser?.uid
                     else { return }
-                    
-                    addUnknownWordInUserSession(word: word ?? "", userId: userID)
-                    
-                    
+
+                    addUnknownWordInUserSession(
+                        word: word ?? "",
+                        userId: userID
+                    )
+
                 }) {
                     HStack {
                         Image(systemName: "bookmark.fill")
                         if videoPlayerViewModel.isSavingWord {
                             ProgressView()
-//                                .background(Color.white)
-//                                .cornerRadius(10)
-//                                .shadow(radius: 5)
-                        }else{
-                            let videoPlayerWord = videoPlayerViewModel.word ?? ""
-                            if videoPlayerViewModel.wordSaved && videoPlayerWord == word {
+                            //                                .background(Color.white)
+                            //                                .cornerRadius(10)
+                            //                                .shadow(radius: 5)
+                        } else {
+                            let videoPlayerWord =
+                                videoPlayerViewModel.word ?? ""
+                            if videoPlayerViewModel.wordSaved
+                                && videoPlayerWord == word
+                            {
                                 Text("Word Saved! ")
-                                .transition(.opacity)
-                                .animation(.easeInOut(duration: 0.3), value: videoPlayerViewModel.wordSaved)
-                            }else{
+                                    .transition(.opacity)
+                                    .animation(
+                                        .easeInOut(duration: 0.3),
+                                        value: videoPlayerViewModel.wordSaved
+                                    )
+                            } else {
                                 Text("Save")
                             }
-                            
+
                         }
-                        
+
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -559,17 +580,19 @@ struct VideoPlayerView: View {
             .shadow(radius: 8)
             .frame(width: 200)
 
-//            Triangle()
-//                .fill(Color.appPrimaryColor)
-//                .frame(width: 30, height: 15)
-//                .rotationEffect(.degrees(180))
-//                .offset(x: -60, y: -1)
+            //            Triangle()
+            //                .fill(Color.appPrimaryColor)
+            //                .frame(width: 30, height: 15)
+            //                .rotationEffect(.degrees(180))
+            //                .offset(x: -60, y: -1)
         }
 
     }
-    
+
     func addUnknownWordInUserSession(word: String, userId: String) {
-        guard let language = userSession.currentUser?.targetLanguage else { return }
+        guard let language = userSession.currentUser?.targetLanguage else {
+            return
+        }
         let newWord = WordPair(target: word, native: translatedText ?? "")
 
         // Ensure we have a mutable copy of currentUser
@@ -579,10 +602,15 @@ struct VideoPlayerView: View {
         var languagesData = currentUser.languagesData ?? [:]
 
         // Get or create LanguagesData for the target language
-        var langData = languagesData[language] ?? LanguagesData(savedWords: WordLists(knownWords: [], unknownWords: []))
+        var langData =
+            languagesData[language]
+            ?? LanguagesData(
+                savedWords: WordLists(knownWords: [], unknownWords: [])
+            )
 
         // Get or create savedWords
-        var savedWords = langData.savedWords ?? WordLists(knownWords: [], unknownWords: [])
+        var savedWords =
+            langData.savedWords ?? WordLists(knownWords: [], unknownWords: [])
 
         // Append new word to unknownWords
         savedWords.unknownWords.append(newWord)
@@ -603,8 +631,6 @@ struct VideoPlayerView: View {
             languagesData: languagesData
         )
     }
-
-
 
     struct Triangle: Shape {
         func path(in rect: CGRect) -> Path {
@@ -662,4 +688,3 @@ final class VideoAssetCache {
         cache.removeAll()
     }
 }
-
