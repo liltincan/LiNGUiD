@@ -28,7 +28,17 @@ struct MainTabView: View {
                 .tag(2)
 
             PracticeView(userSession: userSession)
-                .tabItem { Label("Practice", systemImage: "rectangle.3.offgrid.fill") }
+                .tabItem {
+                    VStack {
+                        Image(selection == 3 ? "practiceImg2" : "practiceImg1")
+                            .renderingMode(.template)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 25, height: 25)
+                        Text("Practice")
+                            .font(.caption2)
+                    }
+                }
                 .tag(3)
 
             // Pass logout closure to ProfileView
@@ -36,6 +46,7 @@ struct MainTabView: View {
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
                 .tag(4)
         }
+        .accentColor(Color(red: 142/255, green: 84/255, blue: 229/255))
         .onReceive(deepLinkCoordinator.$deepLinkVideoID.compactMap { $0 }) { id in
             FirestoreService.shared.getVideoURL(for: id) { result in
                 DispatchQueue.main.async {
