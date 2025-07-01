@@ -10,6 +10,7 @@ struct ProfileView: View {
     
     @State private var showingFullScreenProfilePicture: Bool = false
     @State private var fullScreenProfilePictureURL: String?
+    @State private var hasTaskExecuted = false
     
     let onLogout: () -> Void
 
@@ -55,7 +56,7 @@ struct ProfileView: View {
             .refreshable {
                 await refreshData()
             }
-            .onAppear() {
+            .task {
                 Task {
                     await loadData()
                 }
@@ -109,6 +110,8 @@ struct ProfileView: View {
     @MainActor
     private func loadData() async {
         if let currentUser = Auth.auth().currentUser {
+            guard !hasTaskExecuted else { return }
+            hasTaskExecuted = true
             print("Loading data for user: \(currentUser.uid)")
             await vm.fetchUserData()
             print("Loaded liked video thumbnails: \(vm.likedVideoThumbnails)")
@@ -122,6 +125,7 @@ struct ProfileView: View {
     private func refreshData() async {
         if let currentUser = Auth.auth().currentUser {
             await vm.fetchUserData(uid: currentUser.uid)
+            print("Loading data for user: \(currentUser.uid)")
         } else {
             print("Error: No current user for refresh.")
             await vm.fetchUserData()

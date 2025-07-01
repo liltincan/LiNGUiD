@@ -195,7 +195,8 @@ class VideoUploadService {
         filename: String,
         category: String,
         language: String = "auto",
-        uploaderId: String? = nil
+        uploaderId: String? = nil,
+        thumbnailData: Data? = nil
     ) async throws -> VideoUploadResponse {
         
         print("Starting upload to: \(baseURL)/api/upload_video")
@@ -218,6 +219,7 @@ class VideoUploadService {
         let httpBody = createMultipartBody(
             boundary: boundary,
             videoData: videoData,
+            thumbnailData: thumbnailData,
             filename: filename,
             category: category,
             language: language,
@@ -266,6 +268,7 @@ class VideoUploadService {
     private func createMultipartBody(
         boundary: String,
         videoData: Data,
+        thumbnailData: Data?,
         filename: String,
         category: String,
         language: String,
@@ -292,6 +295,11 @@ class VideoUploadService {
         
         // Add required file field
         addFileField(name: "file", filename: filename, mimeType: "video/mp4", data: videoData)
+        
+        // Thumbnail (optional)
+        if let thumbnailData = thumbnailData {
+            addFileField(name: "thumbnail", filename: "thumb_\(filename).jpg", mimeType: "image/jpeg", data: thumbnailData)
+        }
         
         // Add required category field
         addTextField(name: "category", value: category)

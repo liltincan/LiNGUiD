@@ -1,7 +1,11 @@
 import SwiftUI
 import Photos
 import AVFoundation
+import PhotosUI
+import AVKit
+import TOCropViewController
 import FirebaseAuth
+
 
 struct UploadView: View {
     @State private var videoAssets: [PHAsset] = []
@@ -9,6 +13,7 @@ struct UploadView: View {
     @State private var isMultiSelect = false
     @State private var navigateToThumbnail = false
     @State private var uploadService = VideoUploadService()
+    @State private var thumbnailOverrides: [String: UIImage] = [:]
 
     let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 3)
 
@@ -86,7 +91,10 @@ struct UploadView: View {
                         Spacer()
                         
                         NavigationLink(
-                            destination: AddThumbnailView(assets: selectedAssets),
+                            destination: AddThumbnailView(
+                                assets: selectedAssets,
+                                thumbnailOverrides: $thumbnailOverrides
+                            ),
                             isActive: $navigateToThumbnail
                         ) {
                             Button(action: {
@@ -132,7 +140,7 @@ struct UploadView: View {
         }
     }
 
-    // Helper function to convert PHAsset to Data
+    // Helped function to convert PHAsset to Data
     private func convertAssetToData(asset: PHAsset) async throws -> Data {
         return try await withCheckedThrowingContinuation { continuation in
             let options = PHVideoRequestOptions()
@@ -155,14 +163,13 @@ struct UploadView: View {
                 } catch {
                     continuation.resume(throwing: VideoUploadError(
                         message: "Could not read video data",
-                        code: "data_read_failed", 
+                        code: "data_read_failed",
                         details: error.localizedDescription
                     ))
                 }
             }
         }
     }
-
     private func testVideoUpload() {
         // Check if we have a selected video
         guard let firstAsset = selectedAssets.first else {
@@ -266,19 +273,30 @@ struct UploadView: View {
 
 struct VideoThumbnailMiniView: View {
     let asset: PHAsset
+    var overrideImage: UIImage? = nil // ← allow override image
     @State private var thumbnail: UIImage?
 
     var body: some View {
         Group {
-            if let thumbnail = thumbnail {
+            if let override = overrideImage {
+                Image(uiImage: override)
+                    .resizable()
+                    .aspectRatio(9/16, contentMode: .fill)
+                    .padding(1)               // Inner padding for border
+                    .background(Color.white)  // Acts as the uniform border
+                    .clipped()
+            } else if let thumbnail = thumbnail {
                 Image(uiImage: thumbnail)
                     .resizable()
                     .aspectRatio(9/16, contentMode: .fill)
-                    .border(Color.white.opacity(0.8), width: 1)
+                    .padding(1)
+                    .background(Color.white)
                     .clipped()
             } else {
                 Color.gray
                     .aspectRatio(9/16, contentMode: .fill)
+                    .padding(1)
+                    .background(Color.white)
             }
         }
         .onAppear(perform: fetchThumbnail)
@@ -300,48 +318,80 @@ struct VideoThumbnailMiniView: View {
     }
 }
 
+extension PHAsset: Identifiable {
+    public var id: String { localIdentifier }
+}
+struct CroppingImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
+}
+
 
 struct AddThumbnailView: View {
     let assets: [PHAsset]
     @State private var uploadService = VideoUploadService()
     @State private var isUploading = false
 
+    @Binding var thumbnailOverrides: [String: UIImage]
+    @State private var showingPickerFor: PHAsset?
+    @State private var showingFrameSelectorFor: PHAsset?
+    @State private var croppingImage: CroppingImage?
+    @State private var croppingAsset: PHAsset?
+
     var body: some View {
         VStack {
             Text("Add Thumbnails")
                 .font(.title)
-                .foregroundColor(.white) // ensure text is visible
+                .foregroundColor(.white)
                 .padding(.top, 10)
-            
+
             ScrollView {
                 LazyVStack(spacing: 5) {
                     ForEach(assets, id: \.localIdentifier) { asset in
                         HStack {
-                            VideoThumbnailMiniView(asset: asset)
-                                .frame(width: 90, height: 160)
-                            
+                            VideoThumbnailMiniView(
+                                asset: asset,
+                                overrideImage: thumbnailOverrides[asset.localIdentifier]
+                            )
+                            .frame(width: 90, height: 160)
+
                             Spacer()
-                            
-                            Text("Add/Edit thumbnail here")
-                                .foregroundColor(.white)
+
+                            Menu {
+                                Button("Choose from Photos") {
+                                    showingPickerFor = asset
+                                }
+                                Button("Pick Frame from Video") {
+                                    showingFrameSelectorFor = asset
+                                }
+                            } label: {
+                                Button(action: {
+                                    print("Tapped thumbnail button for \(asset.localIdentifier)")
+                                    // Present image picker or video frame selector here
+                                }) {
+                                    Text(thumbnailOverrides[asset.localIdentifier] == nil ? "Add Thumbnail" : "Edit Thumbnail")
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal)
+                                        .padding(.vertical, 8)
+                                        .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                                        .cornerRadius(6)
+                                }
+                            }
 
                             Spacer()
                         }
                         .padding()
                         .background(Color.black)
                         .cornerRadius(8)
-                        
+
                         Divider()
                             .background(Color.white.opacity(1.0))
                     }
                 }
                 .padding(.horizontal, 10)
             }
-            .background(Color.black.ignoresSafeArea())
-            
+
             Button(action: {
-                // Handle continue action
-                //print("Continue tapped")
                 uploadSelectedVideo()
             }) {
                 Text(isUploading ? "Uploading..." : "Upload")
@@ -350,16 +400,37 @@ struct AddThumbnailView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color(red: 124/255, green: 58/255, blue: 237/255))
-
             }
             .disabled(isUploading)
+            .cornerRadius(8)
             .padding(.vertical, 20)
             .padding(.horizontal, 10)
-
         }
-        .background(Color.black.ignoresSafeArea()) // whole screen black
+        .sheet(item: $showingPickerFor) { asset in
+            ImagePickerView { image in
+                // Crop this image before assigning
+                croppingImage = CroppingImage(image: image)
+                croppingAsset = asset
+                showingPickerFor = nil
+            }
+        }
+        .sheet(item: $showingFrameSelectorFor) { asset in
+            VideoScrubberSelector(asset: asset) { image in
+                thumbnailOverrides[asset.localIdentifier] = image
+                showingFrameSelectorFor = nil
+            }
+        }
+        .sheet(item: $croppingImage) { cropping in
+            TOCropView(image: cropping.image) { croppedImage in
+                if let asset = croppingAsset {
+                    thumbnailOverrides[asset.localIdentifier] = croppedImage
+                }
+                croppingImage = nil
+                croppingAsset = nil
+            }
+        }
+        .background(Color.black.ignoresSafeArea())
     }
-
     private func uploadSelectedVideo() {
         guard let firstAsset = assets.first else {
             print("No video to upload")
@@ -372,6 +443,10 @@ struct AddThumbnailView: View {
             do {
                 // Convert PSAsset to Data
                 let videoData = try await convertAssetToData(asset: firstAsset)
+                
+                // ✅ STEP: Get selected thumbnail
+                let thumbnailImage = thumbnailOverrides[firstAsset.localIdentifier]
+                let thumbnailData = thumbnailImage?.jpegData(compressionQuality: 0.9)
 
                 // Upload to Python API
                 let response = try await uploadService.uploadVideo(
@@ -379,7 +454,8 @@ struct AddThumbnailView: View {
                     filename: getVideoFilename(from: firstAsset),
                     category: "general",
                     language: "auto",
-                    uploaderId: Auth.auth().currentUser?.uid
+                    uploaderId: Auth.auth().currentUser?.uid,
+                    thumbnailData: thumbnailData
                 )
 
                 print("UPLOAD SUCCESS!")
@@ -395,7 +471,7 @@ struct AddThumbnailView: View {
             }
         }
     }
-
+    
     private func getVideoFilename(from asset: PHAsset) -> String {
         let resources = PHAssetResource.assetResources(for: asset)
         if let resource = resources.first {
@@ -404,7 +480,7 @@ struct AddThumbnailView: View {
         // Fallback if we can't get the original filename
         return "video_\(Date().timeIntervalSince1970).mp4"
     }
-
+    
     private func convertAssetToData(asset: PHAsset) async throws -> Data {
         return try await withCheckedThrowingContinuation { continuation in
             let options = PHVideoRequestOptions()
@@ -427,7 +503,7 @@ struct AddThumbnailView: View {
                 } catch {
                     continuation.resume(throwing: VideoUploadError(
                         message: "Could not read video data",
-                        code: "data_read_failed", 
+                        code: "data_read_failed",
                         details: error.localizedDescription
                     ))
                 }
@@ -435,6 +511,178 @@ struct AddThumbnailView: View {
         }
     }
 }
+
+struct ImagePickerView: UIViewControllerRepresentable {
+    var onImagePicked: (UIImage) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onImagePicked: onImagePicked)
+    }
+
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var config = PHPickerConfiguration()
+        config.selectionLimit = 1
+        config.filter = .images
+
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+
+    class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        var onImagePicked: (UIImage) -> Void
+
+        init(onImagePicked: @escaping (UIImage) -> Void) {
+            self.onImagePicked = onImagePicked
+        }
+
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            picker.dismiss(animated: true)
+            guard let provider = results.first?.itemProvider, provider.canLoadObject(ofClass: UIImage.self) else { return }
+
+            provider.loadObject(ofClass: UIImage.self) { image, error in
+                if let uiImage = image as? UIImage {
+                    DispatchQueue.main.async {
+                        self.onImagePicked(uiImage)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct VideoScrubberSelector: View {
+    let asset: PHAsset
+    var onFrameSelected: (UIImage) -> Void
+
+    @State private var playerItem: AVPlayerItem?
+    @State private var videoAsset: AVAsset?
+    @State private var currentFrame: UIImage?
+    @State private var currentTime: CMTime = .zero
+
+    var body: some View {
+        VStack {
+            if let currentFrame = currentFrame {
+                Image(uiImage: currentFrame)
+                    .resizable()
+                    .aspectRatio(9/16, contentMode: .fit)
+                    .frame(maxHeight: 600)
+                    .padding()
+            } else {
+                Color.gray
+                    .aspectRatio(9/16, contentMode: .fit)
+                    .frame(maxHeight: 600)
+                    .padding()
+            }
+
+            if let duration = videoAsset?.duration.seconds {
+                Slider(value: Binding(
+                    get: { currentTime.seconds },
+                    set: { newValue in
+                        let newTime = CMTime(seconds: newValue, preferredTimescale: 600)
+                        currentTime = newTime
+                        generateThumbnail(at: newTime)
+                    }
+                ), in: 0...duration)
+                .padding(.horizontal, 25)
+                .padding(.bottom, 15)
+            }
+
+            Button("Use This Frame") {
+                if let currentFrame = currentFrame {
+                    onFrameSelected(currentFrame)
+                }
+            }
+            .frame(maxWidth: UIScreen.main.bounds.width - 45)
+            .padding(.vertical, 20)
+            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+            .foregroundColor(.white)
+            .cornerRadius(8)
+        }
+        .onAppear {
+            loadAsset()
+        }
+    }
+
+    private func loadAsset() {
+        let options = PHVideoRequestOptions()
+        options.deliveryMode = .highQualityFormat
+        options.isNetworkAccessAllowed = true
+
+        PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
+            guard let avAsset = avAsset else { return }
+            DispatchQueue.main.async {
+                self.videoAsset = avAsset
+                self.generateThumbnail(at: .zero)
+            }
+        }
+    }
+
+    private func generateThumbnail(at time: CMTime) {
+        guard let asset = videoAsset else { return }
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.requestedTimeToleranceAfter = .zero
+        generator.requestedTimeToleranceBefore = .zero
+
+        DispatchQueue.global().async {
+            do {
+                let cgImage = try generator.copyCGImage(at: time, actualTime: nil)
+                let uiImage = UIImage(cgImage: cgImage)
+                DispatchQueue.main.async {
+                    self.currentFrame = uiImage
+                }
+            } catch {
+                print("Failed to generate thumbnail: \(error)")
+            }
+        }
+    }
+}
+
+struct TOCropView: UIViewControllerRepresentable {
+    let image: UIImage
+    let onCropped: (UIImage) -> Void
+    @Environment(\.presentationMode) var presentationMode
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    func makeUIViewController(context: Context) -> TOCropViewController {
+        let cropController = TOCropViewController(image: image)
+        cropController.delegate = context.coordinator
+
+        // Optional: Lock aspect ratio to 9:16
+        cropController.aspectRatioPreset = .presetCustom
+        cropController.customAspectRatio = CGSize(width: 9, height: 16)
+        cropController.aspectRatioLockEnabled = true
+        cropController.resetAspectRatioEnabled = false
+
+        return cropController
+    }
+
+    func updateUIViewController(_ uiViewController: TOCropViewController, context: Context) {}
+
+    class Coordinator: NSObject, TOCropViewControllerDelegate {
+        var parent: TOCropView
+
+        init(parent: TOCropView) {
+            self.parent = parent
+        }
+
+        func cropViewController(_ cropViewController: TOCropViewController, didCropTo image: UIImage, with cropRect: CGRect, angle: Int) {
+            cropViewController.dismiss(animated: true)
+            parent.onCropped(image)
+        }
+
+        func cropViewController(_ cropViewController: TOCropViewController, didFinishCancelled cancelled: Bool) {
+            cropViewController.dismiss(animated: true)
+        }
+    }
+}
+
 //struct UploadView_Previews: PreviewProvider {
 //    static var previews: some View {
 //        UploadView()
