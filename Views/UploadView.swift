@@ -14,6 +14,8 @@ struct UploadView: View {
     @State private var navigateToThumbnail = false
     @State private var uploadService = VideoUploadService()
     @State private var thumbnailOverrides: [String: UIImage] = [:]
+    @State private var compressedVideoURLs: [String: URL] = [:]
+    @State private var isCompressing = false
 
     let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 3)
 
@@ -95,19 +97,44 @@ struct UploadView: View {
                         NavigationLink(
                             destination: AddThumbnailView(
                                 assets: selectedAssets,
+                                compressedVideoURLs: compressedVideoURLs,
                                 thumbnailOverrides: $thumbnailOverrides
                             ),
                             isActive: $navigateToThumbnail
                         ) {
                             Button(action: {
-                                navigateToThumbnail = true
+                                isCompressing = true
+
+                                Task {
+                                    isCompressing = true
+
+                                    for asset in selectedAssets {
+                                        if compressedVideoURLs[asset.localIdentifier] == nil {
+                                            if let url = await compressVideo(from: asset) {
+                                                compressedVideoURLs[asset.localIdentifier] = url
+                                            }
+                                        }
+                                    }
+
+                                    isCompressing = false
+                                    navigateToThumbnail = true
+                                }
                             }) {
-                                Text("Next")
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 10)
-                                    .background(Color(red: 124/255, green: 58/255, blue: 237/255))
-                                    .foregroundColor(.white)
-                                    .cornerRadius(8)
+                                if isCompressing {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .padding(.horizontal, 20)
+                                        .padding(.vertical, 10)
+                                        .background(Color.gray)
+                                        .cornerRadius(8)
+                                } else {
+                                    Text("Next")
+                                        .padding(.horizontal, 20)
+                                        .padding(.vertical, 10)
+                                        .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                                        .foregroundColor(.white)
+                                        .cornerRadius(8)
+                                }
                             }
                         }
                         .disabled(selectedAssets.isEmpty)
@@ -117,24 +144,71 @@ struct UploadView: View {
                 }
             }
         }
+        .animation(.easeInOut, value: isCompressing)
         .onAppear {
             loadVideos()
         }
-
-        // Temporary video upload testing
-//        VStack {
-//            Button("Test API Connection") {
-//                testAPIConnection()
-//            }
-//
-//            Button("Test Video Upload") {
-//                testVideoUpload()
-//            }
-//            Button("Test Mock Upload") {
-//                testWithMockVideo()
-//            }
-//        }
+        .allowsHitTesting(!isCompressing)
+        .overlay(
+            Group {
+                if isCompressing {
+                    ZStack {
+                        Color.black.opacity(0.9)
+                            .ignoresSafeArea()
+                        GeometryReader { geo in
+                            VStack{
+                                Spacer()
+                                    .frame(height: min(geo.size.height * 0.5, 275))
+                                
+                                ProgressView("Processing Video\(selectedAssets.count == 1 ? "" : "s")")
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .foregroundColor(.white)
+                                    .font(.headline)
+                                Text("This may take a few moments")
+                                    .foregroundColor(.white)
+                                    .font(.subheadline)
+                                
+                                Spacer()
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
+                    }
+                }
+            }
+        )
     }
+    
+    private func compressVideo(from asset: PHAsset) async -> URL? {
+        await withCheckedContinuation { continuation in
+            let options = PHVideoRequestOptions()
+            options.deliveryMode = .highQualityFormat
+            options.isNetworkAccessAllowed = true
+
+            PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
+                guard let avURLAsset = avAsset as? AVURLAsset else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                let exportSession = AVAssetExportSession(asset: avURLAsset, presetName: AVAssetExportPreset1280x720)!
+
+                let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).mp4")
+                exportSession.outputURL = outputURL
+                exportSession.outputFileType = .mp4
+                exportSession.shouldOptimizeForNetworkUse = true
+
+                exportSession.exportAsynchronously {
+                    if exportSession.status == .completed {
+                        continuation.resume(returning: outputURL)
+                    } else {
+                        print("Compression failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
+                        continuation.resume(returning: nil)
+                    }
+                }
+            }
+        }
+    }
+
 
     private func testAPIConnection() {
         Task {
@@ -295,7 +369,7 @@ struct VideoThumbnailMiniView: View {
                     .background(Color.white)
                     .clipped()
             } else {
-                Image("default_thumbnail") // <- 🔥 fallback image from assets
+                Image(uiImage: UIImage(systemName: "video") ?? UIImage())
                     .resizable()
                     .aspectRatio(9/16, contentMode: .fill)
                     .padding(1)
@@ -333,6 +407,8 @@ struct CroppingImage: Identifiable {
 
 struct AddThumbnailView: View {
     let assets: [PHAsset]
+    let compressedVideoURLs: [String: URL]
+    
     @State private var uploadService = VideoUploadService()
     @State private var isUploading = false
 
@@ -344,7 +420,7 @@ struct AddThumbnailView: View {
 
     var body: some View {
         VStack {
-            Text("Add Thumbnails")
+            Text("Edit Thumbnails")
                 .font(.title)
                 .foregroundColor(.white)
                 .padding(.top, 10)
@@ -362,10 +438,10 @@ struct AddThumbnailView: View {
                             Spacer()
 
                             Menu {
-                                Button("Choose from Photos") {
+                                Button("Choose from Photo Library") {
                                     showingPickerFor = asset
                                 }
-                                Button("Pick Frame from Video") {
+                                Button("Pick a frame from the Video") {
                                     showingFrameSelectorFor = asset
                                 }
                             } label: {
@@ -373,7 +449,7 @@ struct AddThumbnailView: View {
                                     print("Tapped thumbnail button for \(asset.localIdentifier)")
                                     // Present image picker or video frame selector here
                                 }) {
-                                    Text(thumbnailOverrides[asset.localIdentifier] == nil ? "Add Thumbnail" : "Edit Thumbnail")
+                                    Text("Edit Thumbnail")
                                         .foregroundColor(.white)
                                         .padding(.horizontal)
                                         .padding(.vertical, 8)
@@ -422,9 +498,13 @@ struct AddThumbnailView: View {
             }
         }
         .sheet(item: $showingFrameSelectorFor) { asset in
-            VideoScrubberSelector(asset: asset) { image in
-                thumbnailOverrides[asset.localIdentifier] = image
-                showingFrameSelectorFor = nil
+            if let url = compressedVideoURLs[asset.localIdentifier] {
+                VideoScrubberSelector(videoURL: url) { image in
+                    thumbnailOverrides[asset.localIdentifier] = image
+                    showingFrameSelectorFor = nil
+                }
+            } else {
+                Text("Error: Compressed video not found.")
             }
         }
         .sheet(item: $croppingImage) { cropping in
@@ -449,7 +529,15 @@ struct AddThumbnailView: View {
         Task {
             do {
                 // Convert PSAsset to Data
-                let videoData = try await convertAssetToData(asset: firstAsset)
+                let videoData: Data
+                
+                if let compressedURL = compressedVideoURLs[firstAsset.localIdentifier] {
+                    print("✅ Using compressed video at: \(compressedURL)")
+                    videoData = try Data(contentsOf: compressedURL)
+                } else {
+                    print("⚠️ No compressed video found. Falling back to PHAsset conversion.")
+                    videoData = try await convertAssetToData(asset: firstAsset)
+                }
                 
                 // ✅ STEP: Get selected thumbnail
                 let thumbnailImage = thumbnailOverrides[firstAsset.localIdentifier]
@@ -521,33 +609,32 @@ struct AddThumbnailView: View {
     private func preloadDefaultThumbnails() {
         for asset in assets {
             let id = asset.localIdentifier
-            // Skip if already overridden
             if thumbnailOverrides[id] != nil { continue }
 
-            let manager = PHImageManager.default()
-            let options = PHImageRequestOptions()
-            options.deliveryMode = .highQualityFormat
-            options.isNetworkAccessAllowed = true
-            options.isSynchronous = false
-            options.resizeMode = .fast
+            PHImageManager.default().requestAVAsset(forVideo: asset, options: nil) { avAsset, _, _ in
+                guard let avAsset = avAsset else { return }
 
-            let targetSize = CGSize(width: 225, height: 400) // 9:16
+                let generator = AVAssetImageGenerator(asset: avAsset)
+                generator.appliesPreferredTrackTransform = true
+                let time = CMTime(seconds: 0.1, preferredTimescale: 600)
 
-            manager.requestImage(for: asset,
-                                 targetSize: targetSize,
-                                 contentMode: .aspectFill,
-                                 options: options) { image, _ in
-                if let image = image {
-                    DispatchQueue.main.async {
-                        // Only assign if user hasn’t set one
-                        if thumbnailOverrides[id] == nil {
-                            thumbnailOverrides[id] = image
+                DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        let cgImage = try generator.copyCGImage(at: time, actualTime: nil)
+                        let uiImage = UIImage(cgImage: cgImage)
+                        DispatchQueue.main.async {
+                            if thumbnailOverrides[id] == nil {
+                                thumbnailOverrides[id] = uiImage
+                            }
                         }
+                    } catch {
+                        print("Failed to generate thumbnail for \(id): \(error)")
                     }
                 }
             }
         }
     }
+
 
 }
 
@@ -593,7 +680,7 @@ struct ImagePickerView: UIViewControllerRepresentable {
 }
 
 struct VideoScrubberSelector: View {
-    let asset: PHAsset
+    let videoURL: URL
     var onFrameSelected: (UIImage) -> Void
 
     @State private var playerItem: AVPlayerItem?
@@ -646,17 +733,9 @@ struct VideoScrubberSelector: View {
     }
 
     private func loadAsset() {
-        let options = PHVideoRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.isNetworkAccessAllowed = true
-
-        PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
-            guard let avAsset = avAsset else { return }
-            DispatchQueue.main.async {
-                self.videoAsset = avAsset
-                self.generateThumbnail(at: .zero)
-            }
-        }
+        let asset = AVAsset(url: videoURL)
+        self.videoAsset = asset
+        generateThumbnail(at: .zero)
     }
 
     private func generateThumbnail(at time: CMTime) {
@@ -721,6 +800,8 @@ struct TOCropView: UIViewControllerRepresentable {
         }
     }
 }
+
+
 
 //struct UploadView_Previews: PreviewProvider {
 //    static var previews: some View {

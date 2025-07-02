@@ -695,19 +695,33 @@ struct ActionButton: View {
 
 final class VideoAssetCache {
     static let shared = VideoAssetCache()
+
     private var cache: [URL: AVAsset] = [:]
+    private let queue = DispatchQueue(label: "com.yourapp.VideoAssetCacheQueue", attributes: .concurrent)
 
     func asset(for url: URL) -> AVAsset {
-        if let cached = cache[url] {
-            return cached
+        var result: AVAsset?
+        
+        queue.sync {
+            result = cache[url]
+        }
+
+        if let result = result {
+            return result
         } else {
             let asset = AVURLAsset(url: url)
-            cache[url] = asset
+            
+            queue.async(flags: .barrier) {
+                self.cache[url] = asset
+            }
+
             return asset
         }
     }
 
     func clear() {
-        cache.removeAll()
+        queue.async(flags: .barrier) {
+            self.cache.removeAll()
+        }
     }
 }
