@@ -496,16 +496,22 @@ struct AddThumbnailView: View {
                 croppingAsset = asset
                 showingPickerFor = nil
             }
+            .preferredColorScheme(.dark)
         }
         .sheet(item: $showingFrameSelectorFor) { asset in
-            if let url = compressedVideoURLs[asset.localIdentifier] {
-                VideoScrubberSelector(videoURL: url) { image in
-                    thumbnailOverrides[asset.localIdentifier] = image
-                    showingFrameSelectorFor = nil
+            ZStack {
+                Color.black.opacity(0.9) //darkens background
+                if let url = compressedVideoURLs[asset.localIdentifier] {
+                    VideoScrubberSelector(videoURL: url) { image in
+                        thumbnailOverrides[asset.localIdentifier] = image
+                        showingFrameSelectorFor = nil
+                    }
+                } else {
+                    Text("Error: Compressed video not found.")
+                        .foregroundColor(.white)
                 }
-            } else {
-                Text("Error: Compressed video not found.")
             }
+            .ignoresSafeArea()
         }
         .sheet(item: $croppingImage) { cropping in
             TOCropView(image: cropping.image) { croppedImage in
@@ -652,6 +658,8 @@ struct ImagePickerView: UIViewControllerRepresentable {
 
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = context.coordinator
+        //picker.overrideUserInterfaceStyle = .dark
+        
         return picker
     }
 
