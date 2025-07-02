@@ -531,7 +531,7 @@ struct AddThumbnailView: View {
             options.isSynchronous = false
             options.resizeMode = .fast
 
-            let targetSize = CGSize(width: 300, height: 533) // 9:16
+            let targetSize = CGSize(width: 225, height: 400) // 9:16
 
             manager.requestImage(for: asset,
                                  targetSize: targetSize,
