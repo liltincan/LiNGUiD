@@ -658,7 +658,7 @@ struct ImagePickerView: UIViewControllerRepresentable {
 
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = context.coordinator
-        //picker.overrideUserInterfaceStyle = .dark
+        picker.overrideUserInterfaceStyle = .dark
         
         return picker
     }
