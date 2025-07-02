@@ -7,6 +7,6 @@ class AppState: ObservableObject {
 
     init() {
         isSignedIn = FirebaseAuthService.shared.currentUserID != nil
-        needsOnboarding = !UserDefaults.standard.bool(forKey: "didCompleteOnboarding")
+        //needsOnboarding = !UserDefaults.standard.bool(forKey: "didCompleteOnboarding")
     }
 }
