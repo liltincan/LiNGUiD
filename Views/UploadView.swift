@@ -55,22 +55,24 @@ struct UploadView: View {
                 .padding(.bottom, 20)
 
                 // 🟣 Video Grid
-                ScrollView {
-                    LazyVGrid(columns: columns, spacing: 0) {
-                        ForEach(videoAssets, id: \.localIdentifier) { asset in
-                            VideoThumbnailSelectableView(
-                                asset: asset,
-                                index: selectedAssets.firstIndex(of: asset).map { $0 + 1 },
-                                isSelected: selectedAssets.contains(asset)
-                            )
-                            .onTapGesture {
-                                handleSelection(for: asset)
+                GeometryReader { geometry in
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: 0) {
+                            ForEach(videoAssets, id: \.localIdentifier) { asset in
+                                VideoThumbnailSelectableView(
+                                    asset: asset,
+                                    index: selectedAssets.firstIndex(of: asset).map { $0 + 1 },
+                                    isSelected: selectedAssets.contains(asset)
+                                )
+                                .onTapGesture {
+                                    handleSelection(for: asset)
+                                }
                             }
                         }
                     }
+                    .padding(.horizontal, 2.5)
+                    .frame(maxHeight: geometry.size.height) // 🔧 adjust 180 based on header & buttons
                 }
-                .padding(.horizontal, 2.5)
-                .frame(maxHeight: .infinity, alignment: .bottom)
 
                 Spacer()
 
@@ -120,18 +122,18 @@ struct UploadView: View {
         }
 
         // Temporary video upload testing
-        VStack {
-            Button("Test API Connection") {
-                testAPIConnection()
-            }
-
-            Button("Test Video Upload") {
-                testVideoUpload()
-            }
-            Button("Test Mock Upload") {
-                testWithMockVideo()
-            }
-        }
+//        VStack {
+//            Button("Test API Connection") {
+//                testAPIConnection()
+//            }
+//
+//            Button("Test Video Upload") {
+//                testVideoUpload()
+//            }
+//            Button("Test Mock Upload") {
+//                testWithMockVideo()
+//            }
+//        }
     }
 
     private func testAPIConnection() {
@@ -293,10 +295,12 @@ struct VideoThumbnailMiniView: View {
                     .background(Color.white)
                     .clipped()
             } else {
-                Color.gray
+                Image("default_thumbnail") // <- 🔥 fallback image from assets
+                    .resizable()
                     .aspectRatio(9/16, contentMode: .fill)
                     .padding(1)
                     .background(Color.white)
+                    .clipped()
             }
         }
         .onAppear(perform: fetchThumbnail)
@@ -406,6 +410,9 @@ struct AddThumbnailView: View {
             .padding(.vertical, 20)
             .padding(.horizontal, 10)
         }
+        .onAppear {
+            preloadDefaultThumbnails()
+        }
         .sheet(item: $showingPickerFor) { asset in
             ImagePickerView { image in
                 // Crop this image before assigning
@@ -510,6 +517,38 @@ struct AddThumbnailView: View {
             }
         }
     }
+    
+    private func preloadDefaultThumbnails() {
+        for asset in assets {
+            let id = asset.localIdentifier
+            // Skip if already overridden
+            if thumbnailOverrides[id] != nil { continue }
+
+            let manager = PHImageManager.default()
+            let options = PHImageRequestOptions()
+            options.deliveryMode = .highQualityFormat
+            options.isNetworkAccessAllowed = true
+            options.isSynchronous = false
+            options.resizeMode = .fast
+
+            let targetSize = CGSize(width: 300, height: 533) // 9:16
+
+            manager.requestImage(for: asset,
+                                 targetSize: targetSize,
+                                 contentMode: .aspectFill,
+                                 options: options) { image, _ in
+                if let image = image {
+                    DispatchQueue.main.async {
+                        // Only assign if user hasn’t set one
+                        if thumbnailOverrides[id] == nil {
+                            thumbnailOverrides[id] = image
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 struct ImagePickerView: UIViewControllerRepresentable {
