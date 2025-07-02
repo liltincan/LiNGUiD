@@ -712,6 +712,7 @@ struct VideoScrubberSelector: View {
                         generateThumbnail(at: newTime)
                     }
                 ), in: 0...duration)
+                .tint(Color(red: 124/255, green: 58/255, blue: 237/255))
                 .padding(.horizontal, 25)
                 .padding(.bottom, 15)
             }
