@@ -377,7 +377,7 @@ struct DashboardView: View {
 //                }
 //            }
             translateTextV2(
-                text: "Bonjour, comment ça va ?",
+                text: word.target,
                 sourceLang: viewModel.targetLanguage ?? "",
                 targetLang: viewModel.nativeLanguage ?? "",
             ) { result in
