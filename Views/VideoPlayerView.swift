@@ -89,7 +89,7 @@ struct VideoPlayerView: View {
                 Spacer()
                 HStack {
                     Spacer()
-                    VStack(spacing: 24) {
+                    VStack(spacing: 35) {
                         ActionButton(
                             icon: isCaptionVisible
                                 ? "caption-on" : "caption-off",
@@ -107,10 +107,18 @@ struct VideoPlayerView: View {
                                 //                                print(words)
                             }
                         }
+                        
                         ActionButton(
-                            icon: isLiked ? "heart.fill" : "heart",
+                            icon: "person.crop.circle.fill",
+                            color: .white,
+                            size: 25,
+                            isSystemImage: true
+                        ) {}
+                        
+                        ActionButton(
+                            icon: "heart.fill",
                             color: isLiked ? .red : .white,
-                            size: 32,
+                            size: 25,
                             isSystemImage: true
                         ) {
                             isLiked.toggle()
@@ -131,16 +139,16 @@ struct VideoPlayerView: View {
                         }
 
                         ActionButton(
-                            icon: "bubble.right",
+                            icon: "bubble.fill",
                             color: .white,
-                            size: 30,
+                            size: 25,
                             isSystemImage: true
                         ) {}
 
                         ActionButton(
-                            icon: isSaved ? "bookmark.fill" : "bookmark",
+                            icon: "bookmark.fill",
                             color: isSaved ? .yellow : .white,
-                            size: 32,
+                            size: 25,
                             isSystemImage: true
                         ) {
                             isSaved.toggle()
@@ -161,9 +169,9 @@ struct VideoPlayerView: View {
                         }
 
                         ActionButton(
-                            icon: "square.and.arrow.up",
+                            icon: "arrowshape.turn.up.right.fill",
                             color: .white,
-                            size: 32,
+                            size: 25,
                             isSystemImage: true
                         ) {
                             // Record share "intent" when user opens share sheet - Gerardo
@@ -180,9 +188,23 @@ struct VideoPlayerView: View {
                             }
                             isShareSheetPresented = true
                         }
+                        
+                        ActionButton(
+                            icon: "clock.fill",
+                            color: .white,
+                            size: 25,
+                            isSystemImage: true
+                        ) {}
+                        
+                        ActionButton(
+                            icon: "ellipsis",
+                            color: .white,
+                            size: 25,
+                            isSystemImage: true
+                        ) {}
                     }
                     .padding(.trailing, 20)
-                    .padding(.bottom, 200)
+                    .padding(.bottom, 100)
                 }
 
             }
@@ -221,7 +243,8 @@ struct VideoPlayerView: View {
                     .background(Color.black.opacity(0.6))
                     .cornerRadius(8)
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 100)  // or .top for upper display
+                    .padding(.trailing, 35)
+                    .padding(.bottom, 100)
 
                 }
 
@@ -661,7 +684,7 @@ struct ActionButton: View {
                 .foregroundColor(color)
                 .background(
                     Circle()
-                        .fill(Color.black.opacity(0.1))
+                        .fill(Color.black.opacity(0))
                         .frame(width: size + 20, height: size + 20)
                         .blur(radius: 3)
                 )

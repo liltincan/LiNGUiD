@@ -23,6 +23,7 @@ struct VideoFeedView: View {
                     .foregroundColor(.gray)
             } else {
                 VerticalVideoFeed(videos: vm.videos, currentIndex: $currentIndex, userSession: userSession, vm: vm)
+                
             }
         }
         .ignoresSafeArea()
