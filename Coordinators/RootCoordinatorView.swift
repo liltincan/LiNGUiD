@@ -5,23 +5,21 @@ struct RootCoordinatorView: View {
     @EnvironmentObject var deepLinkCoordinator: DeepLinkCoordinator
     @StateObject var userSession = UserSessionViewModel()
     @StateObject private var vm = LoginViewModel()
+    @State private var selectedTab: Int = 0
     
     @State private var navigationPath = NavigationPath()
+    
+    @State private var startingVideoId: String? = nil
 
     init() {
         // logout()
     }
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            mainContent
-                .navigationDestination(for: String.self) { videoId in
-                    viewForDeepLink(videoId: videoId)
-                }
-        }
-        .onChange(of: deepLinkCoordinator.deepLinkVideoID) { _, newId in
-            handleDeepLinkChange(newId)
-        }
+        mainContent
+            .onChange(of: deepLinkCoordinator.deepLinkVideoID) { _, newId in
+                handleDeepLinkChange(newId)
+            }
     }
     
     
@@ -62,20 +60,27 @@ struct RootCoordinatorView: View {
     
     @ViewBuilder
     private var mainTabView: some View {
-        MainTabView(onLogout: logout) // Pass logout closure to MainTabView
-            .environmentObject(userSession)
+        MainTabView(
+            selectedTab: $selectedTab,
+            deepLinkedVideoID: startingVideoId,
+            onLogout: logout
+        )
+        .environmentObject(userSession)
     }
     
     
     private func handleDeepLinkChange(_ newId: String?) {
-        if let videoId = newId {
-            navigationPath.append(videoId)
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                deepLinkCoordinator.deepLinkVideoID = nil
-            }
+        guard let videoId = newId else { return }
+        
+        // Reset ViewModel's videos and set starting video ID to the new one:
+        startingVideoId = nil
+        selectedTab = 0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            startingVideoId = videoId
         }
+        
     }
+
     
     
     private func checkExistingAuthentication() {
@@ -95,21 +100,6 @@ struct RootCoordinatorView: View {
         }
     }
     
-    @ViewBuilder
-    private func viewForDeepLink(videoId: String) -> some View {
-        if let url = URL(string: "https://learnwithlinguid.com/videos/\(videoId).mp4"),
-           UIApplication.shared.canOpenURL(url) {
-            VideoPlayerView(url: url, videoId: videoId)
-        } else {
-            Text("Video unavailable")
-                .font(.headline)
-                .foregroundColor(.gray)
-                .padding()
-                .onAppear {
-                    print("⚠️ Invalid or missing video URL for ID: \(videoId)")
-                }
-        }
-    }
 
     // Updated logout function that properly updates app state
     func logout() {

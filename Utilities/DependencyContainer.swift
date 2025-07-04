@@ -7,6 +7,8 @@ final class DependencyContainer {
     func registerAll() {
         register(AuthService.self) { FirebaseAuthService() }
         register(VideoRepository.self) { FirestoreVideoRepository() }
+        register(FirestoreVideoRepository.self) { FirestoreVideoRepository() }
+
     }
 
     private var factories = [String: () -> Any]()

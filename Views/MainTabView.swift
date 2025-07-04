@@ -2,10 +2,8 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selection = 0
-    @EnvironmentObject var deepLinkCoordinator: DeepLinkCoordinator
-    @State private var showDeepLinkedVideo = false
-    @State private var deepLinkedVideoID: String?
-    @State private var deepLinkedVideoURL: URL?
+    @Binding var selectedTab: Int
+    var deepLinkedVideoID: String?
     
     @StateObject var userSession = UserSessionViewModel()
     
@@ -14,7 +12,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            VideoFeedView(userSession: userSession)
+            VideoFeedView(userSession: userSession, startingVideoId: deepLinkedVideoID)
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
 
@@ -47,24 +45,5 @@ struct MainTabView: View {
                 .tag(4)
         }
         .accentColor(Color(red: 142/255, green: 84/255, blue: 229/255))
-        .onReceive(deepLinkCoordinator.$deepLinkVideoID.compactMap { $0 }) { id in
-            FirestoreService.shared.getVideoURL(for: id) { result in
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success(let url):
-                        deepLinkedVideoID = id
-                        deepLinkedVideoURL = url
-                        showDeepLinkedVideo = true
-                    case .failure(let error):
-                        print("Failed to fetch video URL: \(error.localizedDescription)")
-                    }
-                }
-            }
-        }
-        .fullScreenCover(isPresented: $showDeepLinkedVideo) {
-            if let id = deepLinkedVideoID, let url = deepLinkedVideoURL {
-                VideoPlayerView(url: url, videoId: id)
-            }
-        }
     }
 }

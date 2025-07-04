@@ -14,6 +14,7 @@ class VideoFeedViewModel: ObservableObject {
     private let db = Firestore.firestore()
     private var lastID: String?
     private let pageSize = 10
+    @Published var deepLinkedVideoIndex: Int?
     
     init(repository: VideoRepository = DependencyContainer.shared.resolve(), authService: AuthService = DependencyContainer.shared.resolve()) {
         self.repository = repository
@@ -111,4 +112,46 @@ class VideoFeedViewModel: ObservableObject {
             print("Error loading more videos: \(error)")
         }
     }
+    
+    @MainActor
+    func resetVideos(startingWith videoId: String) async {
+        videos = []
+        await fetchInitialVideos()
+
+        // Check if video is missing after initial fetch
+        if !videos.contains(where: { $0.id == videoId }) {
+            do {
+                guard let userID = authService.currentUserID else { return }
+                let userDoc = try await db.collection("users").document(userID).getDocument()
+                let user = try userDoc.data(as: User.self)
+
+                let targetLanguage = user.targetLanguage.isEmpty ?
+                    (user.languagesData?.keys.first?.lowercased() ?? "french") :
+                    user.targetLanguage.lowercased()
+
+                selectedLanguage = targetLanguage
+
+                if let deepLinkedVideo = try await repository.fetchVideoById(videoId: videoId) {
+                    // Insert at front
+                    print("Deep linked video FOUND:", deepLinkedVideo.title)
+                    videos.insert(deepLinkedVideo, at: 0)
+
+                    // Also update deepLinkedVideoIndex to 0 explicitly
+                    deepLinkedVideoIndex = 0
+                } else {
+                    print("Deep linked video NOT FOUND in repository for ID:", videoId)
+                }
+
+            } catch {
+                print("Failed to fetch deep-linked video separately: \(error)")
+            }
+        } else {
+            // If video is already in videos, update index accordingly
+            if let index = videos.firstIndex(where: { $0.id == videoId }) {
+                deepLinkedVideoIndex = index
+            }
+        }
+    }
+
 }
+

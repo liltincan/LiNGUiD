@@ -4,25 +4,35 @@
 //
 //  Created by Jackson Sanders on 6/6/25.
 //
-
 import Foundation
 
 class DeepLinkCoordinator: ObservableObject {
     @Published var deepLinkVideoID: String?
 
     func handle(url: URL) {
-        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              components.host == "learnwithlinguid.com",
+              let path = components.path.removingPercentEncoding,
+              path.starts(with: "/videos/") else {
+            DispatchQueue.main.async {
+                self.deepLinkVideoID = nil
+            }
+            return
+        }
 
-        if components?.host == "learnwithlinguid.com",
-           let path = components?.path,
-           path.starts(with: "/videos/") {
-            let videoId = path.replacingOccurrences(of: "/videos/", with: "")
-            deepLinkVideoID = videoId
+        let videoId = path.replacingOccurrences(of: "/videos/", with: "")
+        
+        DispatchQueue.main.async {
+            // Reset first to ensure .onChange fires every time, even for same ID
+            self.deepLinkVideoID = nil
+            self.deepLinkVideoID = videoId
         }
     }
     
     func deepLinkToVideo(with videoId: String) {
-        self.deepLinkVideoID = videoId
+        DispatchQueue.main.async {
+            self.deepLinkVideoID = nil
+            self.deepLinkVideoID = videoId
+        }
     }
-
 }

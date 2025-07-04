@@ -670,21 +670,39 @@ struct ActionButton: View {
     }
 }
 
+import Foundation
+import AVFoundation
+
 final class VideoAssetCache {
+    // Shared singleton instance
     static let shared = VideoAssetCache()
+
+    // Private cache dictionary
     private var cache: [URL: AVAsset] = [:]
 
+    // Serial queue for thread-safe access
+    private let queue = DispatchQueue(label: "com.yourapp.videoAssetCache")
+
+    private init() {}
+
+    /// Returns a cached AVAsset for a given URL, or creates and caches it if missing.
     func asset(for url: URL) -> AVAsset {
-        if let cached = cache[url] {
-            return cached
-        } else {
-            let asset = AVURLAsset(url: url)
-            cache[url] = asset
-            return asset
+        return queue.sync {
+            if let cached = cache[url] {
+                return cached
+            } else {
+                let asset = AVURLAsset(url: url)
+                cache[url] = asset
+                return asset
+            }
         }
     }
 
+    /// Clears all cached assets (optional utility)
     func clear() {
-        cache.removeAll()
+        queue.sync {
+            cache.removeAll()
+        }
     }
 }
+

@@ -99,4 +99,50 @@ final class FirestoreVideoRepository: VideoRepository {
         }
         return finalVideos
     }
+    
+    func fetchVideoById(videoId: String) async throws -> Video? {
+        let languages = ["english", "french", "russian", "spanish", "german"]
+        
+        for langCode in languages {
+            print("Searching for video \(videoId) in language: \(langCode)")
+            let docRef = db.collection(videosCollection).document(langCode).collection("items").document(videoId)
+            
+            let docSnapshot = try await docRef.getDocument()
+            
+            if docSnapshot.exists, let data = docSnapshot.data() {
+                print("Found document in \(langCode): \(docSnapshot.documentID)")
+                
+                guard let urlString = data["video_url"] as? String,
+                      let url = URL(string: urlString),
+                      let title = data["title"] as? String,
+                      let captionDicts = data["captions"] as? [[String: Any]] else {
+                    print("Data missing required fields in document \(docSnapshot.documentID)")
+                    return nil
+                }
+                
+                let captions: [Captions] = captionDicts.compactMap { dict in
+                    guard let start = dict["start"] as? Double,
+                          let end = dict["end"] as? Double,
+                          let text = dict["text"] as? String else {
+                        return nil
+                    }
+                    let words = dict["words"] as? [String]
+                    return Captions(end: end, start: start, text: text, words: words)
+                }
+                
+                let detectedLevel = data["detected_level"] as? Int ?? 2
+                
+                return Video(id: docSnapshot.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel)
+            } else {
+                print("No document found for videoId \(videoId) in language: \(langCode)")
+            }
+        }
+        
+        print("Video with ID \(videoId) not found in any language collections")
+        return nil
+    }
+
+
+
 }
+
