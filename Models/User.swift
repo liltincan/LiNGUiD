@@ -31,13 +31,14 @@ struct User: Codable, Identifiable {
     var country: String?
     var streak: Int?
     var profilePhotoUrl: String?
+    var didCompleteOnboarding: Bool?
 
     enum CodingKeys: CodingKey {
         case id, email, userName, createdAt, flameDate, flameStatus,
             globalWatchTime, interests, targetLanguage, languagesData,
             likedVideos, savedVideos, watchedVideos, uploadedVideos,
             nativeLanguage, nativeLanguageList,
-            followers, following, chats, country, streak, profilePhotoUrl
+            followers, following, chats, country, streak, profilePhotoUrl, didCompleteOnboarding
     }
 
     private enum AlternateKeys: String, CodingKey {

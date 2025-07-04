@@ -15,12 +15,14 @@ struct VideoThumbnailSelectableView: View {
                     Image(uiImage: thumbnail)
                         .resizable()
                         .aspectRatio(9/16, contentMode: .fill)
-                        .border(Color.white.opacity(0.8), width: 1)
+                        .padding(1)
+                        .background(Color.white)
                         .clipped()
                 } else {
                     Color.gray
                         .aspectRatio(9/16, contentMode: .fill)
-                        .border(Color.white.opacity(0.8), width: 1)
+                        .padding(1)
+                        .background(Color.white)
                 }
             }
             .onAppear(perform: fetchThumbnail)

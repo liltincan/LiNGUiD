@@ -16,17 +16,13 @@ final class FirebaseAuthService: AuthService {
     }
 
     private func saveUserData(user: FirebaseAuth.User, loginMethod: String, isNewUser: Bool = false) {
-        guard isNewUser else { return }
-
-        let email = user.email ?? ""
-        let username = email.components(separatedBy: "@").first ?? "user"
-
         let userData: [String: Any] = [
             "id": user.uid,
-            "email": email,
-            "userName": username,
+            "email": user.email ?? "",
+            "userName": (user.email ?? "").components(separatedBy: "@").first ?? "user",
             "loginWith": loginMethod,
-            "createdAt": FieldValue.serverTimestamp()
+            "createdAt": FieldValue.serverTimestamp(),
+            "didCompleteOnboarding": false // Initialize as false for new users
         ]
 
         db.collection("users").document(user.uid).setData(userData, merge: true) { error in

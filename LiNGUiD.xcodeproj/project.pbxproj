@@ -38,6 +38,10 @@
 		7EFDD81E2E0C8DD600154192 /* ChatListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */; };
 		8177D3E62DF8D4B100FA6800 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E52DF8D4AC00FA6800 /* UploadView.swift */; };
 		8177D3E82DF8D69A00FA6800 /* VideoThumbnailSelectableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */; };
+		81CC3AEF2E15B4000010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AEE2E15B4000010512B /* CropViewController */; };
+		81CC3AF12E15B4000010512B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF02E15B4000010512B /* TOCropViewController */; };
+		81CC3AF32E15B44A0010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF22E15B44A0010512B /* CropViewController */; };
+		81CC3AF52E15B44A0010512B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF42E15B44A0010512B /* TOCropViewController */; };
 		81F436412DF2830600DA9BDA /* LanguageLevelSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */; };
 		81F436432DF2831300DA9BDA /* LanguageSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436422DF2831300DA9BDA /* LanguageSelectionView.swift */; };
 		81F436452DF2831D00DA9BDA /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */; };
@@ -190,6 +194,8 @@
 			files = (
 				8F51F2282DE022D200397726 /* FirebaseAnalytics in Frameworks */,
 				8F51F22A2DE022D200397726 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
+				81CC3AF12E15B4000010512B /* TOCropViewController in Frameworks */,
+				81CC3AEF2E15B4000010512B /* CropViewController in Frameworks */,
 				8FB929612DE10B9B0020AFCD /* FirebaseStorage in Frameworks */,
 				8F51F2262DE022D200397726 /* FirebaseAI in Frameworks */,
 				8F51F22E2DE022D200397726 /* FirebaseAppCheck in Frameworks */,
@@ -207,6 +213,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				81CC3AF52E15B44A0010512B /* TOCropViewController in Frameworks */,
+				81CC3AF32E15B44A0010512B /* CropViewController in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -413,6 +421,8 @@
 				60C7E5BA2DE2C0C500C1AAF2 /* GoogleSignIn */,
 				60C7E5BC2DE2C0C500C1AAF2 /* GoogleSignInSwift */,
 				609F7A432E0763110031682A /* SwiftUIFlow */,
+				81CC3AEE2E15B4000010512B /* CropViewController */,
+				81CC3AF02E15B4000010512B /* TOCropViewController */,
 			);
 			productName = LiNGUiD;
 			productReference = 8F823B4C2DD987F8007B6E5E /* LiNGUiD.app */;
@@ -433,6 +443,8 @@
 			);
 			name = LiNGUiDTests;
 			packageProductDependencies = (
+				81CC3AF22E15B44A0010512B /* CropViewController */,
+				81CC3AF42E15B44A0010512B /* TOCropViewController */,
 			);
 			productName = LiNGUiDTests;
 			productReference = 8F823B5A2DD987FA007B6E5E /* LiNGUiDTests.xctest */;
@@ -495,6 +507,7 @@
 				8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				60C7E5B92DE2C0C500C1AAF2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */,
+				81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8F823B4D2DD987F8007B6E5E /* Products */;
@@ -1002,6 +1015,14 @@
 				minimumVersion = 8.0.0;
 			};
 		};
+		81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/TimOliver/TOCropViewController";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.4;
+			};
+		};
 		8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -1027,6 +1048,26 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 60C7E5B92DE2C0C500C1AAF2 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		81CC3AEE2E15B4000010512B /* CropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = CropViewController;
+		};
+		81CC3AF02E15B4000010512B /* TOCropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = TOCropViewController;
+		};
+		81CC3AF22E15B44A0010512B /* CropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = CropViewController;
+		};
+		81CC3AF42E15B44A0010512B /* TOCropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = TOCropViewController;
 		};
 		8F51F2252DE022D200397726 /* FirebaseAI */ = {
 			isa = XCSwiftPackageProductDependency;

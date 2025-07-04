@@ -218,6 +218,60 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         }
     }
     
+    // In FirestoreService.swift
+    func getOnboardingStatus(completion: @escaping (Result<Bool, Error>) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(.failure(NSError(domain: "NoUID", code: -1)))
+            return
+        }
+        
+        db.collection("users").document(uid).getDocument { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            
+            let status = snapshot?.data()?["didCompleteOnboarding"] as? Bool ?? false
+            completion(.success(status))
+        }
+    }
+
+    func setOnboardingStatus(completed: Bool, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else {
+            completion(.failure(NSError(domain: "NoUID", code: -1)))
+            return
+        }
+        
+        db.collection("users").document(uid).updateData([
+            "didCompleteOnboarding": completed
+        ]) { error in
+            if let error = error {
+                completion(.failure(error))
+            } else {
+                completion(.success(()))
+            }
+        }
+    }
+    
 }
+extension FirestoreService {
+    func updateOnboardingStatus(completed: Bool) async throws {
+        guard let uid = Auth.auth().currentUser?.uid else { throw AuthError.noUser }
+        try await db.collection("users").document(uid).updateData([
+            "didCompleteOnboarding": completed
+        ])
+    }
+    
+    func getOnboardingStatus() async throws -> Bool {
+        guard let uid = Auth.auth().currentUser?.uid else { throw AuthError.noUser }
+        let doc = try await db.collection("users").document(uid).getDocument()
+        return doc.data()?["didCompleteOnboarding"] as? Bool ?? false
+    }
+    
+    enum AuthError: Error {
+        case noUser
+    }
+}
+
 
 

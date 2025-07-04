@@ -400,10 +400,10 @@ struct CustomProgressBar: View {
     }
 }
 
-struct OnboardingFlowView_Previews: PreviewProvider {
-    static var previews: some View {
-        OnboardingFlowView {
-            print("Onboarding Complete")
-        }
-    }
-}
+//struct OnboardingFlowView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        OnboardingFlowView {
+//            print("Onboarding Complete")
+//        }
+//    }
+//}

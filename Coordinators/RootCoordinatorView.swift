@@ -1,11 +1,12 @@
 import SwiftUI
+import FirebaseAuth
 
 struct RootCoordinatorView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var deepLinkCoordinator: DeepLinkCoordinator
     @StateObject var userSession = UserSessionViewModel()
     @StateObject private var vm = LoginViewModel()
-    @State private var selectedTab: Int = 0
+    @State private var hasCheckedOnboarding = false
     
     @State private var navigationPath = NavigationPath()
     
@@ -16,10 +17,25 @@ struct RootCoordinatorView: View {
     }
 
     var body: some View {
-        mainContent
-            .onChange(of: deepLinkCoordinator.deepLinkVideoID) { _, newId in
-                handleDeepLinkChange(newId)
+        NavigationStack(path: $navigationPath) {
+            // Single source of truth for view hierarchy
+            ZStack {
+                if !hasCheckedOnboarding {
+                    ProgressView()
+                } else {
+                    mainContent
+                }
             }
+            .task {
+                await checkInitialState()
+            }
+            .navigationDestination(for: String.self) { videoId in
+                viewForDeepLink(videoId: videoId)
+            }
+        }
+        .onChange(of: deepLinkCoordinator.deepLinkVideoID) { _, newId in
+            handleDeepLinkChange(newId)
+        }
     }
     
     
@@ -51,10 +67,84 @@ struct RootCoordinatorView: View {
     @ViewBuilder
     private var onboardingView: some View {
         OnboardingFlowView {
-            UserDefaults.standard.set(true, forKey: "didCompleteOnboarding")
-            appState.needsOnboarding = false
+            // This runs when onboarding completes
+            completeOnboarding()
         }
         .environmentObject(userSession)
+        
+    }
+    
+    private func checkInitialState() async {
+        guard appState.isSignedIn else {
+            hasCheckedOnboarding = true
+            return
+        }
+        
+        do {
+            // 1. First try to get from Firestore
+            let firestoreCompleted = try await FirestoreService.shared.getOnboardingStatus()
+            
+            // 2. If not found in Firestore, check local storage
+            let localCompleted = UserDefaults.standard.bool(forKey: "didCompleteOnboarding")
+            
+            await MainActor.run {
+                appState.needsOnboarding = !(firestoreCompleted || localCompleted)
+                hasCheckedOnboarding = true
+            }
+            
+            // 3. If Firestore says incomplete but local says complete, sync to Firestore
+            if !firestoreCompleted && localCompleted {
+                try await FirestoreService.shared.updateOnboardingStatus(completed: true)
+            }
+        } catch {
+            print("Error checking onboarding:", error)
+            // Fallback to local storage
+            await MainActor.run {
+                appState.needsOnboarding = !UserDefaults.standard.bool(forKey: "didCompleteOnboarding")
+                hasCheckedOnboarding = true
+            }
+        }
+    }
+    
+    private func completeOnboarding() {
+        // Update local state immediately
+        UserDefaults.standard.set(true, forKey: "didCompleteOnboarding")
+        appState.needsOnboarding = false
+        
+        // Update Firestore async
+        Task {
+            do {
+                try await FirestoreService.shared.updateOnboardingStatus(completed: true)
+            } catch {
+                print("Failed to update Firestore onboarding status:", error)
+                // You might want to retry this later
+            }
+        }
+    }
+    
+    private func checkOnboardingStatus() async {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        do {
+            // First check Firestore
+            let firestoreCompleted = try await FirestoreService.shared.getOnboardingStatus()
+            
+            // Then check local UserDefaults as fallback
+            let localCompleted = UserDefaults.standard.bool(forKey: "didCompleteOnboarding")
+            
+            await MainActor.run {
+                appState.needsOnboarding = !(firestoreCompleted || localCompleted)
+                if !appState.needsOnboarding {
+                    UserDefaults.standard.set(true, forKey: "didCompleteOnboarding")
+                }
+            }
+        } catch {
+            print("Error checking onboarding status: \(error)")
+            await MainActor.run {
+                // Fallback to local storage if Firestore fails
+                appState.needsOnboarding = !UserDefaults.standard.bool(forKey: "didCompleteOnboarding")
+            }
+        }
     }
     
     
@@ -90,10 +180,23 @@ struct RootCoordinatorView: View {
                 let exists = await userSession.checkUserExists()
                 await MainActor.run {
                     appState.isSignedIn = true
-                    appState.needsOnboarding = !exists
                     
                     if exists {
-                        UserDefaults.standard.set(true, forKey: "didCompleteOnboarding")
+                        // Check onboarding status from Firestore
+                        FirestoreService.shared.getOnboardingStatus { result in
+                            switch result {
+                            case .success(let completed):
+                                appState.needsOnboarding = !completed
+                                UserDefaults.standard.set(completed, forKey: "didCompleteOnboarding")
+                            case .failure:
+                                // If we can't check, assume onboarding is needed
+                                appState.needsOnboarding = true
+                            }
+                        }
+                    } else {
+                        // New user needs onboarding
+                        appState.needsOnboarding = true
+                        UserDefaults.standard.set(false, forKey: "didCompleteOnboarding")
                     }
                 }
             }
