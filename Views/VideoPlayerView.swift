@@ -51,6 +51,7 @@ struct VideoPlayerView: View {
     @State private var isLiked: Bool = false
     @State private var isSaved: Bool = false
     @State private var isShareSheetPresented = false
+    @State private var isOptionsSheetPresented = false
     @State private var isPlayerReady = false
     @State private var hasBeenSetup = false
     @State private var watchTimer: Timer?  // timer for video watch time - Gerardo
@@ -201,7 +202,9 @@ struct VideoPlayerView: View {
                             color: .white,
                             size: 25,
                             isSystemImage: true
-                        ) {}
+                        ) {
+                            isOptionsSheetPresented = true
+                        }
                     }
                     .padding(.trailing, 20)
                     .padding(.bottom, 100)
@@ -304,6 +307,29 @@ struct VideoPlayerView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $isOptionsSheetPresented) {
+            OptionsSheetView(
+                videoId: videoId,
+                onInterested: {
+                    print("Interested in video \(videoId)")
+                    // Firestore logic or analytics here
+                },
+                onNotInterested: {
+                    print("Not interested in video \(videoId)")
+                    // Remove from feed or record feedback
+                },
+                onReport: {
+                    print("Reported video \(videoId)")
+                    // Firestore or moderation flag
+                },
+                onDismiss: {
+                    isOptionsSheetPresented = false
+                }
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+
         //        .overlay(
         //            Group {
         //                if showWordPopup, let word = selectedWord {
@@ -735,3 +761,79 @@ final class VideoAssetCache {
     }
 }
 
+struct OptionsSheetView: View {
+    let videoId: String
+    let onInterested: () -> Void
+    let onNotInterested: () -> Void
+    let onReport: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Capsule()
+                .fill(Color.gray.opacity(0.5))
+                .frame(width: 40, height: 5)
+                .padding(.top, 10)
+
+            Text("What would you like to do?")
+                .font(.headline)
+                .foregroundColor(.white)
+
+            VStack(spacing: 12) {
+                Button {
+                    onInterested()
+                    onDismiss()
+                } label: {
+                    Label("I'm interested", systemImage: "hand.thumbsup")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+
+                Button {
+                    onNotInterested()
+                    onDismiss()
+                } label: {
+                    Label("Not interested", systemImage: "hand.thumbsdown")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.gray.opacity(0.6))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+
+                Button(role: .destructive) {
+                    onReport()
+                    onDismiss()
+                } label: {
+                    Label("Report video", systemImage: "flag.fill")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.red.opacity(0.8))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+            }
+            .padding(.top, 10)
+
+            Button("Cancel") {
+                onDismiss()
+            }
+            .foregroundColor(.white)
+            .padding(.top, 10)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(Color.black)
+        .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.8), radius: 10)
+        .padding(.horizontal)
+        .transition(.move(edge: .bottom))
+    }
+}
