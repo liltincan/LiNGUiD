@@ -704,9 +704,6 @@ final class VideoAssetCache {
     private var cache: [URL: AVAsset] = [:]
     private let queue = DispatchQueue(label: "com.yourapp.VideoAssetCacheQueue", attributes: .concurrent)
 
-    // Serial queue for thread-safe access
-    private let queue = DispatchQueue(label: "com.yourapp.videoAssetCache")
-
     private init() {}
 
     /// Returns a cached AVAsset for a given URL, or creates and caches it if missing.

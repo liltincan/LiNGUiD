@@ -3,7 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @State private var selection = 0
     @Binding var selectedTab: Int
-    var deepLinkedVideoID: String?
+    @Binding var deepLinkedVideoID: String?
     
     @StateObject var userSession = UserSessionViewModel()
     

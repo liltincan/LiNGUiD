@@ -7,7 +7,7 @@ struct RootCoordinatorView: View {
     @StateObject var userSession = UserSessionViewModel()
     @StateObject private var vm = LoginViewModel()
     @State private var hasCheckedOnboarding = false
-    
+    @State private var selectedTab: Int = 0
     @State private var navigationPath = NavigationPath()
     
     @State private var startingVideoId: String? = nil
@@ -17,26 +17,21 @@ struct RootCoordinatorView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            // Single source of truth for view hierarchy
-            ZStack {
-                if !hasCheckedOnboarding {
-                    ProgressView()
-                } else {
-                    mainContent
-                }
+        ZStack {
+            if !hasCheckedOnboarding {
+                ProgressView()
+            } else {
+                mainContent
             }
-            .task {
-                await checkInitialState()
-            }
-            .navigationDestination(for: String.self) { videoId in
-                viewForDeepLink(videoId: videoId)
-            }
+        }
+        .task {
+            await checkInitialState()
         }
         .onChange(of: deepLinkCoordinator.deepLinkVideoID) { _, newId in
             handleDeepLinkChange(newId)
         }
     }
+
     
     
     @ViewBuilder
@@ -45,10 +40,26 @@ struct RootCoordinatorView: View {
             authView
         } else if appState.needsOnboarding {
             onboardingView
+        } else if startingVideoId != nil {
+            // Deep link takes priority — show feed with specific video
+            MainTabView(
+                selectedTab: $selectedTab,
+                deepLinkedVideoID: $startingVideoId,
+                onLogout: logout
+            )
+            .id(startingVideoId) // Important: triggers view reload if ID changes
+            .environmentObject(userSession)
         } else {
-            mainTabView
+            // Default signed-in experience
+            MainTabView(
+                selectedTab: $selectedTab,
+                deepLinkedVideoID: $startingVideoId,
+                onLogout: logout
+            )
+            .environmentObject(userSession)
         }
     }
+
     
     
     @ViewBuilder
@@ -152,7 +163,7 @@ struct RootCoordinatorView: View {
     private var mainTabView: some View {
         MainTabView(
             selectedTab: $selectedTab,
-            deepLinkedVideoID: startingVideoId,
+            deepLinkedVideoID: $startingVideoId,
             onLogout: logout
         )
         .environmentObject(userSession)
@@ -161,15 +172,15 @@ struct RootCoordinatorView: View {
     
     private func handleDeepLinkChange(_ newId: String?) {
         guard let videoId = newId else { return }
-        
-        // Reset ViewModel's videos and set starting video ID to the new one:
-        startingVideoId = nil
-        selectedTab = 0
+
+        startingVideoId = nil // reset to trigger .task
+        selectedTab = 0 // ensure you're showing video feed
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             startingVideoId = videoId
         }
-        
     }
+
 
     
     

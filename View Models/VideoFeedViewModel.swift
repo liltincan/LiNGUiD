@@ -131,7 +131,11 @@ class VideoFeedViewModel: ObservableObject {
 
                 selectedLanguage = targetLanguage
 
-                if let deepLinkedVideo = try await repository.fetchVideoById(videoId: videoId) {
+                if let deepLinkedVideo = try await repository.fetchVideoById(
+                    videoId: videoId,
+                    user: user,
+                    selectedLanguage: targetLanguage
+                ) {
                     // Insert at front
                     print("Deep linked video FOUND:", deepLinkedVideo.title)
                     videos.insert(deepLinkedVideo, at: 0)

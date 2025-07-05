@@ -79,6 +79,8 @@
 		8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296C2DE1169D0020AFCD /* DashboardView.swift */; };
 		8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296E2DE116BC0020AFCD /* PracticeView.swift */; };
 		8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929702DE116CE0020AFCD /* ProfileView.swift */; };
+		D6886D0A2E18995600304FE7 /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = D6886D092E18995600304FE7 /* CropViewController */; };
+		D6886D0C2E18995600304FE7 /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = D6886D0B2E18995600304FE7 /* TOCropViewController */; };
 		D69E51D42DE66EF600329D64 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */; };
 		D69E51D62DE6735A00329D64 /* VideoCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51D52DE6735A00329D64 /* VideoCache.swift */; };
 		D69E51FF2DE6C0F600329D64 /* VideoPlayerLayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */; };
@@ -222,6 +224,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D6886D0C2E18995600304FE7 /* TOCropViewController in Frameworks */,
+				D6886D0A2E18995600304FE7 /* CropViewController in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -465,6 +469,8 @@
 			);
 			name = LiNGUiDUITests;
 			packageProductDependencies = (
+				D6886D092E18995600304FE7 /* CropViewController */,
+				D6886D0B2E18995600304FE7 /* TOCropViewController */,
 			);
 			productName = LiNGUiDUITests;
 			productReference = 8F823B642DD987FA007B6E5E /* LiNGUiDUITests.xctest */;
@@ -1113,6 +1119,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		D6886D092E18995600304FE7 /* CropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = CropViewController;
+		};
+		D6886D0B2E18995600304FE7 /* TOCropViewController */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */;
+			productName = TOCropViewController;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

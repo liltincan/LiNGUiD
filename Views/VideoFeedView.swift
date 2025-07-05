@@ -136,6 +136,7 @@ struct VerticalVideoFeed: View {
 
 
 
+
                 .onChange(of: currentIndex) { oldIndex, newIndex in
                     if newIndex >= videos.count - 2 && !vm.isLoading {
                         Task { await vm.fetchMoreVideos() }
