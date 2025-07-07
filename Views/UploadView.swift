@@ -505,10 +505,14 @@ struct AddThumbnailView: View {
             ZStack {
                 Color.black.opacity(0.9) //darkens background
                 if let url = compressedVideoURLs[asset.localIdentifier] {
-                    VideoScrubberSelector(videoURL: url) { image in
-                        thumbnailOverrides[asset.localIdentifier] = image
-                        showingFrameSelectorFor = nil
-                    }
+                    VideoScrubberSelector(
+                        videoURL: url,
+                        onCancel: { showingFrameSelectorFor = nil },
+                        onFrameSelected: { image in
+                            thumbnailOverrides[asset.localIdentifier] = image
+                            showingFrameSelectorFor = nil
+                        }
+                    )
                 } else {
                     Text("Error: Compressed video not found.")
                         .foregroundColor(.white)
@@ -527,7 +531,7 @@ struct AddThumbnailView: View {
                     croppingSourceAsset = nil
                 },
                 onCancel: {
-                    // 👈 User tapped cancel in crop — go back to picker
+                    //User tapped cancel in crop — go back to picker
                     if let asset = croppingSourceAsset {
                         showingPickerFor = asset
                     }
@@ -702,6 +706,7 @@ struct ImagePickerView: UIViewControllerRepresentable {
 
 struct VideoScrubberSelector: View {
     let videoURL: URL
+    let onCancel: () -> Void
     var onFrameSelected: (UIImage) -> Void
 
     @State private var playerItem: AVPlayerItem?
@@ -711,43 +716,64 @@ struct VideoScrubberSelector: View {
 
     var body: some View {
         VStack {
+            ZStack {
+                Text("Select Thumbnail")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+
+                HStack {
+                    Button(action: {
+                        onCancel()
+                    }) {
+                        Image("Return_Button") // or "xmark" if you want a close icon
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.leading, 20)
+
+                    Spacer()
+                }
+            }
             if let currentFrame = currentFrame {
                 Image(uiImage: currentFrame)
                     .resizable()
                     .aspectRatio(9/16, contentMode: .fit)
                     .frame(maxHeight: 600)
-                    .padding()
+                    .padding(.vertical, 20)
             } else {
                 Color.gray
                     .aspectRatio(9/16, contentMode: .fit)
                     .frame(maxHeight: 600)
-                    .padding()
+                    .padding(.vertical, 20)
             }
 
             if let duration = videoAsset?.duration.seconds {
-                Slider(value: Binding(
-                    get: { currentTime.seconds },
-                    set: { newValue in
-                        let newTime = CMTime(seconds: newValue, preferredTimescale: 600)
-                        currentTime = newTime
-                        generateThumbnail(at: newTime)
+                HStack {
+                    Slider(value: Binding(
+                        get: { currentTime.seconds },
+                        set: { newValue in
+                            let newTime = CMTime(seconds: newValue, preferredTimescale: 600)
+                            currentTime = newTime
+                            generateThumbnail(at: newTime)
+                        }
+                    ), in: 0...duration)
+                    .tint(Color.appPrimaryColor)
+                    
+                    Button(action: {
+                        if let currentFrame = currentFrame {
+                            onFrameSelected(currentFrame)
+                        }
+                    }) {
+                        Text("Next")
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 8)
+                            .background(Color.appPrimaryColor)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
                     }
-                ), in: 0...duration)
-                .tint(Color(red: 124/255, green: 58/255, blue: 237/255))
-                .padding(.horizontal, 25)
-                .padding(.bottom, 15)
-            }
-
-            Button("Use This Frame") {
-                if let currentFrame = currentFrame {
-                    onFrameSelected(currentFrame)
                 }
+                .padding(.horizontal, 30)
             }
-            .frame(maxWidth: UIScreen.main.bounds.width - 45)
-            .padding(.vertical, 20)
-            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
-            .foregroundColor(.white)
-            .cornerRadius(8)
         }
         .onAppear {
             loadAsset()
