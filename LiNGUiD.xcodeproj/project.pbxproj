@@ -79,6 +79,7 @@
 		8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296C2DE1169D0020AFCD /* DashboardView.swift */; };
 		8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296E2DE116BC0020AFCD /* PracticeView.swift */; };
 		8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929702DE116CE0020AFCD /* ProfileView.swift */; };
+		D61307E82E1B4D6C0089F942 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D61307E72E1B4D6C0089F942 /* NotificationService.swift */; };
 		D6886D0A2E18995600304FE7 /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = D6886D092E18995600304FE7 /* CropViewController */; };
 		D6886D0C2E18995600304FE7 /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = D6886D0B2E18995600304FE7 /* TOCropViewController */; };
 		D69E51D42DE66EF600329D64 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */; };
@@ -170,6 +171,7 @@
 		8FB9296C2DE1169D0020AFCD /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		8FB9296E2DE116BC0020AFCD /* PracticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeView.swift; sourceTree = "<group>"; };
 		8FB929702DE116CE0020AFCD /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		D61307E72E1B4D6C0089F942 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		D69E51D52DE6735A00329D64 /* VideoCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCache.swift; sourceTree = "<group>"; };
 		D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerLayerView.swift; sourceTree = "<group>"; };
@@ -332,6 +334,7 @@
 			isa = PBXGroup;
 			children = (
 				0493FF552E0C614700D6F989 /* LaunchManager.swift */,
+				D61307E72E1B4D6C0089F942 /* NotificationService.swift */,
 				603628C12DFA91C900C6D0E5 /* AppTextTranslate.swift */,
 				60974D852DE79BDF0075CAAE /* AppTitleText.swift */,
 				604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */,
@@ -596,6 +599,7 @@
 				8FB929552DE02A790020AFCD /* AuthService.swift in Sources */,
 				047C2F532E0C5FA40052C0C3 /* VideoUploadService.swift in Sources */,
 				138F1B982DEF6D2F00F3B31B /* EditProfileView.swift in Sources */,
+				D61307E82E1B4D6C0089F942 /* NotificationService.swift in Sources */,
 				60F930CE2DEA83F300E37156 /* SavedWordsViewModel.swift in Sources */,
 				60974D882DE79D130075CAAE /* AppColors.swift in Sources */,
 				8FB929672DE116370020AFCD /* MainTabView.swift in Sources */,
