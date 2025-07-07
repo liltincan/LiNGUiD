@@ -10,6 +10,7 @@
 		047C2F532E0C5FA40052C0C3 /* VideoUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */; };
 		0493FF562E0C614700D6F989 /* LaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0493FF552E0C614700D6F989 /* LaunchManager.swift */; };
 		132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1320204F2DE8D07100DD8AF1 /* SettingsView.swift */; };
+		134970E42E1B3E030053E214 /* OtherUserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 134970E32E1B3E030053E214 /* OtherUserProfileView.swift */; };
 		138018E52DF0AD01003FC3D6 /* ChangePasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */; };
 		138F1B962DEE0DF700F3B31B /* VideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B952DEE0DF300F3B31B /* VideoView.swift */; };
 		138F1B982DEF6D2F00F3B31B /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B972DEF6D2900F3B31B /* EditProfileView.swift */; };
@@ -113,6 +114,7 @@
 		047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoUploadService.swift; sourceTree = "<group>"; };
 		0493FF552E0C614700D6F989 /* LaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchManager.swift; sourceTree = "<group>"; };
 		1320204F2DE8D07100DD8AF1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		134970E32E1B3E030053E214 /* OtherUserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherUserProfileView.swift; sourceTree = "<group>"; };
 		138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangePasswordView.swift; sourceTree = "<group>"; };
 		138F1B952DEE0DF300F3B31B /* VideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoView.swift; sourceTree = "<group>"; };
 		138F1B972DEF6D2900F3B31B /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
@@ -288,32 +290,33 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				81F731932E0A1C8C0057786F /* CountrySelectionView.swift */,
-				8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */,
-				8177D3E52DF8D4AC00FA6800 /* UploadView.swift */,
-				13F4B1602DFCB86C0019BE81 /* ChangeLanguageLevelFlow.swift */,
+				134970E32E1B3E030053E214 /* OtherUserProfileView.swift */,
+				60974D872DE79D100075CAAE /* AppColors.swift */,
 				13F4B15E2DFC99A20019BE81 /* ChangeLanguageFlowView.swift */,
+				13F4B1602DFCB86C0019BE81 /* ChangeLanguageLevelFlow.swift */,
+				138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */,
+				8FB9296A2DE116820020AFCD /* ChatListView.swift */,
+				81F731932E0A1C8C0057786F /* CountrySelectionView.swift */,
+				8FB9296C2DE1169D0020AFCD /* DashboardView.swift */,
+				138F1B972DEF6D2900F3B31B /* EditProfileView.swift */,
 				81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */,
 				81F436422DF2831300DA9BDA /* LanguageSelectionView.swift */,
-				138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */,
-				138F1B972DEF6D2900F3B31B /* EditProfileView.swift */,
-				138F1B952DEE0DF300F3B31B /* VideoView.swift */,
-				60974D892DE803760075CAAE /* PracticeWordView.swift */,
-				1320204F2DE8D07100DD8AF1 /* SettingsView.swift */,
-				8FB929702DE116CE0020AFCD /* ProfileView.swift */,
-				8FB9296E2DE116BC0020AFCD /* PracticeView.swift */,
-				8FB9296C2DE1169D0020AFCD /* DashboardView.swift */,
-				8FB9296A2DE116820020AFCD /* ChatListView.swift */,
+				8F51F2372DE0245500397726 /* LoginView.swift */,
 				8FB929662DE1162E0020AFCD /* MainTabView.swift */,
-				60974D872DE79D100075CAAE /* AppColors.swift */,
 				81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */,
 				81F436462DF2835100DA9BDA /* OnboardingPageView.swift */,
-				8F51F2382DE0247000397726 /* VideoFeedView.swift */,
-				D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */,
-				D6BA59E52DF3682000E6E137 /* ShareSheetView.swift */,
-				D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */,
 				D69E52002DE6CC5500329D64 /* PlayerView.swift */,
-				8F51F2372DE0245500397726 /* LoginView.swift */,
+				8FB9296E2DE116BC0020AFCD /* PracticeView.swift */,
+				60974D892DE803760075CAAE /* PracticeWordView.swift */,
+				8FB929702DE116CE0020AFCD /* ProfileView.swift */,
+				1320204F2DE8D07100DD8AF1 /* SettingsView.swift */,
+				D6BA59E52DF3682000E6E137 /* ShareSheetView.swift */,
+				8177D3E52DF8D4AC00FA6800 /* UploadView.swift */,
+				8F51F2382DE0247000397726 /* VideoFeedView.swift */,
+				D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */,
+				D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */,
+				8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */,
+				138F1B952DEE0DF300F3B31B /* VideoView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -574,6 +577,7 @@
 				8FB9294D2DE02A320020AFCD /* VideoFeedView.swift in Sources */,
 				7EFDD81E2E0C8DD600154192 /* ChatListViewModel.swift in Sources */,
 				D69E51D62DE6735A00329D64 /* VideoCache.swift in Sources */,
+				134970E42E1B3E030053E214 /* OtherUserProfileView.swift in Sources */,
 				60974D8A2DE803810075CAAE /* PracticeWordView.swift in Sources */,
 				D69E52012DE6CC5500329D64 /* PlayerView.swift in Sources */,
 				81F436412DF2830600DA9BDA /* LanguageLevelSelectionView.swift in Sources */,

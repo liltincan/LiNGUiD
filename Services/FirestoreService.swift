@@ -13,6 +13,14 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
     static let shared = FirestoreService() //singleton instance of FirebaseService to be used everywhere
     internal let db = Firestore.firestore() //database instance
     
+    func getUserProfilePicture(forUserId uid: String) async throws -> String? {
+        let snapshot = try await db.collection("users").document(uid).getDocument()
+
+        guard let data = snapshot.data() else {
+            return nil
+        }
+        return data["profilePhotoUrl"] as? String
+    }
     
     func getCurrentUser(completion: @escaping (Result<User, Error>) -> Void) {
         guard let uid = Auth.auth().currentUser?.uid else { //makes sure user exists

@@ -45,12 +45,8 @@ class VideoPlayerViewModel: ObservableObject {
             }
         }
     }
-
-
-
-
     
-    func toggleLike(for videoId: String, userId: String, currentLikes: [String], language: String?) {
+    func toggleLike(for videoId: String, userId: String, currentLikes: [String], language: String?, completion: @escaping (Bool) -> Void) {
         var updatedLikes = currentLikes
         let isLiking = !currentLikes.contains(videoId)
 
@@ -61,29 +57,31 @@ class VideoPlayerViewModel: ObservableObject {
         }
 
         firestoreService.updateLikedVideos(forUserId: userId, likedVideos: updatedLikes) { result in
-            switch result {
-            case .success:
-                // Record engagement event for likes - Gerardo
-                if isLiking {
-                    Task {
-                        await self.recordEngagementEvent(
-                            videoId: videoId,
-                            userID: userId,
-                            eventType: "like",
-                            language: language
-                        )
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    completion(isLiking) // Return the new state
+                    // Record engagement event for likes - Gerardo
+                    if isLiking {
+                        Task {
+                            await self.recordEngagementEvent(
+                                videoId: videoId,
+                                userID: userId,
+                                eventType: "like",
+                                language: language
+                            )
+                        }
                     }
+                case .failure(let error):
+                    print("🔍 Like update failed: \(error)")
+                    self.errorMessage = error.localizedDescription
+                    completion(!isLiking) // Revert state on failure
                 }
-                break
-            case .failure(let error):
-                print("🔍 Like update failed: \(error)")
-                self.errorMessage = error.localizedDescription
             }
         }
     }
 
-    
-    func toggleSave(for videoId: String, userId: String, currentSaves: [String], language: String?) {
+    func toggleSave(for videoId: String, userId: String, currentSaves: [String], language: String?, completion: @escaping (Bool) -> Void) {
         var updatedSaves = currentSaves
         let isSaving = !currentSaves.contains(videoId)
         
@@ -94,28 +92,31 @@ class VideoPlayerViewModel: ObservableObject {
         }
 
         firestoreService.updateSavedVideos(forUserId: userId, savedVideos: updatedSaves) { result in
-            switch result {
-            case .success:
-                // Record engagement event for saves - Gerardo
-                if isSaving {
-                    Task {
-                        await self.recordEngagementEvent(
-                            videoId: videoId,
-                            userID: userId,
-                            eventType: "save",
-                            language: language
-                        )
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    completion(isSaving) // Return the new state
+                    // Record engagement event for saves - Gerardo
+                    if isSaving {
+                        Task {
+                            await self.recordEngagementEvent(
+                                videoId: videoId,
+                                userID: userId,
+                                eventType: "save",
+                                language: language
+                            )
+                        }
                     }
+                case .failure(let error):
+                    self.errorMessage = error.localizedDescription
+                    completion(!isSaving) // Revert state on failure
                 }
-                break
-            case .failure(let error):
-                self.errorMessage = error.localizedDescription
             }
         }
     }
     
     /// Function to mark fetched videos as watched
-    /// - Author: Gerardo De La Torre. 
+    /// - Author: Gerardo De La Torre.
     /// - Date: 2025-06-06
     func markVideoAsWatched(_ videoID: String, userID: String) async {
         let db = Firestore.firestore()
@@ -141,7 +142,7 @@ class VideoPlayerViewModel: ObservableObject {
         )
     }
 
-    /// Function to record watch sessions 
+    /// Function to record watch sessions
     /// - Author: Gerardo De La Torre.
     /// - Date: 2025-06-15
     func recordWatchSession(videoId: String, userID: String, watchTime: TimeInterval, language: String?) async {

@@ -7,6 +7,8 @@ struct VideoPlayerView: View {
     let url: URL
     let videoId: String
     let language: String?
+    let uploaderId: String
+    let uploaderPfp: String?
     let containerWidth: CGFloat?
     let containerHeight: CGFloat?
     var isActive: Bool
@@ -16,6 +18,8 @@ struct VideoPlayerView: View {
         url: URL,
         videoId: String,
         language: String? = nil,
+        uploaderId: String,
+        uploaderPfp: String? = nil,
         captions: [Captions]? = nil
     ) {
         self.url = url
@@ -25,12 +29,16 @@ struct VideoPlayerView: View {
         self.containerHeight = nil
         self.isActive = true
         self.captions = captions
+        self.uploaderId = uploaderId
+        self.uploaderPfp = uploaderPfp
     }
 
     init(
         url: URL,
         videoId: String,
         language: String? = nil,
+        uploaderId: String,
+        uploaderPfp: String? = nil,
         containerWidth: CGFloat,
         containerHeight: CGFloat,
         isActive: Bool = true,
@@ -43,6 +51,8 @@ struct VideoPlayerView: View {
         self.containerHeight = containerHeight
         self.isActive = isActive
         self.captions = captions
+        self.uploaderId = uploaderId
+        self.uploaderPfp = uploaderPfp
     }
 
     @State private var isPlaying = false
@@ -53,8 +63,8 @@ struct VideoPlayerView: View {
     @State private var isShareSheetPresented = false
     @State private var isPlayerReady = false
     @State private var hasBeenSetup = false
-    @State private var watchTimer: Timer?  // timer for video watch time - Gerardo
-    @State private var totalWatchTime: TimeInterval = 0  // total watch time - Gerardo
+    @State private var watchTimer: Timer?
+    @State private var totalWatchTime: TimeInterval = 0
     @State private var hasBeenMarkedAsWatched = false
 
     @State private var isCaptionVisible = false
@@ -73,210 +83,248 @@ struct VideoPlayerView: View {
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
 
     var body: some View {
-        ZStack {
-            VideoPlayerLayerView(player: player)
-                .aspectRatio(9 / 16, contentMode: .fill)
-                .frame(
-                    width: containerWidth ?? UIScreen.main.bounds.width,
-                    height: containerHeight ?? UIScreen.main.bounds.height
-                )
-                .clipped()
-                .onTapGesture {
-                    togglePlayPause()
-                }
-
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    VStack(spacing: 35) {
-                        ActionButton(
-                            icon: isCaptionVisible
-                                ? "caption-on" : "caption-off",
-
-                            color: .white,
-                            size: 30,
-                            isSystemImage: false,
-                        ) {
-                            isCaptionVisible.toggle()
-
-                            if isCaptionVisible && !currentCaptionText.isEmpty {
-                                words = currentCaptionText.components(
-                                    separatedBy: .whitespacesAndNewlines
-                                )
-                                //                                print(words)
+        NavigationStack {
+            GeometryReader { proxy in
+                let screenWidth = proxy.size.width
+                let screenHeight = proxy.size.height
+                let safeAreaTop = proxy.safeAreaInsets.top
+                let safeAreaBottom = proxy.safeAreaInsets.bottom
+                
+                // Calculate available height for video (excluding tab bar)
+                let tabBarHeight: CGFloat = 83
+                let availableHeight = screenHeight - tabBarHeight
+                
+                // Calculate video dimensions to maintain 1:2 aspect ratio
+                let videoWidth = containerWidth ?? screenWidth
+                let idealVideoHeight = videoWidth * 2 // 1:2 aspect ratio (width:height)
+                let videoHeight = min(idealVideoHeight, availableHeight)
+                
+                ZStack {
+                    // Video Player - positioned at the very top
+                    VStack(spacing: 0) {
+                        VideoPlayerLayerView(player: player)
+                            .frame(width: videoWidth, height: videoHeight)
+                            .clipped()
+                            .onTapGesture {
+                                togglePlayPause()
                             }
-                        }
                         
-                        ActionButton(
-                            icon: "person.crop.circle.fill",
-                            color: .white,
-                            size: 25,
-                            isSystemImage: true
-                        ) {}
-                        
-                        ActionButton(
-                            icon: "heart.fill",
-                            color: isLiked ? .red : .white,
-                            size: 25,
-                            isSystemImage: true
-                        ) {
-                            isLiked.toggle()
-
-                            // Use Firebase Auth directly
-                            guard let userID = Auth.auth().currentUser?.uid
-                            else { return }
-
-                            // Get current likes from userSession
-                            let currentLikes =
-                                userSession.currentUser?.likedVideos ?? []
-                            videoPlayerViewModel.toggleLike(
-                                for: videoId,
-                                userId: userID,
-                                currentLikes: currentLikes,
-                                language: language
-                            )
-                        }
-
-                        ActionButton(
-                            icon: "bubble.fill",
-                            color: .white,
-                            size: 25,
-                            isSystemImage: true
-                        ) {}
-
-                        ActionButton(
-                            icon: "bookmark.fill",
-                            color: isSaved ? .yellow : .white,
-                            size: 25,
-                            isSystemImage: true
-                        ) {
-                            isSaved.toggle()
-                            let user = userSession.currentUser
-
-                            // Use Firebase Auth directly - Gerardo
-                            guard let userID = Auth.auth().currentUser?.uid
-                            else { return }
-                            // Get current saves from userSession
-                            let currentSaves =
-                                userSession.currentUser?.savedVideos ?? []
-                            videoPlayerViewModel.toggleSave(
-                                for: videoId,
-                                userId: userID,
-                                currentSaves: currentSaves,
-                                language: language
-                            )
-                        }
-
-                        ActionButton(
-                            icon: "arrowshape.turn.up.right.fill",
-                            color: .white,
-                            size: 25,
-                            isSystemImage: true
-                        ) {
-                            // Record share "intent" when user opens share sheet - Gerardo
-                            let user = userSession.currentUser
-                            guard let userID = Auth.auth().currentUser?.uid
-                            else { return }
-
-                            Task {
-                                await videoPlayerViewModel.recordShare(
-                                    for: videoId,
-                                    userId: userID,
-                                    language: language
-                                )
-                            }
-                            isShareSheetPresented = true
-                        }
-                        
-                        ActionButton(
-                            icon: "clock.fill",
-                            color: .white,
-                            size: 25,
-                            isSystemImage: true
-                        ) {}
-                        
-                        ActionButton(
-                            icon: "ellipsis",
-                            color: .white,
-                            size: 25,
-                            isSystemImage: true
-                        ) {}
+                        Spacer()
                     }
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 100)
-                }
-
-            }
-
-            if isCaptionVisible && !words.isEmpty {
-                VStack {
-                    Spacer()
-                    Flow(.vertical, alignment: .leading, spacing: 0) {
-                        ForEach(words, id: \.self) { word in
-                            Text(word)
-                                .font(.system(size: 20))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 4)
-                                .foregroundColor(.white)
-                                .fixedSize(horizontal: true, vertical: false)
-                                .background(
-                                    GeometryReader { geo in
-                                        Color.clear
-                                            .onAppear {
-                                                wordFrames[word] = geo.frame(
-                                                    in: .global
-                                                )
-                                            }
+                    .ignoresSafeArea(edges: .top)
+                    
+                    // Action buttons overlay
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            VStack(spacing: 35) {
+                                ActionButton(
+                                    icon: isCaptionVisible ? "caption-on" : "caption-off",
+                                    color: .white,
+                                    size: 30,
+                                    isSystemImage: false
+                                ) {
+                                    isCaptionVisible.toggle()
+                                    if isCaptionVisible && !currentCaptionText.isEmpty {
+                                        words = currentCaptionText.components(separatedBy: .whitespacesAndNewlines)
                                     }
-                                )
-                                .onTapGesture {
-                                    if isPlaying {
-                                        togglePlayPause()
-                                    }
-                                    print(word)
-                                    actionFunction(word: word)
                                 }
-
+                                
+                                NavigationLink(destination: OtherUserProfileView(userId: uploaderId)) {
+                                    ProfilePictureView(
+                                        uploaderPfp: uploaderPfp,
+                                        size: 40
+                                    )
+                                }
+                                .simultaneousGesture(
+                                    TapGesture()
+                                        .onEnded { _ in
+                                            if isPlaying {
+                                                player.pause()
+                                                isPlaying = false
+                                                stopWatchTimer()
+                                            }
+                                        }
+                                )
+                                
+                                ActionButton(
+                                    icon: "heart.fill",
+                                    color: isLiked ? .red : .white,
+                                    size: 25,
+                                    isSystemImage: true
+                                ) {
+                                    guard let userID = Auth.auth().currentUser?.uid else { return }
+                                    let currentLikes = userSession.currentUser?.likedVideos ?? []
+                                    isLiked.toggle()
+                                    videoPlayerViewModel.toggleLike(
+                                        for: "\(language ?? "")/items/\(videoId)",
+                                        userId: userID,
+                                        currentLikes: currentLikes,
+                                        language: language
+                                    ) { newState in
+                                        isLiked = newState
+                                        if var currentUser = userSession.currentUser {
+                                            var updatedLikes = currentUser.likedVideos ?? []
+                                            let videoIdWithPath = "\(language ?? "")/items/\(videoId)"
+                                            if newState {
+                                                if !updatedLikes.contains(videoIdWithPath) {
+                                                    updatedLikes.append(videoIdWithPath)
+                                                }
+                                            } else {
+                                                updatedLikes.removeAll { $0 == videoIdWithPath }
+                                            }
+                                            currentUser.likedVideos = updatedLikes
+                                            userSession.currentUser = currentUser
+                                        }
+                                    }
+                                }
+                                
+                                ActionButton(
+                                    icon: "bubble.fill",
+                                    color: .white,
+                                    size: 25,
+                                    isSystemImage: true
+                                ) {}
+                                
+                                ActionButton(
+                                    icon: "bookmark.fill",
+                                    color: isSaved ? .yellow : .white,
+                                    size: 25,
+                                    isSystemImage: true
+                                ) {
+                                    guard let userID = Auth.auth().currentUser?.uid else { return }
+                                    let currentSaves = userSession.currentUser?.savedVideos ?? []
+                                    isSaved.toggle()
+                                    videoPlayerViewModel.toggleSave(
+                                        for: "\(language ?? "")/items/\(videoId)",
+                                        userId: userID,
+                                        currentSaves: currentSaves,
+                                        language: language
+                                    ) { newState in
+                                        isSaved = newState
+                                        if var currentUser = userSession.currentUser {
+                                            var updatedSaves = currentUser.savedVideos ?? []
+                                            let videoIdWithPath = "\(language ?? "")/items/\(videoId)"
+                                            if newState {
+                                                if !updatedSaves.contains(videoIdWithPath) {
+                                                    updatedSaves.append(videoIdWithPath)
+                                                }
+                                            } else {
+                                                updatedSaves.removeAll { $0 == videoIdWithPath }
+                                            }
+                                            currentUser.savedVideos = updatedSaves
+                                            userSession.currentUser = currentUser
+                                        }
+                                    }
+                                }
+                                
+                                ActionButton(
+                                    icon: "arrowshape.turn.up.right.fill",
+                                    color: .white,
+                                    size: 25,
+                                    isSystemImage: true
+                                ) {
+                                    guard let userID = Auth.auth().currentUser?.uid else { return }
+                                    Task {
+                                        await videoPlayerViewModel.recordShare(
+                                            for: videoId,
+                                            userId: userID,
+                                            language: language
+                                        )
+                                    }
+                                    isShareSheetPresented = true
+                                }
+                                
+                                ActionButton(
+                                    icon: "clock.fill",
+                                    color: .white,
+                                    size: 25,
+                                    isSystemImage: true
+                                ) {}
+                                
+                                ActionButton(
+                                    icon: "ellipsis",
+                                    color: .white,
+                                    size: 25,
+                                    isSystemImage: true
+                                ) {}
+                            }
+                            .padding(.trailing, 20)
+                            .padding(.bottom, tabBarHeight + safeAreaBottom)
                         }
                     }
-                    .background(Color.black.opacity(0.6))
-                    .cornerRadius(8)
-                    .padding(.horizontal, 20)
-                    .padding(.trailing, 35)
-                    .padding(.bottom, 100)
-
-                }
-
-            }
-
-            if showWordPopup, let word = selectedWord {
-                Color.black.opacity(0.2)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation {
-                            selectedWord = nil
-                            translatedText = nil
-                            showWordPopup = false
+                    
+                    // Captions overlay
+                    if isCaptionVisible && !words.isEmpty {
+                        VStack {
+                            Spacer()
+                            Flow(.vertical, alignment: .leading, spacing: 0) {
+                                ForEach(words, id: \.self) { word in
+                                    Text(word)
+                                        .font(.system(size: 20))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 4)
+                                        .foregroundColor(.white)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                        .background(
+                                            GeometryReader { geo in
+                                                Color.clear
+                                                    .onAppear {
+                                                        wordFrames[word] = geo.frame(in: .global)
+                                                    }
+                                            }
+                                        )
+                                        .onTapGesture {
+                                            if isPlaying {
+                                                togglePlayPause()
+                                            }
+                                            actionFunction(word: word)
+                                        }
+                                }
+                            }
+                            .background(Color.black.opacity(0.6))
+                            .cornerRadius(8)
+                            .padding(.horizontal, 20)
+                            .padding(.trailing, 80) // Space for action buttons
+                            .padding(.bottom, tabBarHeight + safeAreaBottom + 20)
                         }
                     }
-
-                VStack {
-                    Spacer()
-                    wordPopup(
-                        for: word,
-                        from: userSession.currentUser?.targetLanguage ?? "",
-                        to: userSession.currentUser?.nativeLanguage ?? ""
-                    )
-                    .padding(.bottom, 200)
-                    //                    .position(x: popupPosition.x + 10, y: popupPosition.y - 150) // ⬅ adjust these offsets as needed
+                    
+                    // Word popup overlay
+                    if showWordPopup, let word = selectedWord {
+                        Color.black.opacity(0.2)
+                            .ignoresSafeArea()
+                            .onTapGesture {
+                                withAnimation {
+                                    selectedWord = nil
+                                    translatedText = nil
+                                    showWordPopup = false
+                                }
+                            }
+                        
+                        VStack {
+                            Spacer()
+                            wordPopup(
+                                for: word,
+                                from: userSession.currentUser?.targetLanguage ?? "",
+                                to: userSession.currentUser?.nativeLanguage ?? ""
+                            )
+                            .padding(.bottom, 200)
+                        }
+                    }
                 }
             }
-
         }
+        .navigationBarHidden(true)
         .onAppear {
-            words = []  // Clear stale words
+            words = []
             currentCaptionText = ""
+
+            let videoIdWithPath = "\(language ?? "")/items/\(videoId)"
+            isLiked = userSession.currentUser?.likedVideos?.contains(videoIdWithPath) ?? false
+            isSaved = userSession.currentUser?.savedVideos?.contains(videoIdWithPath) ?? false
+
             if !hasBeenSetup {
                 setupPlayer()
                 hasBeenSetup = true
@@ -289,7 +337,7 @@ struct VideoPlayerView: View {
             }
         }
         .onDisappear {
-            recordWatchTime()  // Record session when leaving view entirely
+            recordWatchTime()
             player.pause()
             isPlaying = false
             stopWatchTimer()
@@ -304,20 +352,10 @@ struct VideoPlayerView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        //        .overlay(
-        //            Group {
-        //                if showWordPopup, let word = selectedWord {
-        //                    wordPopup(
-        //                        for: word,
-        //                        from: "fr",
-        //                        to: "en",
-        //                    )
-        //                    .padding()
-        //                }
-        //            }
-        //        )
     }
 
+    // ... (rest of the methods remain the same)
+    
     private func setupPlayer() {
         configureAudioSession()
 
@@ -342,11 +380,9 @@ struct VideoPlayerView: View {
                 if isCaptionVisible && !currentCaptionText.isEmpty {
                     words =
                         currentCaptionText
-                        .replacingOccurrences(of: "\n", with: " ")  // avoid vertical breaks
+                        .replacingOccurrences(of: "\n", with: " ")
                         .components(separatedBy: .whitespaces)
                         .filter { !$0.isEmpty }
-
-                    //                                print(words)
                 }
             } else {
                 currentCaptionText = ""
@@ -398,14 +434,13 @@ struct VideoPlayerView: View {
             player.seek(to: .zero)
             player.play()
             isPlaying = true
-            // Resetting for a new watch session
             totalWatchTime = 0
             hasBeenMarkedAsWatched = false
             startWatchTimer()
         } else {
             player.pause()
             isPlaying = false
-            recordWatchTime()  // Record this session before stopping
+            recordWatchTime()
             stopWatchTimer()
         }
     }
@@ -423,45 +458,27 @@ struct VideoPlayerView: View {
         }
     }
 
-    /// Function to start the watch timer for a video
-    /// - Author: Gerardo De La Torre
-    /// - Date: 2025-06-10
     private func startWatchTimer() {
-        // Guard so we don't start the timer if it's already running
         guard watchTimer == nil else { return }
 
-        watchTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true)
-        { _ in
+        watchTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
             totalWatchTime += 0.1
 
-            // Check if we've hit 1 second and haven't marked as watched yet
             if totalWatchTime >= 1.0 && !hasBeenMarkedAsWatched {
                 hasBeenMarkedAsWatched = true
                 Task { @MainActor in
-                    // Use Firebase Auth UID instead of Firestore user.id
-                    guard let userID = Auth.auth().currentUser?.uid else {
-                        return
-                    }
-                    await videoPlayerViewModel.markVideoAsWatched(
-                        videoId,
-                        userID: userID
-                    )
+                    guard let userID = Auth.auth().currentUser?.uid else { return }
+                    await videoPlayerViewModel.markVideoAsWatched(videoId, userID: userID)
                 }
             }
         }
     }
 
-    /// Function to stop the watch timer for a video
-    /// - Author: Gerardo De La Torre
-    /// - Date: 2025-06-10
     private func stopWatchTimer() {
         watchTimer?.invalidate()
         watchTimer = nil
     }
 
-    /// Function to record watch time
-    /// - Author: Gerardo De La Torre
-    /// - Date: 2025-06-15
     private func recordWatchTime() {
         guard totalWatchTime > 0 else { return }
 
@@ -482,31 +499,13 @@ struct VideoPlayerView: View {
             translateTextV2(
                 text: word,
                 sourceLang: userSession.currentUser?.targetLanguage ?? "",
-                targetLang: userSession.currentUser?.nativeLanguage ?? "",
+                targetLang: userSession.currentUser?.nativeLanguage ?? ""
             ) { result in
                 if let translated = result {
                     isTranslatingCaption = false
                     translatedText = result
-                    print("🇩🇪 Translated Text: \(translated)")
-                } else {
-                    print("❌ Translation failed.")
                 }
             }
-
-            //            translateWithMyMemory(
-            //                text: word,
-            //                from: userSession.currentUser?.targetLanguage ?? "",
-            //                to: userSession.currentUser?.nativeLanguage ?? ""
-            //            ) { result, source in
-            //                DispatchQueue.main.async {
-            //                    isTranslatingCaption = false
-            //                    translatedText = result
-            //                    print(
-            //                        "Translated: \(result ?? "Failed")\nSource: \(source ?? "Failed")"
-            //                    )
-            //
-            //                }
-            //            }
             selectedWord = word
             showWordPopup = true
         }
@@ -516,16 +515,15 @@ struct VideoPlayerView: View {
     private func wordPopup(
         for word: String?,
         from targetLanguage: String,
-        to nativeLanguage: String,
+        to nativeLanguage: String
     ) -> some View {
-        return VStack(spacing: 0) {
+        VStack(spacing: 0) {
             VStack(spacing: 0) {
                 if isTranslatingCaption {
                     HStack(spacing: 10) {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle())
                             .padding(.top, 15)
-
                         Text("Translating...")
                             .font(.system(size: 14, weight: .medium))
                             .padding(.top, 15)
@@ -535,60 +533,35 @@ struct VideoPlayerView: View {
                         .font(.system(size: 24, weight: .semibold))
                         .padding(.top)
                 }
-
                 Spacer().frame(height: 10)
-
                 Divider()
                     .frame(height: 2)
                     .background(Color.white)
-
                 Button(action: {
-                    guard let userID = Auth.auth().currentUser?.uid
-                    else { return }
-
-                    addUnknownWordInUserSession(
-                        word: word ?? "",
-                        userId: userID
-                    )
-
+                    guard let userID = Auth.auth().currentUser?.uid else { return }
+                    addUnknownWordInUserSession(word: word ?? "", userId: userID)
                 }) {
                     HStack {
                         Image(systemName: "bookmark.fill")
                         if videoPlayerViewModel.isSavingWord {
                             ProgressView()
-                            //                                .background(Color.white)
-                            //                                .cornerRadius(10)
-                            //                                .shadow(radius: 5)
                         } else {
-                            let videoPlayerWord =
-                                videoPlayerViewModel.word ?? ""
-                            if videoPlayerViewModel.wordSaved
-                                && videoPlayerWord == word
-                            {
-                                Text("Word Saved! ")
+                            let videoPlayerWord = videoPlayerViewModel.word ?? ""
+                            if videoPlayerViewModel.wordSaved && videoPlayerWord == word {
+                                Text("Word Saved!")
                                     .transition(.opacity)
-                                    .animation(
-                                        .easeInOut(duration: 0.3),
-                                        value: videoPlayerViewModel.wordSaved
-                                    )
+                                    .animation(.easeInOut(duration: 0.3), value: videoPlayerViewModel.wordSaved)
                             } else {
                                 Text("Save")
                             }
-
                         }
-
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-
                 Divider()
                     .background(Color.white)
-
-                Button(action: {
-                    // see in context logic
-                    //                    selectedWord = nil
-                }) {
+                Button(action: {}) {
                     HStack {
                         Image(systemName: "info.circle.fill")
                         Text("See in context")
@@ -602,51 +575,29 @@ struct VideoPlayerView: View {
             .cornerRadius(16)
             .shadow(radius: 8)
             .frame(width: 200)
-
-            //            Triangle()
-            //                .fill(Color.appPrimaryColor)
-            //                .frame(width: 30, height: 15)
-            //                .rotationEffect(.degrees(180))
-            //                .offset(x: -60, y: -1)
         }
-
     }
 
     func addUnknownWordInUserSession(word: String, userId: String) {
-        guard let language = userSession.currentUser?.targetLanguage else {
-            return
-        }
+        guard let language = userSession.currentUser?.targetLanguage else { return }
         let newWord = WordPair(target: word, native: translatedText ?? "")
 
-        // Ensure we have a mutable copy of currentUser
         guard var currentUser = userSession.currentUser else { return }
-
-        // Ensure languagesData dictionary exists
         var languagesData = currentUser.languagesData ?? [:]
 
-        // Get or create LanguagesData for the target language
         var langData =
             languagesData[language]
-            ?? LanguagesData(
-                savedWords: WordLists(knownWords: [], unknownWords: [])
-            )
+            ?? LanguagesData(savedWords: WordLists(knownWords: [], unknownWords: []))
 
-        // Get or create savedWords
         var savedWords =
             langData.savedWords ?? WordLists(knownWords: [], unknownWords: [])
 
-        // Append new word to unknownWords
         savedWords.unknownWords.append(newWord)
-
-        // Save it back into LanguagesData and languagesData map
         langData.savedWords = savedWords
         languagesData[language] = langData
         currentUser.languagesData = languagesData
-
-        // Update the in-memory user session to trigger UI updates
         userSession.currentUser = currentUser
 
-        // Save to Firestore
         videoPlayerViewModel.saveUnknownWord(
             to: userId,
             targetLanguage: language,
@@ -665,7 +616,40 @@ struct VideoPlayerView: View {
             return path
         }
     }
+}
 
+struct ProfilePictureView: View {
+    let uploaderPfp: String?
+    let size: CGFloat
+    
+    var body: some View {
+        Group {
+            if let uploaderPfp = uploaderPfp, !uploaderPfp.isEmpty {
+                AsyncImage(url: URL(string: uploaderPfp)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                }
+            } else {
+                Image(systemName: "person.crop.circle.fill")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            }
+        }
+        .frame(width: size, height: size)
+        .foregroundColor(.white)
+        .clipShape(Circle())
+        .background(
+            Circle()
+                .fill(Color.black.opacity(0))
+                .frame(width: size + 20, height: size + 20)
+                .blur(radius: 3)
+        )
+    }
 }
 
 struct ActionButton: View {
@@ -693,20 +677,13 @@ struct ActionButton: View {
     }
 }
 
-import Foundation
-import AVFoundation
-
 final class VideoAssetCache {
-    // Shared singleton instance
     static let shared = VideoAssetCache()
-
-    // Private cache dictionary
     private var cache: [URL: AVAsset] = [:]
     private let queue = DispatchQueue(label: "com.yourapp.VideoAssetCacheQueue", attributes: .concurrent)
 
     private init() {}
 
-    /// Returns a cached AVAsset for a given URL, or creates and caches it if missing.
     func asset(for url: URL) -> AVAsset {
         var result: AVAsset?
         
@@ -727,11 +704,9 @@ final class VideoAssetCache {
         }
     }
 
-    /// Clears all cached assets (optional utility)
     func clear() {
         queue.async(flags: .barrier) {
             self.cache.removeAll()
         }
     }
 }
-

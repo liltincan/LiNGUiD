@@ -33,6 +33,7 @@ final class FirestoreVideoRepository: VideoRepository {
             guard let urlString = document.data()["video_url"] as? String,
                   let url = URL(string: urlString),
                   let title = document.data()["title"] as? String,
+                  let uploaderId = document.data()["uploaderId"] as? String,
                   let captionDicts = document.data()["captions"] as? [[String: Any]] else {
                 return nil
             }
@@ -50,7 +51,7 @@ final class FirestoreVideoRepository: VideoRepository {
             
             
             let detectedLevel = document.data()["detected_level"] as? Int ?? 2
-            return Video(id: document.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel)
+            return Video(id: document.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId)
         }
 
         // Filter: only include videos within ±1 of user's level - Gerardo De La Torre
@@ -91,7 +92,9 @@ final class FirestoreVideoRepository: VideoRepository {
                 guard detectedLevel >= (userLevel - 1) && detectedLevel <= (userLevel + 1) else {
                     return nil
                 }
-                return Video(id: document.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel)
+                
+                let uploaderId = document.data()["uploaderId"] as? String ?? ""
+                return Video(id: document.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId)
             }
             return allVideosAtLevel
         } else {
@@ -123,6 +126,7 @@ final class FirestoreVideoRepository: VideoRepository {
             let urlString = data["video_url"] as? String,
             let url = URL(string: urlString),
             let title = data["title"] as? String,
+            let uploaderId = data["uploaderId"] as? String,
             let captionDicts = data["captions"] as? [[String: Any]]
         else {
             print("Malformed video data for videoId \(videoId)")
@@ -140,8 +144,7 @@ final class FirestoreVideoRepository: VideoRepository {
         }
 
         let detectedLevel = data["detected_level"] as? Int ?? 2
-
-        return Video(id: videoId, url: url, captions: captions, title: title, detectedLevel: detectedLevel)
+        return Video(id: videoId, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId)
     }
 
 
