@@ -1,3 +1,5 @@
+//Created by Tahmidul Karim
+
 import SwiftUI
 import Photos
 import AVFoundation
@@ -416,7 +418,8 @@ struct AddThumbnailView: View {
     @State private var showingPickerFor: PHAsset?
     @State private var showingFrameSelectorFor: PHAsset?
     @State private var croppingImage: CroppingImage?
-    @State private var croppingAsset: PHAsset?
+    @State private var croppingSourceAsset: PHAsset?
+    //@State private var croppingAsset: PHAsset?
 
     var body: some View {
         VStack {
@@ -493,7 +496,7 @@ struct AddThumbnailView: View {
             ImagePickerView { image in
                 // Crop this image before assigning
                 croppingImage = CroppingImage(image: image)
-                croppingAsset = asset
+                croppingSourceAsset = asset
                 showingPickerFor = nil
             }
             .preferredColorScheme(.dark)
@@ -514,13 +517,23 @@ struct AddThumbnailView: View {
             .ignoresSafeArea()
         }
         .sheet(item: $croppingImage) { cropping in
-            TOCropView(image: cropping.image) { croppedImage in
-                if let asset = croppingAsset {
-                    thumbnailOverrides[asset.localIdentifier] = croppedImage
+            TOCropView(
+                image: cropping.image,
+                onCropped: { croppedImage in
+                    if let asset = croppingSourceAsset {
+                        thumbnailOverrides[asset.localIdentifier] = croppedImage
+                    }
+                    croppingImage = nil
+                    croppingSourceAsset = nil
+                },
+                onCancel: {
+                    // 👈 User tapped cancel in crop — go back to picker
+                    if let asset = croppingSourceAsset {
+                        showingPickerFor = asset
+                    }
+                    croppingImage = nil
                 }
-                croppingImage = nil
-                croppingAsset = nil
-            }
+            )
         }
         .background(Color.black.ignoresSafeArea())
     }
@@ -771,6 +784,7 @@ struct VideoScrubberSelector: View {
 struct TOCropView: UIViewControllerRepresentable {
     let image: UIImage
     let onCropped: (UIImage) -> Void
+    let onCancel: () -> Void
     @Environment(\.presentationMode) var presentationMode
 
     func makeCoordinator() -> Coordinator {
@@ -806,6 +820,7 @@ struct TOCropView: UIViewControllerRepresentable {
 
         func cropViewController(_ cropViewController: TOCropViewController, didFinishCancelled cancelled: Bool) {
             cropViewController.dismiss(animated: true)
+            parent.onCancel()
         }
     }
 }
