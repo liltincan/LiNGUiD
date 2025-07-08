@@ -161,7 +161,7 @@ struct ProfileHeaderView: View {
                             languages: vm.allLanguageNames,
                             uid: uid,
                             selectedNativeLanguages: Set([vm.nativeLanguage?.lowercased() ?? ""]),
-                            onLogout: onLogout,
+                            onLogout: onLogout
                         )
                     } label: {
                         Image(systemName: "gearshape.fill")
