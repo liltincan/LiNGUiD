@@ -6,6 +6,7 @@ struct Video: Identifiable, Codable, Equatable {
     let captions: [Captions]?
     let title: String
     let detectedLevel: Int
+    let uploaderId: String
     static func == (lhs: Video, rhs: Video) -> Bool {
     return lhs.id == rhs.id
 }
