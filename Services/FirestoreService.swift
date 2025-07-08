@@ -59,26 +59,68 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         }
     }
 
-    
-    func updateLikedVideos(forUserId uid: String, likedVideos: [String], completion: @escaping (Result<Void, Error>) -> Void) {
-        db.collection("users").document(uid).updateData(["likedVideos": likedVideos]) { error in
+    func updateLikedVideos(forUserId uid: String, likedVideos: [String], likedVideoId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        // Update user's liked videos list
+        db.collection("users").document(uid).updateData(["likedVideos": likedVideos]) { [weak self] error in
             if let error = error {
                 completion(.failure(error))
-            } else {
-            completion(.success(()))
+                return
             }
+            
+            // Update the video's like count
+            let path = likedVideoId.split(separator: "/")
+            guard path.count == 3 else {
+                completion(.failure(NSError(domain: "InvalidVideoId", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid video ID format"])))
+                return
+            }
+            
+            let incrementValue = likedVideos.contains(likedVideoId) ? 1 : -1
+            
+            self?.db.collection("videos")
+                .document(String(path[0]))
+                .collection(String(path[1]))
+                .document(String(path[2]))
+                .updateData(["likes": FieldValue.increment(Int64(incrementValue))]) { error in
+                    if let error = error {
+                        completion(.failure(error))
+                    } else {
+                        completion(.success(()))
+                    }
+                }
         }
     }
     
-    func updateSavedVideos(forUserId uid: String, savedVideos: [String], completion: @escaping (Result<Void, Error>) -> Void) {
-        db.collection("users").document(uid).updateData(["savedVideos": savedVideos]) { error in
+    func updateSavedVideos(forUserId uid: String, savedVideos: [String], savedVideoId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        // Update user's saved videos list
+        db.collection("users").document(uid).updateData(["savedVideos": savedVideos]) { [weak self] error in
             if let error = error {
                 completion(.failure(error))
-            } else {
-                completion(.success(()))
+                return
             }
+
+            // Update the video's save count
+            let path = savedVideoId.split(separator: "/")
+            guard path.count == 3 else {
+                completion(.failure(NSError(domain: "InvalidVideoId", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid video ID format"])))
+                return
+            }
+
+            let incrementValue = savedVideos.contains(savedVideoId) ? 1 : -1
+
+            self?.db.collection("videos")
+                .document(String(path[0]))
+                .collection(String(path[1]))
+                .document(String(path[2]))
+                .updateData(["saves": FieldValue.increment(Int64(incrementValue))]) { error in
+                    if let error = error {
+                        completion(.failure(error))
+                    } else {
+                        completion(.success(()))
+                    }
+                }
         }
     }
+
     
     func getVideoURL(for videoId: String, completion: @escaping (Result<URL, Error>) -> Void) {
         db.collection("videos").document(videoId).getDocument { snapshot, error in

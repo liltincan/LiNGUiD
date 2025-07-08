@@ -56,7 +56,7 @@ class VideoPlayerViewModel: ObservableObject {
             updatedLikes.append(videoId)
         }
 
-        firestoreService.updateLikedVideos(forUserId: userId, likedVideos: updatedLikes) { result in
+        firestoreService.updateLikedVideos(forUserId: userId, likedVideos: updatedLikes, likedVideoId: videoId) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success:
@@ -91,7 +91,7 @@ class VideoPlayerViewModel: ObservableObject {
             updatedSaves.append(videoId)
         }
 
-        firestoreService.updateSavedVideos(forUserId: userId, savedVideos: updatedSaves) { result in
+        firestoreService.updateSavedVideos(forUserId: userId, savedVideos: updatedSaves, savedVideoId: videoId) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success:
