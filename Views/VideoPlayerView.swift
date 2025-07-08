@@ -13,25 +13,7 @@ struct VideoPlayerView: View {
     let containerHeight: CGFloat?
     var isActive: Bool
     let captions: [Captions]?
-
-    init(
-        url: URL,
-        videoId: String,
-        language: String? = nil,
-        uploaderId: String,
-        uploaderPfp: String? = nil,
-        captions: [Captions]? = nil
-    ) {
-        self.url = url
-        self.videoId = videoId
-        self.language = language
-        self.containerWidth = nil
-        self.containerHeight = nil
-        self.isActive = true
-        self.captions = captions
-        self.uploaderId = uploaderId
-        self.uploaderPfp = uploaderPfp
-    }
+    var likes: Int?
 
     init(
         url: URL,
@@ -42,7 +24,8 @@ struct VideoPlayerView: View {
         containerWidth: CGFloat,
         containerHeight: CGFloat,
         isActive: Bool = true,
-        captions: [Captions]? = nil
+        captions: [Captions]? = nil,
+        likes: Int? = nil
     ) {
         self.url = url
         self.videoId = videoId
@@ -53,6 +36,7 @@ struct VideoPlayerView: View {
         self.captions = captions
         self.uploaderId = uploaderId
         self.uploaderPfp = uploaderPfp
+        self.likes = likes
     }
 
     @State private var isPlaying = false
@@ -66,6 +50,7 @@ struct VideoPlayerView: View {
     @State private var watchTimer: Timer?
     @State private var totalWatchTime: TimeInterval = 0
     @State private var hasBeenMarkedAsWatched = false
+    @State private var likesCount = 0
 
     @State private var isCaptionVisible = false
     @State private var currentCaptionText: String = ""
@@ -151,36 +136,42 @@ struct VideoPlayerView: View {
                                         }
                                 )
                                 
-                                ActionButton(
-                                    icon: "heart.fill",
-                                    color: isLiked ? .red : .white,
-                                    size: 25,
-                                    isSystemImage: true
-                                ) {
-                                    guard let userID = Auth.auth().currentUser?.uid else { return }
-                                    let currentLikes = userSession.currentUser?.likedVideos ?? []
-                                    isLiked.toggle()
-                                    videoPlayerViewModel.toggleLike(
-                                        for: "\(language ?? "")/items/\(videoId)",
-                                        userId: userID,
-                                        currentLikes: currentLikes,
-                                        language: language
-                                    ) { newState in
-                                        isLiked = newState
-                                        if var currentUser = userSession.currentUser {
-                                            var updatedLikes = currentUser.likedVideos ?? []
-                                            let videoIdWithPath = "\(language ?? "")/items/\(videoId)"
-                                            if newState {
-                                                if !updatedLikes.contains(videoIdWithPath) {
-                                                    updatedLikes.append(videoIdWithPath)
+                                VStack(spacing: 5){
+                                    ActionButton(
+                                        icon: "heart.fill",
+                                        color: isLiked ? .red : .white,
+                                        size: 25,
+                                        isSystemImage: true
+                                    ) {
+                                        guard let userID = Auth.auth().currentUser?.uid else { return }
+                                        let currentLikes = userSession.currentUser?.likedVideos ?? []
+                                        isLiked.toggle()
+                                        likesCount = likesCount + (isLiked ? 1 : -1)
+                                        videoPlayerViewModel.toggleLike(
+                                            for: "\(language ?? "")/items/\(videoId)",
+                                            userId: userID,
+                                            currentLikes: currentLikes,
+                                            language: language
+                                        ) { newState in
+                                            isLiked = newState
+                                            if var currentUser = userSession.currentUser {
+                                                var updatedLikes = currentUser.likedVideos ?? []
+                                                let videoIdWithPath = "\(language ?? "")/items/\(videoId)"
+                                                if newState {
+                                                    if !updatedLikes.contains(videoIdWithPath) {
+                                                        updatedLikes.append(videoIdWithPath)
+                                                    }
+                                                } else {
+                                                    updatedLikes.removeAll { $0 == videoIdWithPath }
                                                 }
-                                            } else {
-                                                updatedLikes.removeAll { $0 == videoIdWithPath }
+                                                currentUser.likedVideos = updatedLikes
+                                                userSession.currentUser = currentUser
                                             }
-                                            currentUser.likedVideos = updatedLikes
-                                            userSession.currentUser = currentUser
                                         }
                                     }
+                                    Text("\(likesCount)")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Color.white)
                                 }
                                 
                                 ActionButton(
@@ -340,6 +331,8 @@ struct VideoPlayerView: View {
             let videoIdWithPath = "\(language ?? "")/items/\(videoId)"
             isLiked = userSession.currentUser?.likedVideos?.contains(videoIdWithPath) ?? false
             isSaved = userSession.currentUser?.savedVideos?.contains(videoIdWithPath) ?? false
+            
+            likesCount = likes ?? 0
 
             if !hasBeenSetup {
                 setupPlayer()

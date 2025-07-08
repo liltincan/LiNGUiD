@@ -7,6 +7,7 @@ struct Video: Identifiable, Codable, Equatable {
     let title: String
     let detectedLevel: Int
     let uploaderId: String
+    let likes: Int
     static func == (lhs: Video, rhs: Video) -> Bool {
     return lhs.id == rhs.id
 }
