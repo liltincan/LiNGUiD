@@ -248,9 +248,6 @@ struct VideoGridSection: View {
             Text(emptyMsg)
                 .foregroundColor(.secondary)
                 .padding(.bottom, 15)
-                .onAppear{
-                    print("\(videoURLs), \(videoURLs.count)")
-                }
         } else {
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3),

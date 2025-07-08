@@ -78,6 +78,10 @@ struct VideoPlayerView: View {
     @State private var showWordPopup: Bool = false
     @State private var wordFrames: [String: CGRect] = [:]
     @State private var popupPosition: CGPoint = .zero
+    
+    // Report functionality
+    @State private var showingReportSheet = false
+    @State private var showingReportConfirmation = false
 
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
@@ -85,19 +89,18 @@ struct VideoPlayerView: View {
     var body: some View {
         NavigationStack {
             GeometryReader { proxy in
-                let screenWidth = proxy.size.width
-                let screenHeight = proxy.size.height
-                let safeAreaTop = proxy.safeAreaInsets.top
+                let screenWidth = max(proxy.size.width, 1) // Ensure minimum width
+                let screenHeight = max(proxy.size.height, 1) // Ensure minimum height
                 let safeAreaBottom = proxy.safeAreaInsets.bottom
                 
                 // Calculate available height for video (excluding tab bar)
                 let tabBarHeight: CGFloat = 83
-                let availableHeight = screenHeight - tabBarHeight
+                let availableHeight = max(screenHeight - tabBarHeight, 100) // Minimum height
                 
-                // Calculate video dimensions to maintain 1:2 aspect ratio
-                let videoWidth = containerWidth ?? screenWidth
+                // Calculate video dimensions to maintain 1:2 aspect ratio with safety checks
+                let videoWidth = max(containerWidth ?? screenWidth, 1)
                 let idealVideoHeight = videoWidth * 2 // 1:2 aspect ratio (width:height)
-                let videoHeight = min(idealVideoHeight, availableHeight)
+                let videoHeight = max(min(idealVideoHeight, availableHeight), 100) // Ensure minimum height
                 
                 ZStack {
                     // Video Player - positioned at the very top
@@ -248,10 +251,18 @@ struct VideoPlayerView: View {
                                     color: .white,
                                     size: 25,
                                     isSystemImage: true
-                                ) {}
+                                ) {
+                                    showingReportSheet = true
+                                }
+                                .confirmationDialog("", isPresented: $showingReportSheet, titleVisibility: .hidden) {
+                                    Button("Report Video", role: .destructive) {
+                                        handleReportVideo()
+                                    }
+                                    Button("Cancel", role: .cancel) {}
+                                }
                             }
                             .padding(.trailing, 20)
-                            .padding(.bottom, tabBarHeight + safeAreaBottom)
+                            .padding(.bottom, max(tabBarHeight + safeAreaBottom + 20, 20))
                         }
                     }
                     
@@ -271,7 +282,12 @@ struct VideoPlayerView: View {
                                             GeometryReader { geo in
                                                 Color.clear
                                                     .onAppear {
-                                                        wordFrames[word] = geo.frame(in: .global)
+                                                        let frame = geo.frame(in: .global)
+                                                        // Only store valid frames
+                                                        if frame.width > 0 && frame.height > 0 &&
+                                                           frame.width.isFinite && frame.height.isFinite {
+                                                            wordFrames[word] = frame
+                                                        }
                                                     }
                                             }
                                         )
@@ -287,7 +303,7 @@ struct VideoPlayerView: View {
                             .cornerRadius(8)
                             .padding(.horizontal, 20)
                             .padding(.trailing, 80) // Space for action buttons
-                            .padding(.bottom, tabBarHeight + safeAreaBottom + 20)
+                            .padding(.bottom, max(tabBarHeight + safeAreaBottom + 20, 20))
                         }
                     }
                     
@@ -352,10 +368,13 @@ struct VideoPlayerView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .alert("Report Submitted", isPresented: $showingReportConfirmation) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Thank you for your report. We'll review this content.")
+        }
     }
 
-    // ... (rest of the methods remain the same)
-    
     private func setupPlayer() {
         configureAudioSession()
 
@@ -491,6 +510,16 @@ struct VideoPlayerView: View {
                 language: language
             )
         }
+    }
+
+    private func handleReportVideo() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        Task {
+            print("Video \(language ?? "ERROR")/items/\(videoId) reported")
+        }
+        
+        showingReportConfirmation = true
     }
 
     func actionFunction(word: String) {
@@ -640,13 +669,13 @@ struct ProfilePictureView: View {
                     .aspectRatio(contentMode: .fit)
             }
         }
-        .frame(width: size, height: size)
+        .frame(width: max(size, 1), height: max(size, 1)) // Ensure minimum size
         .foregroundColor(.white)
         .clipShape(Circle())
         .background(
             Circle()
                 .fill(Color.black.opacity(0))
-                .frame(width: size + 20, height: size + 20)
+                .frame(width: max(size + 20, 21), height: max(size + 20, 21)) // Ensure minimum size
                 .blur(radius: 3)
         )
     }
@@ -664,12 +693,12 @@ struct ActionButton: View {
             (isSystemImage ? Image(systemName: icon) : Image(icon))
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: size, height: size)
+                .frame(width: max(size, 1), height: max(size, 1)) // Ensure minimum size
                 .foregroundColor(color)
                 .background(
                     Circle()
                         .fill(Color.black.opacity(0))
-                        .frame(width: size + 20, height: size + 20)
+                        .frame(width: max(size + 20, 21), height: max(size + 20, 21)) // Ensure minimum size
                         .blur(radius: 3)
                 )
         }

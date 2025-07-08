@@ -320,8 +320,6 @@ class ProfileViewModel: ObservableObject {
         await MainActor.run {
             self.likedVideoThumbnails = thumbnails
             self.likedVideoURLs = videoURLs
-            print("Liked video thumbnails: \(thumbnails)")
-            print("Liked video URLs: \(videoURLs)")
         }
     }
     
