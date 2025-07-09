@@ -9,7 +9,7 @@ struct LiNGUiDApp: App {
     @StateObject private var state = AppState()
     @Environment(\.openURL) var openURL
     @StateObject var deepLinkCoordinator = DeepLinkCoordinator()
-    
+    @StateObject var notificationService = NotificationService()
 
     init() {
         DependencyContainer.shared.registerAll()
@@ -24,6 +24,9 @@ struct LiNGUiDApp: App {
                 .environmentObject(deepLinkCoordinator)
                 .onOpenURL { url in
                     deepLinkCoordinator.handle(url: url)
+                }
+                .onAppear {
+                    notificationService.setupNotifications()
                 }
         }
     }

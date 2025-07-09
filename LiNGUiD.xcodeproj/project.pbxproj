@@ -82,6 +82,7 @@
 		8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929702DE116CE0020AFCD /* ProfileView.swift */; };
 		D61307E82E1B4D6C0089F942 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D61307E72E1B4D6C0089F942 /* NotificationService.swift */; };
 		D613080F2E1C8D680089F942 /* SharedVideoPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D613080E2E1C8D670089F942 /* SharedVideoPreviewView.swift */; };
+		D613085B2E1E0B970089F942 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = D613085A2E1E0B970089F942 /* FirebaseMessaging */; };
 		D6886D0A2E18995600304FE7 /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = D6886D092E18995600304FE7 /* CropViewController */; };
 		D6886D0C2E18995600304FE7 /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = D6886D0B2E18995600304FE7 /* TOCropViewController */; };
 		D69E51D42DE66EF600329D64 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */; };
@@ -212,6 +213,7 @@
 				8FB9295F2DE10B910020AFCD /* FirebaseFirestore in Frameworks */,
 				8FB9295D2DE10B860020AFCD /* FirebaseAuth in Frameworks */,
 				8F51F22C2DE022D200397726 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
+				D613085B2E1E0B970089F942 /* FirebaseMessaging in Frameworks */,
 				609F7A442E0763110031682A /* SwiftUIFlow in Frameworks */,
 				60C7E5BD2DE2C0C500C1AAF2 /* GoogleSignInSwift in Frameworks */,
 			);
@@ -436,6 +438,7 @@
 				609F7A432E0763110031682A /* SwiftUIFlow */,
 				81CC3AEE2E15B4000010512B /* CropViewController */,
 				81CC3AF02E15B4000010512B /* TOCropViewController */,
+				D613085A2E1E0B970089F942 /* FirebaseMessaging */,
 			);
 			productName = LiNGUiD;
 			productReference = 8F823B4C2DD987F8007B6E5E /* LiNGUiD.app */;
@@ -1131,6 +1134,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseStorage;
+		};
+		D613085A2E1E0B970089F942 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 		D6886D092E18995600304FE7 /* CropViewController */ = {
 			isa = XCSwiftPackageProductDependency;

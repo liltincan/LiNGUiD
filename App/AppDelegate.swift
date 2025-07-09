@@ -9,6 +9,7 @@
 import UIKit
 import FirebaseCore
 import FirebaseAppCheck
+import FirebaseMessaging
 
 
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -24,6 +25,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         LaunchManager.shared.checkFirstLaunchAndLogoutIfNeeded()
         
         return true
+    }
+    
+    func application(_ application: UIApplication,
+                         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+            Messaging.messaging().apnsToken = deviceToken
     }
 }
 

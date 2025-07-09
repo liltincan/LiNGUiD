@@ -1,5 +1,6 @@
 import AVFoundation
 import FirebaseAuth
+import FirebaseFirestore
 import SwiftUI
 import SwiftUIFlow
 
@@ -71,7 +72,8 @@ struct VideoPlayerView: View {
 
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
-
+    @State private var uploaderUsername: String? = nil
+    
     var body: some View {
         NavigationStack {
             GeometryReader { proxy in
@@ -248,6 +250,7 @@ struct VideoPlayerView: View {
                                 }
                                 .confirmationDialog("", isPresented: $showingReportSheet, titleVisibility: .hidden) {
                                     Button("Report Video", role: .destructive) {
+                                        reportVideo(videoId: self.videoId, reporterUid: (userSession.currentUser?.id)!, reporterUsername: (userSession.currentUser?.userName)!, posterUid: self.uploaderId, posterUsername: self.uploaderUsername!)
                                         handleReportVideo()
                                     }
                                     Button("Cancel", role: .cancel) {}
@@ -256,21 +259,7 @@ struct VideoPlayerView: View {
                             .padding(.trailing, 20)
                             .padding(.bottom, max(tabBarHeight + safeAreaBottom + 20, 20))
                         }
-                        ActionButton(
-                            icon: "clock.fill",
-                            color: .white,
-                            size: 25,
-                            isSystemImage: true
-                        ) {}
                         
-                        ActionButton(
-                            icon: "ellipsis",
-                            color: .white,
-                            size: 25,
-                            isSystemImage: true
-                        ) {
-                            isOptionsSheetPresented = true
-                        }
                     }
                     
                     // Captions overlay
@@ -358,6 +347,16 @@ struct VideoPlayerView: View {
                     player.seek(to: .zero)
                     player.play()
                     isPlaying = true
+                }
+            }
+            
+            fetchUsername(for: uploaderId) { username in
+                if let username = username {
+                    DispatchQueue.main.async {
+                        self.uploaderUsername = username
+                    }
+                } else {
+                    print("Username not found for UID \(self.uploaderId)")
                 }
             }
         }
@@ -836,6 +835,49 @@ struct OptionsSheetView: View {
         .shadow(color: Color.black.opacity(0.8), radius: 10)
         .padding(.horizontal)
         .transition(.move(edge: .bottom))
+    }
+}
+
+func reportVideo(videoId: String, reporterUid: String, reporterUsername: String, posterUid: String, posterUsername: String) {
+    guard let url = URL(string: "https://your-backend.com/api/report") else { return }
+    
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    let body: [String: Any] = [
+        "videoId": videoId,
+        "reporterUid": reporterUid,
+        "reporterUsername": reporterUsername,
+        "posterUid": posterUid,
+        "posterUsername": posterUsername
+    ]
+    
+    request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+    
+    URLSession.shared.dataTask(with: request) { data, response, error in
+        if let error = error {
+            print("Report failed:", error)
+            return
+        }
+        print("Report sent successfully")
+    }.resume()
+}
+
+func fetchUsername(for uid: String, completion: @escaping (String?) -> Void) {
+    let db = Firestore.firestore()
+    db.collection("users").document(uid).getDocument { snapshot, error in
+        if let error = error {
+            print("Error fetching user: \(error)")
+            completion(nil)
+            return
+        }
+
+        if let data = snapshot?.data(), let username = data["username"] as? String {
+            completion(username)
+        } else {
+            completion(nil)
+        }
     }
 }
 

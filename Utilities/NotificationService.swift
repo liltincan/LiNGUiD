@@ -1,48 +1,64 @@
-//
-//  NotificationService.swift
-//  LiNGUiD
-//
-//  Created by Jackson Sanders on 7/6/25.
-//
-
-import Foundation
-import SwiftUI
+import Firebase
+import FirebaseMessaging
+import FirebaseAuth
 import UserNotifications
-import Combine
-final class NotificationService: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
+
+class NotificationService: NSObject, ObservableObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     
-    @Published var showSettingsPage = false
-    @Published var badgeNumber = 0
-    var cancellables = Set<AnyCancellable>()
-    
-    override init() {
-        super.init()
+    func setupNotifications() {
         UNUserNotificationCenter.current().delegate = self
-        
-        $badgeNumber
-            .drop(while: {$0 < 1})
-            .sink { badgeNumber in
-            UIApplication.shared.applicationIconBadgeNumber = badgeNumber
-        }.store(in: &cancellables)
+
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if let error = error {
+                print("Notification permission error: \(error)")
+            }
+
+            print("Notification permission granted: \(granted)")
+            guard granted else { return }
+
+            DispatchQueue.main.async {
+                UIApplication.shared.registerForRemoteNotifications()
+            }
+
+            Messaging.messaging().token { token, error in
+                if let error = error {
+                    print("Error fetching FCM token: \(error)")
+                } else if let token = token {
+                    print("Fetched FCM token: \(token)")
+                    self.saveTokenToFirestore(token: token)
+                }
+            }
+        }
+
+        Messaging.messaging().delegate = self
     }
-    
-    func requestPushNotificationAuthorization() async {
-        do {
-            try await UNUserNotificationCenter.current().requestAuthorization(options: [
-                .alert,
-                .sound,
-                .badge,
-                .carPlay,
-                .provisional,
-                .criticalAlert,
-                .providesAppNotificationSettings])
-            
-        } catch {
-            print(error)
+
+
+    // Called when APNs successfully registers device
+    func application(_ application: UIApplication,
+                     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Messaging.messaging().apnsToken = deviceToken
+    }
+
+    // Called when FCM token is available/refreshed
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let token = fcmToken else { return }
+        print("FCM Token:", token)
+        
+        saveTokenToFirestore(token: token)
+    }
+
+    private func saveTokenToFirestore(token: String) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+
+        let db = Firestore.firestore()
+        db.collection("users").document(userID).setData(["fcmToken": token], merge: true) { error in
+            if let error = error {
+                print("Error saving FCM token: \(error)")
+            } else {
+                print("FCM token saved to Firestore")
+            }
         }
     }
-    
-    func userNotificationCenter(_ center: UNUserNotificationCenter, openSettingsFor notification: UNNotification?) {
-        showSettingsPage = true
-    }
 }
+
