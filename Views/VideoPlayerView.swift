@@ -254,8 +254,6 @@ struct VideoPlayerView: View {
                             .padding(.trailing, 20)
                             .padding(.bottom, tabBarHeight + safeAreaBottom)
                         }
-<<<<<<< HEAD
-                        
                         ActionButton(
                             icon: "clock.fill",
                             color: .white,
@@ -271,8 +269,6 @@ struct VideoPlayerView: View {
                         ) {
                             isOptionsSheetPresented = true
                         }
-=======
->>>>>>> main
                     }
                     
                     // Captions overlay
@@ -372,7 +368,7 @@ struct VideoPlayerView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-<<<<<<< HEAD
+
         .sheet(isPresented: $isOptionsSheetPresented) {
             OptionsSheetView(
                 videoId: videoId,
@@ -408,8 +404,6 @@ struct VideoPlayerView: View {
         //                }
         //            }
         //        )
-=======
->>>>>>> main
     }
 
     // ... (rest of the methods remain the same)
@@ -768,7 +762,6 @@ final class VideoAssetCache {
         }
     }
 }
-<<<<<<< HEAD
 
 struct OptionsSheetView: View {
     let videoId: String
@@ -846,5 +839,4 @@ struct OptionsSheetView: View {
         .transition(.move(edge: .bottom))
     }
 }
-=======
->>>>>>> main
+
