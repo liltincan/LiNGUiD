@@ -52,7 +52,9 @@ class ProfileViewModel: ObservableObject {
     }
     
     var inputAmount: String {
-        return String(Int(user?.globalWatchTime ?? 0))
+        let totalSeconds = user?.globalWatchTime ?? 0
+        let totalMinutes = Int(totalSeconds / 60)  // Convert seconds to minutes
+        return String(totalMinutes)
     }
     
     var followerCount: String {
@@ -318,8 +320,6 @@ class ProfileViewModel: ObservableObject {
         await MainActor.run {
             self.likedVideoThumbnails = thumbnails
             self.likedVideoURLs = videoURLs
-            print("Liked video thumbnails: \(thumbnails)")
-            print("Liked video URLs: \(videoURLs)")
         }
     }
     

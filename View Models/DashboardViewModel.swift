@@ -14,11 +14,12 @@ class DashboardViewModel: ObservableObject{
     @Published var errorMessage: String = ""
     @Published var userLevel: Int = 0
     @Published var totalWatchTime: Double = 0
-    @Published var totalHours: Int = 0
-    @Published var monthlyHoursIncrease: Int = 0
+    @Published var totalHours: Double = 0
+    @Published var monthlyHoursIncrease: Double = 0
     @Published var userRank: Int = 0
     @Published var savedWords: [WordPair] = []
     @Published var studyDates: Set<Int> = []
+    @Published var dailyWatchTime: [Int: Double] = [:]
     @Published var currentMonth: String = ""
     @Published var leaderboardUsers: [LeaderboardUser] = []
     @Published var isLoading: Bool = false
@@ -62,13 +63,20 @@ class DashboardViewModel: ObservableObject{
                 }
                 
                 // Get watch time from target language data (using lowercased key)
+                print("🔍 Watch Time Debug - Target language: '\(targetLanugage)'")
+                print("🔍 Watch Time Debug - Available languages: \(languagesData.keys.sorted())")
+                print("🔍 Watch Time Debug - Global watch time: \(user.globalWatchTime ?? 0)s")
+                
                 if let userLanguageData = languagesData[targetLanugage.lowercased()] {
                     self.totalWatchTime = userLanguageData.watchTime?.total ?? 0
+                    print("🔍 Watch Time Debug - Found \(targetLanugage) specific data: \(self.totalWatchTime)s")
                 } else if let firstLanguageKey = languagesData.keys.first,
                           let firstLanguageData = languagesData[firstLanguageKey] {
                     self.totalWatchTime = firstLanguageData.watchTime?.total ?? 0
+                    print("🔍 Watch Time Debug - Using fallback language '\(firstLanguageKey)': \(self.totalWatchTime)s")
                 } else {
                     self.totalWatchTime = 0
+                    print("🔍 Watch Time Debug - No language data available, using 0")
                 }
                 
                 self.targetLanguage = user.targetLanguage
@@ -101,14 +109,22 @@ class DashboardViewModel: ObservableObject{
     }
     
     private func calculateUserStats(from user: User) async {
-        let totalWatchTime = user.globalWatchTime ?? 0
-        totalHours = Int(totalWatchTime / 3600)
+        // Use language-specific watch time instead of global watch time
+        let languageSpecificWatchTime = self.totalWatchTime // Already calculated in fetchUserData
+        totalHours = languageSpecificWatchTime / 3600 // Convert seconds to hours with decimal
         
-        // Calculate monthly hours increase (simplified for now)
-        monthlyHoursIncrease = Int(totalWatchTime / 3600 / 4) // Rough estimate
+        // Calculate monthly hours increase based on language-specific time
+        // Note: This is a simplified estimate until we have proper monthly tracking
+        monthlyHoursIncrease = totalHours / 4 // Rough estimate: total hours divided by 4 weeks
         
-        // Calculate real user rank
-        userRank = await calculateUserRank(currentUserWatchTime: totalWatchTime)
+        // Calculate real user rank using global watch time for fair comparison
+        let globalWatchTime = user.globalWatchTime ?? 0
+        userRank = await calculateUserRank(currentUserWatchTime: globalWatchTime)
+        
+        print("🔍 Hours Debug - Language-specific watch time: \(languageSpecificWatchTime)s = \(totalHours)h")
+        print("🔍 Hours Debug - Global watch time: \(globalWatchTime)s = \(globalWatchTime/3600)h")
+        print("🔍 Hours Debug - Difference: Language(\(totalHours)h) vs Global(\(globalWatchTime/3600)h)")
+        print("🔍 Hours Debug - Monthly increase estimate: \(monthlyHoursIncrease)h")
     }
     
     private func calculateUserRank(currentUserWatchTime: Double) async -> Int {

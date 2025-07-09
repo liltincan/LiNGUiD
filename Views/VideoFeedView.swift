@@ -188,7 +188,8 @@ struct FeedVideoPage: View {
                 containerWidth: containerWidth,
                 containerHeight: containerHeight,
                 isActive: isActive,
-                captions: video.captions
+                captions: video.captions,
+                likes: video.likes
             )
             .environmentObject(userSession)
             .id(video.id)

@@ -161,7 +161,7 @@ struct ProfileHeaderView: View {
                             languages: vm.allLanguageNames,
                             uid: uid,
                             selectedNativeLanguages: Set([vm.nativeLanguage?.lowercased() ?? ""]),
-                            onLogout: onLogout,
+                            onLogout: onLogout
                         )
                     } label: {
                         Image(systemName: "gearshape.fill")
@@ -248,9 +248,6 @@ struct VideoGridSection: View {
             Text(emptyMsg)
                 .foregroundColor(.secondary)
                 .padding(.bottom, 15)
-                .onAppear{
-                    print("\(videoURLs), \(videoURLs.count)")
-                }
         } else {
             LazyVGrid(
                 columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3),

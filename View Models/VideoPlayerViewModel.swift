@@ -56,7 +56,7 @@ class VideoPlayerViewModel: ObservableObject {
             updatedLikes.append(videoId)
         }
 
-        firestoreService.updateLikedVideos(forUserId: userId, likedVideos: updatedLikes) { result in
+        firestoreService.updateLikedVideos(forUserId: userId, likedVideos: updatedLikes, likedVideoId: videoId) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success:
@@ -91,7 +91,7 @@ class VideoPlayerViewModel: ObservableObject {
             updatedSaves.append(videoId)
         }
 
-        firestoreService.updateSavedVideos(forUserId: userId, savedVideos: updatedSaves) { result in
+        firestoreService.updateSavedVideos(forUserId: userId, savedVideos: updatedSaves, savedVideoId: videoId) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success:
@@ -142,14 +142,21 @@ class VideoPlayerViewModel: ObservableObject {
         )
     }
 
-    /// Function to record watch sessions
+    /// Function to record watch sessions and update user watch time statistics
     /// - Author: Gerardo De La Torre.
     /// - Date: 2025-06-15
+    /// - Updated: 2025-01-08 - Added watch time aggregation 
     func recordWatchSession(videoId: String, userID: String, watchTime: TimeInterval, language: String?) async {
         let db = Firestore.firestore()
+        let languageKey = (language ?? "unknown").lowercased()
+        
+        // Get current date string for daily tracking
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let todayKey = dateFormatter.string(from: Date())
 
         do {
-            // Create a watch session document
+            // 1. Create a watch session document
             let sessionData: [String: Any] = [
                 "userId": userID,
                 "videoId": videoId,
@@ -160,8 +167,66 @@ class VideoPlayerViewModel: ObservableObject {
 
             // Store in a watch_sessions collection
             try await db.collection("watch_sessions").addDocument(data: sessionData)
+            
+            // 2. Update user's aggregated watch time statistics
+            let userRef = db.collection("users").document(userID)
+            
+            try await db.runTransaction { transaction, errorPointer in
+                let userDocument: DocumentSnapshot
+                do {
+                    userDocument = try transaction.getDocument(userRef)
+                } catch let fetchError as NSError {
+                    errorPointer?.pointee = fetchError
+                    return nil
+                }
+                
+                // Get current global watch time
+                let currentGlobalWatchTime = userDocument.data()?["globalWatchTime"] as? Double ?? 0
+                let newGlobalWatchTime = currentGlobalWatchTime + watchTime
+                
+                // Get current languages data
+                var languagesData = userDocument.data()?["languagesData"] as? [String: [String: Any]] ?? [:]
+                
+                // Initialize language data if it doesn't exist
+                if languagesData[languageKey] == nil {
+                    languagesData[languageKey] = [:]
+                }
+                
+                // Get/initialize watch time data for this language
+                var languageWatchTime = languagesData[languageKey]?["watchTime"] as? [String: Any] ?? [:]
+                
+                // Update total watch time for this language
+                let currentLanguageTotal = languageWatchTime["total"] as? Double ?? 0
+                languageWatchTime["total"] = currentLanguageTotal + watchTime
+                
+                // Update daily watch time for this language
+                var dailyWatchTime = languageWatchTime["daily"] as? [String: Double] ?? [:]
+                let currentDailyTime = dailyWatchTime[todayKey] ?? 0
+                dailyWatchTime[todayKey] = currentDailyTime + watchTime
+                languageWatchTime["daily"] = dailyWatchTime
+                
+                // Update the language data
+                languagesData[languageKey]?["watchTime"] = languageWatchTime
+                
+                // Prepare update data
+                let updateData: [String: Any] = [
+                    "globalWatchTime": newGlobalWatchTime,
+                    "languagesData": languagesData
+                ]
+                
+                // Update the user document
+                transaction.updateData(updateData, forDocument: userRef)
+                
+                print("🎯 Watch Time Aggregation - Added \(watchTime)s to user \(userID)")
+                print("   - Global: \(currentGlobalWatchTime)s → \(newGlobalWatchTime)s")
+                print("   - \(languageKey): \(currentLanguageTotal)s → \(currentLanguageTotal + watchTime)s")
+                print("   - Daily (\(todayKey)): \(currentDailyTime)s → \(currentDailyTime + watchTime)s")
+                
+                return nil
+            }
+            
         } catch {
-            print("Failed to record watch session: \(error)")
+            print("Failed to record watch session or update user statistics: \(error)")
         }
     }
 

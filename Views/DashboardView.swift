@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 
 struct DashboardView: View {
     @EnvironmentObject var userSession: UserSessionViewModel
@@ -13,6 +14,27 @@ struct DashboardView: View {
     @State private var selectedWord: WordPair? = nil
     @State private var translatedText: String? = nil
     @State private var isTranslating = false
+    
+    // Computed property to control which users are displayed in leaderboard
+    private var displayedLeaderboardUsers: [LeaderboardUser] {
+        let nonFirstPlaceUsers = viewModel.leaderboardUsers.filter { $0.rank != 1 }
+        let currentUserAuthUID = FirebaseAuth.Auth.auth().currentUser?.uid
+        
+        // Always show rank 2 and 3 users (don't exclude current user)
+        let topUsers = nonFirstPlaceUsers.filter { user in
+            user.rank == 2 || user.rank == 3
+        }
+        
+        // Always add current user at the bottom (even if they're already in top 3)
+        let currentUser = viewModel.leaderboardUsers.first { user in
+            user.id == currentUserAuthUID
+        }
+        
+        if let currentUser = currentUser {
+            return topUsers + [currentUser]
+        }
+        return topUsers
+    }
 
     init(userSession: UserSessionViewModel, selectedTab: Binding<Int>) {
         _viewModel = StateObject(
@@ -162,10 +184,10 @@ struct DashboardView: View {
                 Text("Hours")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.black)
-                Text("\(viewModel.totalHours)")
+                Text(String(format: "%.1f", viewModel.totalHours))
                     .font(.system(size: 48, weight: .bold))
                     .foregroundColor(.black)
-                Text("+\(viewModel.monthlyHoursIncrease) this month")
+                Text(String(format: "+%.1f this month", viewModel.monthlyHoursIncrease))
                     .font(.system(size: 12, weight: .regular))
                     .foregroundColor(.gray)
             }
@@ -214,13 +236,15 @@ struct DashboardView: View {
 
                                 Circle()
                                     .fill(Color.appPrimaryColor)
-                                    .frame(width: 24, height: 24)
+                                    .frame(width: 28, height: 28)
                                     .overlay(
                                         Text("1")
-                                            .font(.system(size: 12, weight: .bold))
+                                            .font(.system(size: 13, weight: .bold))
                                             .foregroundColor(.white)
+                                            .minimumScaleFactor(0.7)
+                                            .lineLimit(1)
                                     )
-                                    .offset(x: 25, y: -25)
+                                    .offset(x: 26, y: -26)
                             }
 
                             VStack(spacing: 3) {
@@ -238,11 +262,11 @@ struct DashboardView: View {
                     }
 
                     ForEach(
-                        viewModel.leaderboardUsers.filter { $0.rank != 1 },
-                        id: \.id
-                    ) { user in
+                        Array(displayedLeaderboardUsers.enumerated()),
+                        id: \.offset
+                    ) { index, user in
                         LeaderboardUserView(user: user)
-                            .offset(offsetForRank(user.rank))
+                            .offset(offsetForUser(user, at: index))
                     }
                 }
                 .frame(height: 320)
@@ -379,7 +403,7 @@ struct DashboardView: View {
             translateTextV2(
                 text: word.target,
                 sourceLang: viewModel.targetLanguage ?? "",
-                targetLang: viewModel.nativeLanguage ?? "",
+                targetLang: viewModel.nativeLanguage ?? ""
             ) { result in
                 if let translated = result {
                     isTranslating = false
@@ -483,11 +507,19 @@ struct DashboardView: View {
         }
     }
 
-    private func offsetForRank(_ rank: Int) -> CGSize {
-        switch rank {
-        case 2: return CGSize(width: -140, height: 30)
-        case 3: return CGSize(width: 140, height: 30)
-        case 4...Int.max: return CGSize(width: 0, height: 160)  // Any rank 4 or higher goes to bottom
+    private func offsetForUser(_ user: LeaderboardUser, at index: Int) -> CGSize {
+        let currentUserAuthUID = FirebaseAuth.Auth.auth().currentUser?.uid
+        
+        // If this is the last item in the array and it's the current user, put at bottom
+        if index == displayedLeaderboardUsers.count - 1 && user.id == currentUserAuthUID {
+            return CGSize(width: 0, height: 160)  // Bottom position for current user
+        }
+        
+        // Regular positions based on rank
+        switch user.rank {
+        case 2: return CGSize(width: -140, height: 30)  // Left
+        case 3: return CGSize(width: 140, height: 30)   // Right
+        case 4...Int.max: return CGSize(width: 0, height: 160)  // Bottom for low ranks
         default: return CGSize.zero
         }
     }
@@ -511,13 +543,15 @@ struct LeaderboardUserView: View {
                 .clipShape(Circle())
                 Circle()
                     .fill(Color.appPrimaryColor)
-                    .frame(width: 20, height: 20)
+                    .frame(width: 26, height: 26)
                     .overlay(
                         Text("\(user.rank)")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.system(size: 11, weight: .bold))
                             .foregroundColor(.white)
+                            .minimumScaleFactor(0.7)
+                            .lineLimit(1)
                     )
-                    .offset(x: 20, y: -20)
+                    .offset(x: 22, y: -22)
             }
 
             VStack(spacing: 2) {
