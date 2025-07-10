@@ -227,7 +227,7 @@ struct LikedView: View {
     
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, emptyMsg: "No liked videos yet.")
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [])
         }
         .navigationTitle("Liked Videos")
     }
@@ -239,7 +239,7 @@ struct SavedView: View {
     
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, emptyMsg: "No saved videos yet.")
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [])
         }
         .navigationTitle("Saved Videos")
     }
