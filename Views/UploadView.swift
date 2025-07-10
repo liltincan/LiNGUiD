@@ -10,6 +10,8 @@ import FirebaseAuth
 
 
 struct UploadView: View {
+    var onComplete: (() -> Void)? = nil
+    
     @State private var videoAssets: [PHAsset] = []
     @State private var selectedAssets: [PHAsset] = []
     @State private var isMultiSelect = false
@@ -100,6 +102,9 @@ struct UploadView: View {
                             destination: AddThumbnailView(
                                 assets: selectedAssets,
                                 compressedVideoURLs: compressedVideoURLs,
+                                onComplete: {
+                                    onComplete?()  // tells ProfileView to pop UploadView
+                                },
                                 thumbnailOverrides: $thumbnailOverrides
                             ),
                             isActive: $navigateToThumbnail
@@ -411,6 +416,8 @@ struct AddThumbnailView: View {
     let assets: [PHAsset]
     let compressedVideoURLs: [String: URL]
     
+    var onComplete: (() -> Void)? = nil
+    
     @State private var uploadService = VideoUploadService()
     @State private var isUploading = false
 
@@ -419,7 +426,10 @@ struct AddThumbnailView: View {
     @State private var showingFrameSelectorFor: PHAsset?
     @State private var croppingImage: CroppingImage?
     @State private var croppingSourceAsset: PHAsset?
-    //@State private var croppingAsset: PHAsset?
+    
+    @EnvironmentObject var uploadManager: UploadManager
+    @Environment(\.dismiss) var dismiss
+
 
     var body: some View {
         VStack {
@@ -474,16 +484,54 @@ struct AddThumbnailView: View {
                 .padding(.horizontal, 10)
             }
 
-            Button(action: {
-                uploadSelectedVideo()
-            }) {
-                Text(isUploading ? "Uploading..." : "Upload")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+            Button("Upload") {
+                onComplete?()
+                isUploading = true
+                uploadManager.addUploadingVideos(assets, thumbnails: thumbnailOverrides)
+                
+                Task {
+                    for asset in assets {
+                        let id = asset.localIdentifier
+                        uploadManager.startUpload(for: asset) {
+                            do {
+                                let data = try await loadVideoData(asset: asset)
+                                let thumbData = thumbnailOverrides[id]?.jpegData(compressionQuality: 0.9)
+                                
+                                try Task.checkCancellation()
+
+                                _ = try await uploadService.uploadVideo(
+                                    videoData: data,
+                                    filename: getVideoFilename(from: asset),
+                                    category: "general",
+                                    language: "auto",
+                                    uploaderId: Auth.auth().currentUser?.uid,
+                                    thumbnailData: thumbData
+                                )
+
+                                try Task.checkCancellation()
+
+                                await MainActor.run {
+                                    uploadManager.markUploaded(id)
+                                }
+
+                            } catch {
+                                if Task.isCancelled {
+                                    print("⛔️ Upload cancelled for \(id)")
+                                } else {
+                                    print("⚠️ Upload failed for \(id): \(error)")
+                                }
+                            }
+                        }
+                    }
+
+                    isUploading = false
+                    dismiss()
+                }
             }
+            .font(.headline)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, maxHeight: 60)
+            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
             .disabled(isUploading)
             .cornerRadius(8)
             .padding(.vertical, 20)
@@ -541,6 +589,15 @@ struct AddThumbnailView: View {
         }
         .background(Color.black.ignoresSafeArea())
     }
+    
+    private func loadVideoData(asset: PHAsset) async throws -> Data {
+        if let compressedURL = compressedVideoURLs[asset.localIdentifier] {
+            return try Data(contentsOf: compressedURL)
+        } else {
+            return try await convertAssetToData(asset: asset)
+        }
+    }
+    
     private func uploadSelectedVideo() {
         guard let firstAsset = assets.first else {
             print("No video to upload")
