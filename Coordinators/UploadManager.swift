@@ -49,7 +49,7 @@ class UploadManager: ObservableObject {
 
     func markUploaded(_ id: String) {
         if let index = uploadingVideos.firstIndex(where: { $0.localIdentifier == id }) {
-            uploadingVideos[index].isUploading = false
+            uploadingVideos.remove(at: index)
         }
         uploadTasks.removeValue(forKey: id)
     }
