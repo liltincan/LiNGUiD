@@ -47,11 +47,20 @@ class DashboardViewModel: ObservableObject{
             
             self.user = user
             
+            // TEMP DISABLED: Migration causes issues with poor network connection
+            // await migrateWatchTimeIfNeeded(for: user)
+            // 
+            // // Refresh user data after potential migration
+            // await userSession.refreshUser()
+            // if let updatedUser = userSession.currentUser {
+            //     self.user = updatedUser
+            // }
+            
             // Use EXACTLY the same logic as Profile page formattedLanguagesDisplay
-            if let languagesData = user.languagesData {
-                let targetLanugage: String = user.targetLanguage // Keep original variable name like Profile
+            if let languagesData = self.user?.languagesData {
+                let targetLanguage: String = self.user?.targetLanguage ?? "" // Keep original variable name like Profile
                 
-                let comprehensionLevel: Int = languagesData[targetLanugage.lowercased()]?.comprehensionLevel ?? 0
+                let comprehensionLevel: Int = languagesData[targetLanguage.lowercased()]?.comprehensionLevel ?? 0
                 
                 if comprehensionLevel == 0, let firstLanguageKey = languagesData.keys.first {
                     let fallbackLevel = languagesData[firstLanguageKey]?.comprehensionLevel ?? 0
@@ -63,34 +72,38 @@ class DashboardViewModel: ObservableObject{
                 }
                 
                 // Get watch time from target language data (using lowercased key)
-                print("🔍 Watch Time Debug - Target language: '\(targetLanugage)'")
+                print("🔍 Watch Time Debug - Target language: '\(targetLanguage)'")
                 print("🔍 Watch Time Debug - Available languages: \(languagesData.keys.sorted())")
-                print("🔍 Watch Time Debug - Global watch time: \(user.globalWatchTime ?? 0)s")
+                print("🔍 Watch Time Debug - Global watch time: \(self.user?.globalWatchTime ?? 0)s")
                 
-                if let userLanguageData = languagesData[targetLanugage.lowercased()] {
-                    self.totalWatchTime = userLanguageData.watchTime?.total ?? 0
-                    print("🔍 Watch Time Debug - Found \(targetLanugage) specific data: \(self.totalWatchTime)s")
+                // Use language-specific watch time ONLY - don't fallback to global
+                if let userLanguageData = languagesData[targetLanguage.lowercased()],
+                   let languageWatchTime = userLanguageData.watchTime?.total {
+                    self.totalWatchTime = languageWatchTime
+                    print("🔍 Watch Time Debug - Using \(targetLanguage) specific time: \(self.totalWatchTime)s")
                 } else if let firstLanguageKey = languagesData.keys.first,
-                          let firstLanguageData = languagesData[firstLanguageKey] {
-                    self.totalWatchTime = firstLanguageData.watchTime?.total ?? 0
-                    print("🔍 Watch Time Debug - Using fallback language '\(firstLanguageKey)': \(self.totalWatchTime)s")
+                          let firstLanguageData = languagesData[firstLanguageKey],
+                          let fallbackWatchTime = firstLanguageData.watchTime?.total {
+                    self.totalWatchTime = fallbackWatchTime
+                    print("🔍 Watch Time Debug - Using fallback language '\(firstLanguageKey)' time: \(self.totalWatchTime)s")
                 } else {
+                    // Start with 0 for language-specific time (user hasn't watched videos in this language yet)
                     self.totalWatchTime = 0
-                    print("🔍 Watch Time Debug - No language data available, using 0")
+                    print("🔍 Watch Time Debug - No language-specific watch time data available, using 0 (user hasn't watched \(targetLanguage) videos yet)")
                 }
                 
-                self.targetLanguage = user.targetLanguage
-                self.nativeLanguage = user.nativeLanguage
+                self.targetLanguage = self.user?.targetLanguage
+                self.nativeLanguage = self.user?.nativeLanguage
             } else {
-                // No language data available - default to 0 like Profile
+                // No language data available - start with 0 for new users
                 self.userLevel = 0
                 self.totalWatchTime = 0
-                print("🔍 Dashboard Debug - No language data available, setting defaults")
+                print("🔍 Dashboard Debug - No language data available, starting with 0 for new user")
             }
             
             // Calculate user stats and fetch real leaderboard
-            await calculateUserStats(from: user)
-            loadSavedWords(from: user)
+            await calculateUserStats(from: self.user!)
+            loadSavedWords(from: self.user!)
             generateStudyDates()
             await fetchRealLeaderboard()
             
@@ -109,7 +122,7 @@ class DashboardViewModel: ObservableObject{
     }
     
     private func calculateUserStats(from user: User) async {
-        // Use language-specific watch time instead of global watch time
+        // Use ONLY language-specific watch time (no fallback to global time)
         let languageSpecificWatchTime = self.totalWatchTime // Already calculated in fetchUserData
         totalHours = languageSpecificWatchTime / 3600 // Convert seconds to hours with decimal
         
@@ -123,7 +136,7 @@ class DashboardViewModel: ObservableObject{
         
         print("🔍 Hours Debug - Language-specific watch time: \(languageSpecificWatchTime)s = \(totalHours)h")
         print("🔍 Hours Debug - Global watch time: \(globalWatchTime)s = \(globalWatchTime/3600)h")
-        print("🔍 Hours Debug - Difference: Language(\(totalHours)h) vs Global(\(globalWatchTime/3600)h)")
+        print("🔍 Hours Debug - Dashboard showing language-specific hours: \(totalHours)h")
         print("🔍 Hours Debug - Monthly increase estimate: \(monthlyHoursIncrease)h")
     }
     
@@ -163,8 +176,6 @@ class DashboardViewModel: ObservableObject{
             
             // Use Auth.auth().currentUser?.uid for consistency with VideoPlayerView fixes
             let currentUserAuthUID = Auth.auth().currentUser?.uid
-            print("🔍 Leaderboard Debug - Current User Auth UID: \(currentUserAuthUID ?? "nil")")
-            print("🔍 Leaderboard Debug - Current User Name: \(userSession.currentUser?.userName ?? "nil")")
             
             for (index, document) in snapshot.documents.enumerated() {
                 let data = document.data()
@@ -174,7 +185,6 @@ class DashboardViewModel: ObservableObject{
                 let minutes = Int(watchTime / 60)
                 let rank = index + 1
                 
-                print("🔍 Leaderboard Debug - User \(rank): ID=\(document.documentID), Name=\(username)")
                 
                 let avatarURL = data["profilePhotoUrl"] as? String ?? generatePlaceholderAvatar(for: username)
                 
@@ -191,19 +201,16 @@ class DashboardViewModel: ObservableObject{
                 // Use Auth UID for comparison instead of userSession.currentUser?.id
                 if document.documentID == currentUserAuthUID {
                     currentUserFound = true
-                    print("🔍 Leaderboard Debug - Found current user in top 10 at rank \(rank)")
-                }
+                     }
             }
             
             // If current user is not in top 10, add them to display
             if !currentUserFound, let currentUser = userSession.currentUser, let currentUserAuthUID = currentUserAuthUID {
-                print("🔍 Leaderboard Debug - Current user not in top 10, adding separately")
                 let currentUserWatchTime = currentUser.globalWatchTime ?? 0
                 let currentUserMinutes = Int(currentUserWatchTime / 60)
                 
                 // Use EXACTLY the same userName as Profile page
                 let currentUserName = currentUser.userName ?? "Me"
-                print("🔍 Leaderboard Debug - Adding current user: Name=\(currentUserName), Minutes=\(currentUserMinutes), Rank=\(userRank)")
                 
                 // Get profile photo URL from User model (same as Profile page)
                 let currentUserAvatar: String
@@ -229,7 +236,6 @@ class DashboardViewModel: ObservableObject{
                 }
             }
             
-            print("🔍 Leaderboard Debug - Final leaderboard users: \(fetchedUsers.map { "\($0.name) (rank \($0.rank))" })")
             leaderboardUsers = fetchedUsers
         } catch {
             print("Error fetching leaderboard: \(error)")
@@ -252,7 +258,86 @@ class DashboardViewModel: ObservableObject{
     }
     
     private func generateStudyDates() {
-        studyDates = Set([4, 5, 8, 12, 15, 18, 22, 25])
+        // Get study dates from real user data instead of mock data
+        studyDates = extractStudyDatesFromUserData()
+    }
+    
+    /// Extract study dates from user's daily watch time records for current month
+    private func extractStudyDatesFromUserData() -> Set<Int> {
+        guard let user = self.user else {
+            print("🔍 Calendar Debug - No user data available")
+            return Set<Int>()
+        }
+        
+        // Try to get language-specific daily data first (prioritize target language)
+        if let languagesData = user.languagesData,
+           let targetLanguage = self.targetLanguage?.lowercased(),
+           let languageData = languagesData[targetLanguage],
+           let watchTime = languageData.watchTime,
+           let dailyWatchTime = watchTime.daily {
+            
+            return extractStudyDatesFromDailyData(dailyWatchTime, source: "target language (\(targetLanguage))")
+        }
+        
+        // Fallback to first available language with daily data
+        if let languagesData = user.languagesData {
+            for (languageKey, languageData) in languagesData {
+                if let watchTime = languageData.watchTime,
+                   let dailyWatchTime = watchTime.daily,
+                   !dailyWatchTime.isEmpty {
+                    
+                     return extractStudyDatesFromDailyData(dailyWatchTime, source: "fallback language (\(languageKey))")
+                }
+            }
+        }
+        
+        
+        // TEMP FIX: Generate calendar dates based on global watch time when no daily data exists
+        if let globalWatchTime = user.globalWatchTime, globalWatchTime > 0 {
+           return generateFallbackCalendarDates(from: globalWatchTime)
+        }
+        
+        return Set<Int>()
+    }
+    
+    /// Helper method to extract study dates from daily watch time data
+    private func extractStudyDatesFromDailyData(_ dailyWatchTime: [String: Double], source: String) -> Set<Int> {
+        let currentDate = Date()
+        let calendar = Calendar.current
+        let currentYear = calendar.component(.year, from: currentDate)
+        let currentMonth = calendar.component(.month, from: currentDate)
+        
+        var studyDaysInCurrentMonth = Set<Int>()
+        
+        // Minimum watch time threshold (10 seconds = any meaningful video watching)
+        let minimumWatchTime: Double = 10.0
+        
+        for (dateString, watchTimeSeconds) in dailyWatchTime {
+            // Parse date string in format "yyyy-MM-dd"
+            if let studyDate = parseDateString(dateString),
+               watchTimeSeconds >= minimumWatchTime {
+                
+                let studyYear = calendar.component(.year, from: studyDate)
+                let studyMonth = calendar.component(.month, from: studyDate)
+                let studyDay = calendar.component(.day, from: studyDate)
+                
+                // Only include dates from current month and year
+                if studyYear == currentYear && studyMonth == currentMonth {
+                    studyDaysInCurrentMonth.insert(studyDay)
+                    print("🔍 Calendar Debug - Added study day: \(studyDay) (\(String(format: "%.1f", watchTimeSeconds))s)")
+                }
+            }
+        }
+        
+         return studyDaysInCurrentMonth
+    }
+    
+    /// Parse date string in "yyyy-MM-dd" format to Date object
+    private func parseDateString(_ dateString: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone.current
+        return formatter.date(from: dateString)
     }
     
     private func setupCurrentMonth() {
@@ -302,6 +387,138 @@ class DashboardViewModel: ObservableObject{
         }
         
         leaderboardUsers = mockUsers
+    }
+    
+    /// Migrate existing global watch time to language-specific data if needed
+    private func migrateWatchTimeIfNeeded(for user: User) async {
+        guard let globalWatchTime = user.globalWatchTime,
+              globalWatchTime > 0,
+              !user.targetLanguage.isEmpty else {
+            return
+        }
+        
+        let languageKey = user.targetLanguage.lowercased()
+        
+        // Check if language-specific data already exists
+        if let languagesData = user.languagesData,
+           let languageData = languagesData[languageKey],
+           let watchTime = languageData.watchTime,
+           let total = watchTime.total,
+           total > 0 {
+            return
+        }
+        
+        
+        // Perform migration
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        
+        do {
+            let userRef = db.collection("users").document(userID)
+            
+            try await db.runTransaction { transaction, errorPointer in
+                let userDocument: DocumentSnapshot
+                do {
+                    userDocument = try transaction.getDocument(userRef)
+                } catch let fetchError as NSError {
+                    errorPointer?.pointee = fetchError
+                    return nil
+                }
+                
+                // Get current languages data
+                var languagesData = userDocument.data()?["languagesData"] as? [String: [String: Any]] ?? [:]
+                
+                // Initialize language data if it doesn't exist
+                if languagesData[languageKey] == nil {
+                    languagesData[languageKey] = [:]
+                }
+                
+                // Create watch time data with migrated global time and estimated daily distribution
+                let migratedWatchTime: [String: Any] = [
+                    "total": globalWatchTime,
+                    "daily": self.generateEstimatedDailyData(from: globalWatchTime)
+                ]
+                
+                // Update the language data
+                languagesData[languageKey]!["watchTime"] = migratedWatchTime
+                
+                // Update the user document
+                transaction.updateData(["languagesData": languagesData], forDocument: userRef)
+                
+              
+                return nil
+            }
+            
+        } catch {
+            print("🔍 Migration Debug - Failed to migrate watch time: \(error)")
+        }
+    }
+    
+    /// Generate estimated daily watch data based on total watch time for calendar display
+    private func generateEstimatedDailyData(from totalWatchTime: Double) -> [String: Double] {
+        guard totalWatchTime > 0 else { return [:] }
+        
+        let currentDate = Date()
+        let calendar = Calendar.current
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        
+        var dailyData: [String: Double] = [:]
+        
+        // Estimate how many days the user has been watching based on total time
+        // Assume average watching session of 120 seconds (2 minutes)
+        let averageSessionTime: Double = 120.0
+        let estimatedSessions = max(1, Int(totalWatchTime / averageSessionTime))
+        let estimatedDays = min(estimatedSessions, 15) // Max 15 days spread
+        
+        // Create daily distribution over recent days
+        for i in 0..<estimatedDays {
+            if let pastDate = calendar.date(byAdding: .day, value: -i, to: currentDate) {
+                let dateString = formatter.string(from: pastDate)
+                
+                // Distribute watch time somewhat randomly but realistically
+                let sessionTime = min(totalWatchTime / Double(estimatedDays), averageSessionTime * 2)
+                if sessionTime >= 10.0 { // Only add if meaningful watch time
+                    dailyData[dateString] = sessionTime
+                }
+            }
+        }
+        
+        
+        return dailyData
+    }
+    
+    /// Generate fallback calendar dates when network migration fails
+    private func generateFallbackCalendarDates(from totalWatchTime: Double) -> Set<Int> {
+        guard totalWatchTime > 0 else { return Set<Int>() }
+        
+        let currentDate = Date()
+        let calendar = Calendar.current
+        let currentMonth = calendar.component(.month, from: currentDate)
+        let currentYear = calendar.component(.year, from: currentDate)
+        
+        var studyDays = Set<Int>()
+        
+        // Estimate study days based on total watch time
+        // Assume average 2 minutes per day = 120 seconds
+        let averageSessionTime: Double = 120.0
+        let estimatedDays = min(Int(totalWatchTime / averageSessionTime), 15) // Max 15 days
+        
+        // Add recent days as study days
+        for i in 0..<estimatedDays {
+            if let pastDate = calendar.date(byAdding: .day, value: -i, to: currentDate) {
+                let dayOfMonth = calendar.component(.day, from: pastDate)
+                let monthOfDate = calendar.component(.month, from: pastDate)
+                let yearOfDate = calendar.component(.year, from: pastDate)
+                
+                // Only include dates from current month and year
+                if monthOfDate == currentMonth && yearOfDate == currentYear {
+                    studyDays.insert(dayOfMonth)
+                }
+            }
+        }
+        
+       
+        return studyDays
     }
 }
 

@@ -205,8 +205,11 @@ class VideoPlayerViewModel: ObservableObject {
                 dailyWatchTime[todayKey] = currentDailyTime + watchTime
                 languageWatchTime["daily"] = dailyWatchTime
                 
-                // Update the language data
-                languagesData[languageKey]?["watchTime"] = languageWatchTime
+                // Update the language data - FIX: Ensure safe assignment
+                if languagesData[languageKey] == nil {
+                    languagesData[languageKey] = [:]
+                }
+                languagesData[languageKey]!["watchTime"] = languageWatchTime
                 
                 // Prepare update data
                 let updateData: [String: Any] = [

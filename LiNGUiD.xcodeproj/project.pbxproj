@@ -44,6 +44,7 @@
 		81CC3AF12E15B4000010512B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF02E15B4000010512B /* TOCropViewController */; };
 		81CC3AF32E15B44A0010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF22E15B44A0010512B /* CropViewController */; };
 		81CC3AF52E15B44A0010512B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF42E15B44A0010512B /* TOCropViewController */; };
+		81E960722E20351600EEE22D /* UploadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E960712E20350500EEE22D /* UploadManager.swift */; };
 		81F436412DF2830600DA9BDA /* LanguageLevelSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */; };
 		81F436432DF2831300DA9BDA /* LanguageSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436422DF2831300DA9BDA /* LanguageSelectionView.swift */; };
 		81F436452DF2831D00DA9BDA /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */; };
@@ -142,6 +143,7 @@
 		7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListViewModel.swift; sourceTree = "<group>"; };
 		8177D3E52DF8D4AC00FA6800 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
 		8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoThumbnailSelectableView.swift; sourceTree = "<group>"; };
+		81E960712E20350500EEE22D /* UploadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadManager.swift; sourceTree = "<group>"; };
 		81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageLevelSelectionView.swift; sourceTree = "<group>"; };
 		81F436422DF2831300DA9BDA /* LanguageSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageSelectionView.swift; sourceTree = "<group>"; };
 		81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
@@ -333,6 +335,7 @@
 		8F51F2202DE01C9C00397726 /* Coordinators */ = {
 			isa = PBXGroup;
 			children = (
+				81E960712E20350500EEE22D /* UploadManager.swift */,
 				8F51F23A2DE0249A00397726 /* VideoFeedCoordinatorView.swift */,
 				8F51F2392DE0248500397726 /* AuthCoordinatorView.swift */,
 				8F51F2362DE0243400397726 /* RootCoordinatorView.swift */,
@@ -530,7 +533,7 @@
 				600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */,
 				81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */,
 				7EE63CF52E1E415F005F5466 /* XCRemoteSwiftPackageReference "Kingfisher" */,
-							);
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8F823B4D2DD987F8007B6E5E /* Products */;
 			projectDirPath = "";
@@ -616,6 +619,7 @@
 				D61307E82E1B4D6C0089F942 /* NotificationService.swift in Sources */,
 				60F930CE2DEA83F300E37156 /* SavedWordsViewModel.swift in Sources */,
 				60974D882DE79D130075CAAE /* AppColors.swift in Sources */,
+				81E960722E20351600EEE22D /* UploadManager.swift in Sources */,
 				8FB929672DE116370020AFCD /* MainTabView.swift in Sources */,
 				D69E51FF2DE6C0F600329D64 /* VideoPlayerLayerView.swift in Sources */,
 				60DAC59C2DE2F770002C5410 /* ProfileViewModel.swift in Sources */,
@@ -1024,7 +1028,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-				600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */ = {
+		600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ciaranrobrien/SwiftUIFlow";
 			requirement = {
