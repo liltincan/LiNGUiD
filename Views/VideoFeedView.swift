@@ -182,14 +182,15 @@ struct FeedVideoPage: View {
             VideoPlayerView(
                 url: video.url,
                 videoId: video.id,
-                language: language,
+                language: video.language,
                 uploaderId: video.uploaderId,
                 uploaderPfp: uploaderPfp,
                 containerWidth: containerWidth,
                 containerHeight: containerHeight,
                 isActive: isActive,
                 captions: video.captions,
-                likes: video.likes
+                videoLikes: video.likes,
+                videoSaves: video.saves,
             )
             .environmentObject(userSession)
             .id(video.id)

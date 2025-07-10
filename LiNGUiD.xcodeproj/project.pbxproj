@@ -10,6 +10,7 @@
 		047C2F532E0C5FA40052C0C3 /* VideoUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */; };
 		0493FF562E0C614700D6F989 /* LaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0493FF552E0C614700D6F989 /* LaunchManager.swift */; };
 		132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1320204F2DE8D07100DD8AF1 /* SettingsView.swift */; };
+		132D56582E20509800B6D237 /* OtherUserProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132D56572E20509800B6D237 /* OtherUserProfileViewModel.swift */; };
 		134970E42E1B3E030053E214 /* OtherUserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 134970E32E1B3E030053E214 /* OtherUserProfileView.swift */; };
 		138018E52DF0AD01003FC3D6 /* ChangePasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */; };
 		138F1B962DEE0DF700F3B31B /* VideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B952DEE0DF300F3B31B /* VideoView.swift */; };
@@ -118,6 +119,7 @@
 		047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoUploadService.swift; sourceTree = "<group>"; };
 		0493FF552E0C614700D6F989 /* LaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchManager.swift; sourceTree = "<group>"; };
 		1320204F2DE8D07100DD8AF1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		132D56572E20509800B6D237 /* OtherUserProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherUserProfileViewModel.swift; sourceTree = "<group>"; };
 		134970E32E1B3E030053E214 /* OtherUserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherUserProfileView.swift; sourceTree = "<group>"; };
 		138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangePasswordView.swift; sourceTree = "<group>"; };
 		138F1B952DEE0DF300F3B31B /* VideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoView.swift; sourceTree = "<group>"; };
@@ -282,6 +284,7 @@
 		8F51F21C2DE01C6900397726 /* View Models */ = {
 			isa = PBXGroup;
 			children = (
+				132D56572E20509800B6D237 /* OtherUserProfileViewModel.swift */,
 				7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */,
 				60E0B91C2DF53A550065B772 /* DashboardViewModel.swift */,
 				139ABECD2DF2270C00EB45FD /* ChangePasswordViewModel.swift */,
@@ -315,11 +318,11 @@
 				81F436462DF2835100DA9BDA /* OnboardingPageView.swift */,
 				D69E52002DE6CC5500329D64 /* PlayerView.swift */,
 				8FB9296E2DE116BC0020AFCD /* PracticeView.swift */,
-				60974D892DE803760075CAAE /* PracticeWordView.swift */,
 				8FB929702DE116CE0020AFCD /* ProfileView.swift */,
 				1320204F2DE8D07100DD8AF1 /* SettingsView.swift */,
 				D6BA59E52DF3682000E6E137 /* ShareSheetView.swift */,
 				8177D3E52DF8D4AC00FA6800 /* UploadView.swift */,
+				60974D892DE803760075CAAE /* PracticeWordView.swift */,
 				8F51F2382DE0247000397726 /* VideoFeedView.swift */,
 				D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */,
 				D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */,
@@ -530,7 +533,7 @@
 				600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */,
 				81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */,
 				7EE63CF52E1E415F005F5466 /* XCRemoteSwiftPackageReference "Kingfisher" */,
-							);
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8F823B4D2DD987F8007B6E5E /* Products */;
 			projectDirPath = "";
@@ -584,6 +587,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				132D56582E20509800B6D237 /* OtherUserProfileViewModel.swift in Sources */,
 				8FB929582DE02A8A0020AFCD /* DependencyContainer.swift in Sources */,
 				603628C22DFA91CE00C6D0E5 /* AppTextTranslate.swift in Sources */,
 				8177D3E62DF8D4B100FA6800 /* UploadView.swift in Sources */,
@@ -1024,7 +1028,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-				600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */ = {
+		600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ciaranrobrien/SwiftUIFlow";
 			requirement = {

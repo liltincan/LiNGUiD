@@ -48,7 +48,7 @@ struct ProfileView: View {
                         ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL)
                             .padding(.bottom, 15)
                         
-                        VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs)
+                        VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs, videoArray: vm.uploadedVideoArray)
                             
                     }
                     .padding()
@@ -164,6 +164,8 @@ struct ProfileHeaderView: View {
                             likedVideoURLs: vm.likedVideoURLs,
                             savedVideos: vm.savedVideoThumbnails,
                             savedVideoURLs: vm.savedVideoURLs,
+                            likedVideoArray: vm.likedVideoArray,
+                            savedVideoArray: vm.savedVideoArray,
                             languages: vm.allLanguageNames,
                             uid: uid,
                             selectedNativeLanguages: Set([vm.nativeLanguage?.lowercased() ?? ""]),
@@ -252,7 +254,7 @@ struct VideoGridSection: View {
     let videoThumbnails: [String]
     let videoURLs: [String]
     var emptyMsg: String = "No videos uploaded yet."
-    
+    var videoArray: [Video]
     var body: some View {
         if videoURLs.count == 0 {
             Text(emptyMsg)
@@ -269,7 +271,8 @@ struct VideoGridSection: View {
                         thumbnailURL: thumbnailURL,
                         videoURL: videoURLs[index], // Use the video URL at the same index
                         index: index,
-                        videoURLs: videoURLs // Pass the full array for VideoView navigation
+                        videoURLs: videoURLs, // Pass the full array for VideoView navigation
+                        videoArray: videoArray
                     )
                     .overlay(
                         VStack {
@@ -321,12 +324,15 @@ struct Videos: View {
     let videoURL: String
     let index: Int
     let videoURLs: [String]
-    
+    let videoArray: [Video]
     var body: some View {
         if URL(string: videoURL) != nil {
             NavigationLink {
-                VideoView(videos: videoURLs, startIndex: index)
+                VideoView(videos: videoArray, userSession: UserSessionViewModel(), startIndex: index)
                     .environmentObject(UserSessionViewModel())
+                    .onAppear{
+                        print(index)
+                    }
             } label: {
                 AsyncImage(url: URL(string: thumbnailURL)) { phase in
                     if let image = phase.image {

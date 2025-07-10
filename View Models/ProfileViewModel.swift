@@ -18,8 +18,14 @@ class ProfileViewModel: ObservableObject {
     @Published var nativeLanguage: String? = nil
     @Published var country: String? = nil
     
+    // New: Store complete Video objects
+    @Published var uploadedVideoArray: [Video] = []
+    @Published var likedVideoArray: [Video] = []
+    @Published var savedVideoArray: [Video] = []
+    
     private let db = Firestore.firestore()
     private let userSession: UserSessionViewModel
+    private let videosCollection = "videos"
     
     init(userSession: UserSessionViewModel) {
         self.userSession = userSession
@@ -121,9 +127,14 @@ class ProfileViewModel: ObservableObject {
             self.errorMessage = nil
         }
         
+        // Fetch both thumbnail data and complete video objects
         await fetchVideoThumbnails()
         await fetchLikedVideoThumbnails()
         await fetchSavedVideoThumbnails()
+        
+        await fetchUploadedVideoObjects()
+        await fetchLikedVideoObjects()
+        await fetchSavedVideoObjects()
         
         await MainActor.run {
             self.dataReady = true
@@ -151,9 +162,14 @@ class ProfileViewModel: ObservableObject {
                 self.errorMessage = nil
             }
             
+            // Fetch both thumbnail data and complete video objects
             await fetchVideoThumbnails()
             await fetchLikedVideoThumbnails()
             await fetchSavedVideoThumbnails()
+            
+            await fetchUploadedVideoObjects()
+            await fetchLikedVideoObjects()
+            await fetchSavedVideoObjects()
             
             await MainActor.run {
                 self.dataReady = true
@@ -237,6 +253,9 @@ class ProfileViewModel: ObservableObject {
         
         currentUser.uploadedVideos?.append(videoPath)
         await updateUser(currentUser)
+        
+        // Refresh video objects after adding
+        await fetchUploadedVideoObjects()
     }
     
     func addLikedVideo(_ videoPath: String) async {
@@ -249,6 +268,9 @@ class ProfileViewModel: ObservableObject {
         if !currentUser.likedVideos!.contains(videoPath) {
             currentUser.likedVideos?.append(videoPath)
             await updateUser(currentUser)
+            
+            // Refresh video objects after adding
+            await fetchLikedVideoObjects()
         }
     }
     
@@ -257,6 +279,9 @@ class ProfileViewModel: ObservableObject {
         
         currentUser.likedVideos?.removeAll { $0 == videoPath }
         await updateUser(currentUser)
+        
+        // Refresh video objects after removing
+        await fetchLikedVideoObjects()
     }
     
     func addSavedVideo(_ videoPath: String) async {
@@ -269,6 +294,9 @@ class ProfileViewModel: ObservableObject {
         if !currentUser.savedVideos!.contains(videoPath) {
             currentUser.savedVideos?.append(videoPath)
             await updateUser(currentUser)
+            
+            // Refresh video objects after adding
+            await fetchSavedVideoObjects()
         }
     }
     
@@ -277,9 +305,142 @@ class ProfileViewModel: ObservableObject {
         
         currentUser.savedVideos?.removeAll { $0 == videoPath }
         await updateUser(currentUser)
+        
+        // Refresh video objects after removing
+        await fetchSavedVideoObjects()
     }
     
-    // MARK: - Private Helper Methods
+    // MARK: - Video Object Fetching Methods
+    private func fetchUploadedVideoObjects() async {
+        guard let uploadedVideoPaths = user?.uploadedVideos, !uploadedVideoPaths.isEmpty else {
+            await MainActor.run {
+                self.uploadedVideoArray = []
+            }
+            return
+        }
+        
+        let videos = await fetchVideoObjectsFromPaths(uploadedVideoPaths)
+        
+        await MainActor.run {
+            self.uploadedVideoArray = videos
+        }
+    }
+    
+    private func fetchLikedVideoObjects() async {
+        guard let likedVideoPaths = user?.likedVideos, !likedVideoPaths.isEmpty else {
+            await MainActor.run {
+                self.likedVideoArray = []
+            }
+            return
+        }
+        
+        let videos = await fetchVideoObjectsFromPaths(likedVideoPaths)
+        
+        await MainActor.run {
+            self.likedVideoArray = videos
+        }
+    }
+    
+    private func fetchSavedVideoObjects() async {
+        guard let savedVideoPaths = user?.savedVideos, !savedVideoPaths.isEmpty else {
+            await MainActor.run {
+                self.savedVideoArray = []
+            }
+            return
+        }
+        
+        let videos = await fetchVideoObjectsFromPaths(savedVideoPaths)
+        
+        await MainActor.run {
+            self.savedVideoArray = videos
+        }
+    }
+    
+    private func fetchVideoObjectsFromPaths(_ paths: [String]) async -> [Video] {
+        var videos: [Video] = []
+        
+        await withTaskGroup(of: Video?.self) { group in
+            for path in paths {
+                group.addTask { [weak self] in
+                    await self?.fetchVideoObjectFromPath(path)
+                }
+            }
+            
+            for await video in group {
+                if let video = video {
+                    videos.append(video)
+                }
+            }
+        }
+        
+        return videos
+    }
+    
+    private func fetchVideoObjectFromPath(_ path: String) async -> Video? {
+        let components = path.split(separator: "/")
+        guard components.count == 3 else {
+            print("Invalid path format: \(path) - Skipping video fetch.")
+            return nil
+        }
+        
+        let lang = String(components[0])
+        let docId = String(components[2])
+        
+        do {
+            let document = try await db.collection(videosCollection)
+                .document(lang)
+                .collection("items")
+                .document(docId)
+                .getDocument()
+            
+            guard document.exists, let data = document.data() else {
+                print("Video document missing or no data for \(path)")
+                return nil
+            }
+            
+            guard let urlString = data["video_url"] as? String,
+                  let url = URL(string: urlString),
+                  let title = data["title"] as? String,
+                  let likes = data["likes"] as? Int,
+                  let saves = data["saves"] as? Int,
+                  let language = data["language_detected"] as? String,
+                  let uploaderId = data["uploaderId"] as? String,
+                  let captionDicts = data["captions"] as? [[String: Any]] else {
+                print("Malformed video data for path: \(path)")
+                return nil
+            }
+            
+            let captions: [Captions] = captionDicts.compactMap { dict in
+                guard let start = dict["start"] as? Double,
+                      let end = dict["end"] as? Double,
+                      let text = dict["text"] as? String else {
+                    return nil
+                }
+                let words = dict["words"] as? [String]
+                return Captions(end: end, start: start, text: text, words: words)
+            }
+            
+            let detectedLevel = data["detected_level"] as? Int ?? 2
+            
+            return Video(
+                id: docId,
+                url: url,
+                captions: captions,
+                title: title,
+                detectedLevel: detectedLevel,
+                uploaderId: uploaderId,
+                likes: likes,
+                saves: saves,
+                language: language
+            )
+            
+        } catch {
+            print("Error fetching video object for \(path):", error.localizedDescription)
+            return nil
+        }
+    }
+    
+    // MARK: - Private Helper Methods (Existing thumbnail methods)
     private func fetchVideoThumbnails() async {
         guard let uploadedVideos = user?.uploadedVideos, !uploadedVideos.isEmpty else {
             await MainActor.run {

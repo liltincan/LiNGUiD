@@ -16,6 +16,8 @@ struct EditProfileView: View {
     @State private var showingAlert: Bool = false
     @State private var alertMessage: String = ""
     @State private var shouldDeleteProfilePicture: Bool = false
+    @State private var isUsernameAvailable: Bool? = nil
+    @State private var isCheckingUsername = false
 
     var currentUsername: String
     var initialProfilePictureURL: URL?
@@ -109,6 +111,29 @@ struct EditProfileView: View {
                     .padding()
                     .background(Color(UIColor.secondarySystemBackground))
                     .cornerRadius(8)
+                    .onChange(of: username) { _ in
+                        checkUsernameAvailability(username)
+                    }
+                
+                // Username validation feedback
+                if isCheckingUsername {
+                    Text("Checking availability...")
+                        .foregroundColor(.gray)
+                        .font(.caption)
+                        .padding(.top, 2)
+                } else if let available = isUsernameAvailable {
+                    if !available {
+                        Text("Username is already taken!")
+                            .foregroundColor(.red)
+                            .font(.caption)
+                            .padding(.top, 2)
+                    } else if username != currentUsername {
+                        Text("Username is available!")
+                            .foregroundColor(.green)
+                            .font(.caption)
+                            .padding(.top, 2)
+                    }
+                }
             }
             .padding(.horizontal, 40)
 
@@ -129,21 +154,38 @@ struct EditProfileView: View {
                         .cornerRadius(10)
                         .padding(.horizontal, 40)
                 } else {
-                    Text("Save")
+                    Text(isCheckingUsername ? "Checking..." : "Save")
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(canSave ? Color.blue : Color.blue.opacity(0.5))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                         .padding(.horizontal, 40)
                 }
             }
-            .disabled(isLoading)
+            .disabled(isLoading || !canSave || isCheckingUsername)
             .padding(.bottom, 30)
         }
         .navigationTitle("Edit Profile")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Check username availability when view appears if username is different from current
+            if username != currentUsername {
+                checkUsernameAvailability(username)
+            }
+        }
+    }
+    
+    // Computed property to determine if save button should be enabled
+    private var canSave: Bool {
+        // If username hasn't changed, allow save
+        if username == currentUsername {
+            return true
+        }
+        
+        // If username has changed, require it to be available
+        return !username.isEmpty && isUsernameAvailable == true
     }
 
     func loadImage() {
@@ -152,6 +194,52 @@ struct EditProfileView: View {
         profileImage = Image(uiImage: inputImage)
         profilePictureURL = nil
         shouldDeleteProfilePicture = false
+    }
+
+    // MARK: - Username Availability Check
+    func checkUsernameAvailability(_ name: String) {
+        // If username hasn't changed from current, don't check
+        guard name != currentUsername else {
+            isUsernameAvailable = nil
+            return
+        }
+        
+        guard !name.isEmpty else {
+            isUsernameAvailable = nil
+            return
+        }
+
+        isCheckingUsername = true
+        let db = Firestore.firestore()
+
+        guard let currentUserID = Auth.auth().currentUser?.uid else {
+            isUsernameAvailable = nil
+            isCheckingUsername = false
+            return
+        }
+
+        db.collection("users")
+            .whereField("userName", isEqualTo: name)
+            .getDocuments { snapshot, error in
+                isCheckingUsername = false
+
+                if let error = error {
+                    print("Error checking username: \(error.localizedDescription)")
+                    isUsernameAvailable = nil
+                    return
+                }
+
+                if let documents = snapshot?.documents {
+                    // Check if any other user (not the current user) has this username
+                    let takenByAnotherUser = documents.contains { doc in
+                        doc.documentID != currentUserID
+                    }
+
+                    isUsernameAvailable = !takenByAnotherUser
+                } else {
+                    isUsernameAvailable = true
+                }
+            }
     }
 
     // MARK: - Image Resizing Helper
@@ -239,7 +327,7 @@ struct EditProfileView: View {
         let db = Firestore.firestore()
         do {
             try await db.collection("users").document(userId).setData([
-                "username": username,
+                "userName": username,
                 "profilePhotoUrl": profilePictureURL ?? NSNull()
             ], merge: true)
         } catch {

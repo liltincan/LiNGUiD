@@ -2,11 +2,13 @@ import SwiftUI
 import AVKit
 
 struct VideoView: View {
-    let videos: [String]
+    let videos: [Video]
     @State private var currentIndex: Int
+    @ObservedObject var userSession: UserSessionViewModel
 
-    init(videos: [String], startIndex: Int = 0) {
-        self.videos = videos
+    init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int) {
+        self.videos = videos.reversed()
+        self.userSession = userSession
         _currentIndex = State(initialValue: startIndex)
     }
 
@@ -20,7 +22,11 @@ struct VideoView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(.gray)
             } else {
-                VerticalVideoScrollView(videos: videos, currentIndex: $currentIndex)
+                VerticalVideoScrollView(
+                    videos: videos,
+                    currentIndex: $currentIndex,
+                    userSession: userSession
+                )
             }
         }
         .ignoresSafeArea()
@@ -28,8 +34,10 @@ struct VideoView: View {
 }
 
 struct VerticalVideoScrollView: View {
-    let videos: [String]
+    let videos: [Video]
     @Binding var currentIndex: Int
+    @ObservedObject var userSession: UserSessionViewModel
+    @State private var hasInitialized = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -40,163 +48,106 @@ struct VerticalVideoScrollView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 0) {
                         ForEach(videos.indices, id: \.self) { index in
-                            SingleVideoPageView(
-                                urlString: videos[index],
+                            VideoPageView(
+                                video: videos[index],
                                 isActive: index == currentIndex,
+                                userSession: userSession,
                                 containerWidth: screenWidth,
                                 containerHeight: screenHeight
                             )
                             .frame(width: screenWidth, height: screenHeight)
                             .id(index)
-                            .background(
-                                GeometryReader { itemGeo in
-                                    Color.clear
-                                        .onAppear {
-                                            checkIfCentered(index: index, geometry: itemGeo, screenHeight: screenHeight)
-                                        }
-                                        .onChange(of: itemGeo.frame(in: .global)) { oldFrame, newFrame in
-                                            checkIfCentered(index: index, geometry: itemGeo, screenHeight: screenHeight)
-                                        }
-                                }
-                            )
                         }
                     }
+                    .background(
+                        GeometryReader { scrollGeo in
+                            Color.clear
+                                .onChange(of: scrollGeo.frame(in: .global)) { oldFrame, newFrame in
+                                    // Only update index after initialization is complete
+                                    if hasInitialized {
+                                        updateCurrentIndex(scrollOffset: newFrame.minY, screenHeight: screenHeight)
+                                    }
+                                }
+                        }
+                    )
                 }
                 .scrollTargetBehavior(.paging)
                 .onAppear {
                     if currentIndex >= videos.count {
                         currentIndex = 0
                     }
+                    
+                    // Scroll to initial position
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        proxy.scrollTo(currentIndex, anchor: .top)
+                        
+                        // Mark as initialized after scrolling
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            hasInitialized = true
+                        }
+                    }
                 }
                 .onChange(of: videos) { oldVideos, newVideos in
                     if currentIndex >= newVideos.count {
                         currentIndex = 0
                     }
+                    hasInitialized = false
                 }
             }
         }
         .background(Color.black)
     }
     
-    private func checkIfCentered(index: Int, geometry: GeometryProxy, screenHeight: CGFloat) {
-        let frame = geometry.frame(in: .global)
-        let screenCenter = screenHeight / 2
-        let itemCenter = frame.midY
-        let distanceFromCenter = abs(itemCenter - screenCenter)
+    private func updateCurrentIndex(scrollOffset: CGFloat, screenHeight: CGFloat) {
+        let newIndex = Int(round(abs(scrollOffset) / screenHeight))
+        let clampedIndex = max(0, min(newIndex, videos.count - 1))
         
-        if distanceFromCenter < screenHeight / 4 {
-            if index != currentIndex {
-                currentIndex = index
-            }
+        if clampedIndex != currentIndex {
+            currentIndex = clampedIndex
         }
     }
 }
 
-struct SingleVideoPageView: View {
-    let urlString: String
+struct VideoPageView: View {
+    let video: Video
     let isActive: Bool
+    @ObservedObject var userSession: UserSessionViewModel
     let containerWidth: CGFloat
     let containerHeight: CGFloat
     
-    @State private var player: AVPlayer? = nil
-    @State private var isPlaying: Bool = false
-    @State private var isLoading: Bool = true
-
+    @State private var uploaderPfp: String?
+    
     var body: some View {
         ZStack {
             Color.black
             
-            if let player = player {
-                VideoPlayerLayerView(player: player)
-                    .frame(width: containerWidth, height: containerHeight)
-                    .clipped()
-                    .onAppear {
-                        setupPlayer()
-                    }
-                    .onDisappear {
-                        cleanupPlayer()
-                    }
-                    .onChange(of: isActive) { oldValue, newValue in
-                        handleActiveStateChange(newValue)
-                    }
-                    .onTapGesture {
-                        togglePlayPause()
-                    }
-                
-            } else {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .scaleEffect(1.5)
-                    .onAppear {
-                        loadPlayer()
-                    }
-            }
+            VideoPlayerView(
+                url: video.url,
+                videoId: video.id,
+                language: video.language,
+                uploaderId: video.uploaderId,
+                uploaderPfp: uploaderPfp,
+                containerWidth: containerWidth,
+                containerHeight: containerHeight,
+                isActive: isActive,
+                captions: video.captions,
+                videoLikes: video.likes,
+                videoSaves: video.saves
+            )
+            .environmentObject(userSession)
+            .id(video.id)
         }
         .frame(width: containerWidth, height: containerHeight)
-    }
-    
-    private func loadPlayer() {
-        guard let url = URL(string: urlString) else {
-            print("Invalid video URL: \(urlString)")
-            return
-        }
-        let newPlayer = AVPlayer(url: url)
-        self.player = newPlayer
-        isLoading = false
-    }
-    
-    private func setupPlayer() {
-        guard let player = player else { return }
-        
-        if isActive {
-            player.play()
-            isPlaying = true
-        } else {
-            player.pause()
-            isPlaying = false
-        }
-        
-        // Add observer for video end
-        NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: player.currentItem,
-            queue: .main
-        ) { _ in
-            player.seek(to: .zero) // Restart video
-            player.play() // Play again
-        }
-    }
-    
-    private func cleanupPlayer() {
-        guard let player = player else { return }
-        player.pause()
-        isPlaying = false
-        // Remove observer
-        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: player.currentItem)
-    }
-    
-    private func handleActiveStateChange(_ active: Bool) {
-        guard let player = player else { return }
-        
-        if active {
-            player.seek(to: .zero)
-            player.play()
-            isPlaying = true
-        } else {
-            player.pause()
-            isPlaying = false
-        }
-    }
-    
-    private func togglePlayPause() {
-        guard let player = player else { return }
-        
-        if isPlaying {
-            player.pause()
-            isPlaying = false
-        } else {
-            player.play()
-            isPlaying = true
+        .onAppear {
+            // Fetch profile picture asynchronously when view appears
+            Task {
+                do {
+                    uploaderPfp = try await FirestoreService.shared.getUserProfilePicture(forUserId: video.uploaderId)
+                } catch {
+                    print("Error fetching uploader profile picture: \(error.localizedDescription)")
+                    uploaderPfp = nil
+                }
+            }
         }
     }
 }

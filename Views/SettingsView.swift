@@ -8,6 +8,8 @@ struct SettingsView: View {
     var likedVideoURLs: [String]
     var savedVideos: [String]
     var savedVideoURLs: [String]
+    var likedVideoArray: [Video]
+    var savedVideoArray: [Video]
     var languages: Set<String>
     var uid: String?
     var selectedNativeLanguages: Set<String>
@@ -28,8 +30,8 @@ struct SettingsView: View {
                         DividerLine()
                         
                         SettingsSection(title: "Your activity") {
-                            SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumbnails: likedVideos, videoURLs: likedVideoURLs))
-                            SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumbnails: savedVideos, videoURLs: savedVideoURLs))
+                            SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumbnails: likedVideos, videoURLs: likedVideoURLs, likedVideoArray: likedVideoArray))
+                            SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumbnails: savedVideos, videoURLs: savedVideoURLs, savedVideoArray: savedVideoArray))
                         }
 
                         DividerLine()
@@ -224,10 +226,11 @@ struct UIConstants {
 struct LikedView: View {
     var videoThumbnails: [String]
     var videoURLs: [String]
+    var likedVideoArray: [Video]
     
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, emptyMsg: "No liked videos yet.")
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, emptyMsg: "No liked videos yet.", videoArray: likedVideoArray)
         }
         .navigationTitle("Liked Videos")
     }
@@ -236,10 +239,11 @@ struct LikedView: View {
 struct SavedView: View {
     var videoThumbnails: [String]
     var videoURLs: [String]
+    var savedVideoArray: [Video]
     
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, emptyMsg: "No saved videos yet.")
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, emptyMsg: "No saved videos yet.", videoArray: savedVideoArray)
         }
         .navigationTitle("Saved Videos")
     }

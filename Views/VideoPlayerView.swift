@@ -14,8 +14,9 @@ struct VideoPlayerView: View {
     let containerHeight: CGFloat?
     var isActive: Bool
     let captions: [Captions]?
-    var likes: Int?
-
+    @State private var videoLikes = 0
+    @State private var videoSaves = 0
+    
     init(
         url: URL,
         videoId: String,
@@ -26,7 +27,8 @@ struct VideoPlayerView: View {
         containerHeight: CGFloat,
         isActive: Bool = true,
         captions: [Captions]? = nil,
-        likes: Int? = nil
+        videoLikes: Int,
+        videoSaves: Int,
     ) {
         self.url = url
         self.videoId = videoId
@@ -37,7 +39,8 @@ struct VideoPlayerView: View {
         self.captions = captions
         self.uploaderId = uploaderId
         self.uploaderPfp = uploaderPfp
-        self.likes = likes
+        _videoLikes = State(initialValue: videoLikes)
+        _videoSaves = State(initialValue: videoSaves)
     }
 
     @State private var isPlaying = false
@@ -52,7 +55,6 @@ struct VideoPlayerView: View {
     @State private var watchTimer: Timer?
     @State private var totalWatchTime: TimeInterval = 0
     @State private var hasBeenMarkedAsWatched = false
-    @State private var likesCount = 0
 
     @State private var isCaptionVisible = false
     @State private var currentCaptionText: String = ""
@@ -146,10 +148,10 @@ struct VideoPlayerView: View {
                                         size: 25,
                                         isSystemImage: true
                                     ) {
+                                        videoLikes += isLiked ? -1 : 1
                                         guard let userID = Auth.auth().currentUser?.uid else { return }
                                         let currentLikes = userSession.currentUser?.likedVideos ?? []
                                         isLiked.toggle()
-                                        likesCount = likesCount + (isLiked ? 1 : -1)
                                         videoPlayerViewModel.toggleLike(
                                             for: "\(language ?? "")/items/\(videoId)",
                                             userId: userID,
@@ -172,7 +174,7 @@ struct VideoPlayerView: View {
                                             }
                                         }
                                     }
-                                    Text("\(likesCount)")
+                                    Text("\(videoLikes)")
                                         .font(.system(size: 12))
                                         .foregroundStyle(Color.white)
                                 }
@@ -183,39 +185,43 @@ struct VideoPlayerView: View {
                                     size: 25,
                                     isSystemImage: true
                                 ) {}
-                                
-                                ActionButton(
-                                    icon: "bookmark.fill",
-                                    color: isSaved ? .yellow : .white,
-                                    size: 25,
-                                    isSystemImage: true
-                                ) {
-                                    guard let userID = Auth.auth().currentUser?.uid else { return }
-                                    let currentSaves = userSession.currentUser?.savedVideos ?? []
-                                    isSaved.toggle()
-                                    videoPlayerViewModel.toggleSave(
-                                        for: "\(language ?? "")/items/\(videoId)",
-                                        userId: userID,
-                                        currentSaves: currentSaves,
-                                        language: language
-                                    ) { newState in
-                                        isSaved = newState
-                                        if var currentUser = userSession.currentUser {
-                                            var updatedSaves = currentUser.savedVideos ?? []
-                                            let videoIdWithPath = "\(language ?? "")/items/\(videoId)"
-                                            if newState {
-                                                if !updatedSaves.contains(videoIdWithPath) {
-                                                    updatedSaves.append(videoIdWithPath)
+                                VStack(spacing: 5){
+                                    ActionButton(
+                                        icon: "bookmark.fill",
+                                        color: isSaved ? .yellow : .white,
+                                        size: 25,
+                                        isSystemImage: true
+                                    ) {
+                                        videoSaves += isSaved ? -1 : 1
+                                        guard let userID = Auth.auth().currentUser?.uid else { return }
+                                        let currentSaves = userSession.currentUser?.savedVideos ?? []
+                                        isSaved.toggle()
+                                        videoPlayerViewModel.toggleSave(
+                                            for: "\(language ?? "")/items/\(videoId)",
+                                            userId: userID,
+                                            currentSaves: currentSaves,
+                                            language: language
+                                        ) { newState in
+                                            isSaved = newState
+                                            if var currentUser = userSession.currentUser {
+                                                var updatedSaves = currentUser.savedVideos ?? []
+                                                let videoIdWithPath = "\(language ?? "")/items/\(videoId)"
+                                                if newState {
+                                                    if !updatedSaves.contains(videoIdWithPath) {
+                                                        updatedSaves.append(videoIdWithPath)
+                                                    }
+                                                } else {
+                                                    updatedSaves.removeAll { $0 == videoIdWithPath }
                                                 }
-                                            } else {
-                                                updatedSaves.removeAll { $0 == videoIdWithPath }
+                                                currentUser.savedVideos = updatedSaves
+                                                userSession.currentUser = currentUser
                                             }
-                                            currentUser.savedVideos = updatedSaves
-                                            userSession.currentUser = currentUser
                                         }
                                     }
+                                    Text("\(videoSaves)")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Color.white)
                                 }
-                                
                                 ActionButton(
                                     icon: "arrowshape.turn.up.right.fill",
                                     color: .white,
@@ -328,7 +334,6 @@ struct VideoPlayerView: View {
                 }
             }
         }
-        .navigationBarHidden(true)
         .onAppear {
             words = []
             currentCaptionText = ""
@@ -337,7 +342,6 @@ struct VideoPlayerView: View {
             isLiked = userSession.currentUser?.likedVideos?.contains(videoIdWithPath) ?? false
             isSaved = userSession.currentUser?.savedVideos?.contains(videoIdWithPath) ?? false
             
-            likesCount = likes ?? 0
 
             if !hasBeenSetup {
                 setupPlayer()
