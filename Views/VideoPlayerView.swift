@@ -250,7 +250,29 @@ struct VideoPlayerView: View {
                                 }
                                 .confirmationDialog("", isPresented: $showingReportSheet, titleVisibility: .hidden) {
                                     Button("Report Video", role: .destructive) {
-                                        reportVideo(videoId: self.videoId, reporterUid: (userSession.currentUser?.id)!, reporterUsername: (userSession.currentUser?.userName)!, posterUid: self.uploaderId, posterUsername: self.uploaderUsername!)
+                                        
+                                        print("DEBUG: Attempting to report video")
+                                                print("DEBUG: reporterUid = \(String(describing: Auth.auth().currentUser?.uid))")
+                                                print("DEBUG: reporterUsername = \(String(describing: userSession.currentUser?.userName))")
+                                                print("DEBUG: posterUsername = \(String(describing: self.uploaderUsername))")
+                                                print("DEBUG: posterUid = \(self.uploaderId)")
+                                        guard
+                                            let reporterUid = Auth.auth().currentUser?.uid,
+                                            let reporterUsername = userSession.currentUser?.userName,
+                                            let posterUsername = self.uploaderUsername
+                                        else {
+                                            print("Missing required user info to report video")
+                                            return
+                                        }
+
+                                        reportVideo(
+                                            videoId: self.videoId,
+                                            reporterUid: reporterUid,
+                                            reporterUsername: reporterUsername,
+                                            posterUid: self.uploaderId,
+                                            posterUsername: posterUsername
+                                        )
+
                                         handleReportVideo()
                                     }
                                     Button("Cancel", role: .cancel) {}
