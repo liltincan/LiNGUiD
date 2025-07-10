@@ -62,6 +62,7 @@ struct OtherUserProfileView: View {
                         VideoGridSection(
                             videoThumbnails: vm.videoThumbnails,
                             videoURLs: vm.videoURLs,
+                            uploadingVideos: [],
                             videoArray: vm.uploadedVideoArray
                         )
                             
