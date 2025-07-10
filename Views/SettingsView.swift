@@ -31,10 +31,6 @@ struct SettingsView: View {
                             SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumbnails: likedVideos, videoURLs: likedVideoURLs))
                             SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumbnails: savedVideos, videoURLs: savedVideoURLs))
                         }
-                        .onAppear{
-                            print(likedVideos)
-                            print(likedVideoURLs)
-                        }
 
                         DividerLine()
 
@@ -231,7 +227,7 @@ struct LikedView: View {
     
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, emptyMsg: "No liked videos yet.")
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [])
         }
         .navigationTitle("Liked Videos")
     }
@@ -243,7 +239,7 @@ struct SavedView: View {
     
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, emptyMsg: "No saved videos yet.")
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [])
         }
         .navigationTitle("Saved Videos")
     }

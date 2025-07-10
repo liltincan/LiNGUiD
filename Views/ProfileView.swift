@@ -12,6 +12,9 @@ struct ProfileView: View {
     @State private var fullScreenProfilePictureURL: String?
     @State private var hasTaskExecuted = false
     
+    @EnvironmentObject var uploadManager: UploadManager
+    @State private var isShowingUploadView = false
+    
     let onLogout: () -> Void
 
     init(userSession: UserSessionViewModel, onLogout: @escaping () -> Void = {}) {
@@ -29,6 +32,7 @@ struct ProfileView: View {
                         ProfileHeaderView(
                             userName: vm.userName,
                             profilePictureURL: vm.profilePictureURL,
+                            country: vm.country ?? "ERROR",
                             languageDisplay: vm.formattedLanguagesDisplay,
                             vm: vm,
                             onLogout: onLogout,
@@ -44,10 +48,10 @@ struct ProfileView: View {
                         )
                         .padding(.bottom, 10)
                         
-                        ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL)
+                        ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL, isShowingUploadView: $isShowingUploadView)
                             .padding(.bottom, 15)
                         
-                        VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs)
+                        VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs, uploadingVideos: uploadManager.uploadingVideos)
                             
                     }
                     .padding()
@@ -62,12 +66,30 @@ struct ProfileView: View {
                 }
             }
             .overlay(
-                Group {
-                    if showingFullScreenProfilePicture, let urlString = fullScreenProfilePictureURL, let url = URL(string: urlString) {
+                ZStack {
+                    // 🔄 Upload Progress Bar
+                    VStack {
+                        if uploadManager.totalCount > 0 && uploadManager.currentIndex < uploadManager.totalCount {
+                            Text("Uploading \(uploadManager.currentIndex + 1)/\(uploadManager.totalCount)")
+                                .font(.caption)
+                                .padding(8)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.black.opacity(0.8))
+                                .foregroundColor(.white)
+                        }
+                        Spacer()
+                    }
+                    .animation(.easeInOut, value: uploadManager.currentIndex)
+
+                    // 🖼 Fullscreen Profile Picture
+                    if showingFullScreenProfilePicture,
+                       let urlString = fullScreenProfilePictureURL,
+                       let url = URL(string: urlString) {
+
                         Rectangle()
                             .fill(Material.ultraThinMaterial)
                             .ignoresSafeArea()
-                        
+
                         ZStack {
                             ZStack(alignment: .topTrailing) {
                                 AsyncImage(url: url) { phase in
@@ -86,7 +108,7 @@ struct ProfileView: View {
                                     }
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                
+
                                 Button {
                                     showingFullScreenProfilePicture = false
                                     fullScreenProfilePictureURL = nil
@@ -114,7 +136,7 @@ struct ProfileView: View {
             hasTaskExecuted = true
             print("Loading data for user: \(currentUser.uid)")
             await vm.fetchUserData()
-            print("Loaded liked video thumbnails: \(vm.likedVideoThumbnails)")
+//            print("Loaded liked video thumbnails: \(vm.likedVideoThumbnails)")
         } else {
             print("Error: No current user on appear.")
             await vm.fetchUserData()
@@ -136,6 +158,7 @@ struct ProfileView: View {
 struct ProfileHeaderView: View {
     let userName: String
     let profilePictureURL: String
+    let country: String
     let languageDisplay: String
     @StateObject var vm: ProfileViewModel
     let uid: String = Auth.auth().currentUser?.uid ?? ""
@@ -194,6 +217,11 @@ struct ProfileHeaderView: View {
                 }
             }
             
+            // Use the country name to flag converter
+            Text(CountryFlagConverter.getFlag(for: country.lowercased()))
+                .font(.largeTitle)
+                .padding(.top, -65)
+                .padding(.leading, -55)
             Text(languageDisplay)
                 .lineLimit(1)
                 .padding(.bottom, 10)
@@ -201,7 +229,6 @@ struct ProfileHeaderView: View {
         }
     }
 }
-
 struct ProfileStatsView: View {
     let videoCount: String
     let inputAmount: String
@@ -219,6 +246,7 @@ struct ProfileStatsView: View {
 struct ProfileActionButtons: View {
     let username: String
     let pfp: String
+    @Binding var isShowingUploadView: Bool
     
     var body: some View {
         HStack {
@@ -227,12 +255,13 @@ struct ProfileActionButtons: View {
             } label: {
                 Buttons(text: "edit")
             }
-            NavigationLink {
-                UploadView() // <- your upload screen
+            NavigationLink(isActive: $isShowingUploadView) {
+                UploadView(onComplete: {
+                    isShowingUploadView = false
+                })
             } label: {
                 Buttons(text: "upload")
             }
-            //Buttons(text: "upload")
             Buttons(text: "share")
         }
     }
@@ -241,50 +270,43 @@ struct ProfileActionButtons: View {
 struct VideoGridSection: View {
     let videoThumbnails: [String]
     let videoURLs: [String]
-    var emptyMsg: String = "No videos uploaded yet."
-    
+    let uploadingVideos: [UploadManager.UploadingVideo]
+    @EnvironmentObject var uploadManager: UploadManager
+
     var body: some View {
-        if videoURLs.count == 0 {
-            Text(emptyMsg)
-                .foregroundColor(.secondary)
-                .padding(.bottom, 15)
-        } else {
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3),
-                spacing: 0
-            ) {
-                // Use `id: \.offset` for unique identification within ForEach
-                ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
-                    Videos(
-                        thumbnailURL: thumbnailURL,
-                        videoURL: videoURLs[index], // Use the video URL at the same index
-                        index: index,
-                        videoURLs: videoURLs // Pass the full array for VideoView navigation
-                    )
-                    .overlay(
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
+            ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
+                Videos(thumbnailURL: thumbnailURL, videoURL: videoURLs[index], index: index, videoURLs: videoURLs)
+            }
+
+            ForEach(uploadingVideos) { video in
+                ZStack {
+                    Image(uiImage: video.thumbnail)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: 180)
+                        .clipped()
+
+                    if video.isUploading {
+                        Color.black.opacity(0.4)
+                        ProgressView().scaleEffect(1.5)
                         VStack {
+                            HStack {
+                                Spacer()
+                                Button {
+                                    uploadManager.cancelUpload(for: video.localIdentifier)
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.title2)
+                                        .foregroundColor(.white)
+                                        .padding(8)
+                                }
+                            }
                             Spacer()
-                            Rectangle()
-                                .frame(height: 1)
-                                .foregroundColor(index >= videoThumbnails.count - (videoThumbnails.count % 3 == 0 ? 3 : videoThumbnails.count % 3) ? .clear : .primary.opacity(0.3))
                         }
-                        .frame(maxWidth: .infinity),
-                        alignment: .bottom
-                    )
-                    .overlay(
-                        HStack {
-                            Spacer()
-                            Rectangle()
-                                .frame(width: 1)
-                                .foregroundColor((index + 1) % 3 == 0 ? .clear : .primary.opacity(0.3))
-                        }
-                        .frame(maxHeight: .infinity),
-                        alignment: .trailing
-                    )
+                    }
                 }
             }
-            .frame(height: CGFloat((videoThumbnails.count / 3 + (videoThumbnails.count % 3 == 0 ? 0 : 1)) * 180))
-            .padding(.bottom, 15)
         }
     }
 }

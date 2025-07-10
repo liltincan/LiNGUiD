@@ -10,6 +10,7 @@ struct LiNGUiDApp: App {
     @Environment(\.openURL) var openURL
     @StateObject var deepLinkCoordinator = DeepLinkCoordinator()
     @StateObject var notificationService = NotificationService()
+    @StateObject private var uploadManager = UploadManager()
 
     init() {
         DependencyContainer.shared.registerAll()
@@ -20,6 +21,7 @@ struct LiNGUiDApp: App {
         WindowGroup {
             RootCoordinatorView()
                 .environmentObject(state)
+                .environmentObject(uploadManager)
                 .environment(\.font, .custom("Poppins", size: 16))
                 .environmentObject(deepLinkCoordinator)
                 .onOpenURL { url in
