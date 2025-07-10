@@ -227,5 +227,6 @@ struct WatchTime: Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         total = try container.decodeIfPresent(Double.self, forKey: .total)
+        daily = try container.decodeIfPresent([String: Double].self, forKey: .daily)
     }
 }
