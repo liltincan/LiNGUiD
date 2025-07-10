@@ -29,6 +29,7 @@ struct ProfileView: View {
                         ProfileHeaderView(
                             userName: vm.userName,
                             profilePictureURL: vm.profilePictureURL,
+                            country: vm.country ?? "ERROR",
                             languageDisplay: vm.formattedLanguagesDisplay,
                             vm: vm,
                             onLogout: onLogout,
@@ -67,9 +68,19 @@ struct ProfileView: View {
                         Rectangle()
                             .fill(Material.ultraThinMaterial)
                             .ignoresSafeArea()
+                            .onTapGesture{
+                                showingFullScreenProfilePicture = false
+                                fullScreenProfilePictureURL = nil
+                            }
                         
                         ZStack {
                             ZStack(alignment: .topTrailing) {
+                                Color.black.opacity(0.01)
+                                    .ignoresSafeArea()
+                                    .onTapGesture {
+                                        showingFullScreenProfilePicture = false
+                                        fullScreenProfilePictureURL = nil
+                                    }
                                 AsyncImage(url: url) { phase in
                                     if let image = phase.image {
                                         image
@@ -87,18 +98,12 @@ struct ProfileView: View {
                                 }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 
-                                Button {
-                                    showingFullScreenProfilePicture = false
-                                    fullScreenProfilePictureURL = nil
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.largeTitle)
-                                        .foregroundColor(.white)
-                                        .padding(15)
-                                }
                             }
                         }
-                        .padding(20)
+                        .onTapGesture {
+                            showingFullScreenProfilePicture = false
+                            fullScreenProfilePictureURL = nil
+                        }
                         .transition(.opacity)
                     }
                 }
@@ -114,7 +119,7 @@ struct ProfileView: View {
             hasTaskExecuted = true
             print("Loading data for user: \(currentUser.uid)")
             await vm.fetchUserData()
-            print("Loaded liked video thumbnails: \(vm.likedVideoThumbnails)")
+//            print("Loaded liked video thumbnails: \(vm.likedVideoThumbnails)")
         } else {
             print("Error: No current user on appear.")
             await vm.fetchUserData()
@@ -136,6 +141,7 @@ struct ProfileView: View {
 struct ProfileHeaderView: View {
     let userName: String
     let profilePictureURL: String
+    let country: String
     let languageDisplay: String
     @StateObject var vm: ProfileViewModel
     let uid: String = Auth.auth().currentUser?.uid ?? ""
@@ -194,6 +200,11 @@ struct ProfileHeaderView: View {
                 }
             }
             
+            // Use the country name to flag converter
+            Text(CountryFlagConverter.getFlag(for: country.lowercased()))
+                .font(.largeTitle)
+                .padding(.top, -65)
+                .padding(.leading, -55)
             Text(languageDisplay)
                 .lineLimit(1)
                 .padding(.bottom, 10)
@@ -201,7 +212,6 @@ struct ProfileHeaderView: View {
         }
     }
 }
-
 struct ProfileStatsView: View {
     let videoCount: String
     let inputAmount: String

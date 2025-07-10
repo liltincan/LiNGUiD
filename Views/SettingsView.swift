@@ -31,10 +31,6 @@ struct SettingsView: View {
                             SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumbnails: likedVideos, videoURLs: likedVideoURLs))
                             SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumbnails: savedVideos, videoURLs: savedVideoURLs))
                         }
-                        .onAppear{
-                            print(likedVideos)
-                            print(likedVideoURLs)
-                        }
 
                         DividerLine()
 

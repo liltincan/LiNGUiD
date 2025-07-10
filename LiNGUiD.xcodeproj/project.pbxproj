@@ -530,7 +530,7 @@
 				600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */,
 				81CC3AED2E15B3690010512B /* XCRemoteSwiftPackageReference "TOCropViewController" */,
 				7EE63CF52E1E415F005F5466 /* XCRemoteSwiftPackageReference "Kingfisher" */,
-			);
+							);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8F823B4D2DD987F8007B6E5E /* Products */;
 			projectDirPath = "";
@@ -806,7 +806,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = Y995HR6W6U;
+				DEVELOPMENT_TEAM = WBXZ64TNQB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
@@ -830,7 +830,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.christian.LiNGUiD;
+				PRODUCT_BUNDLE_IDENTIFIER = com.LiNGUiD.LiNGUiD;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REGISTER_APP_GROUPS = YES;
@@ -855,7 +855,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = Y995HR6W6U;
+				DEVELOPMENT_TEAM = WBXZ64TNQB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "";
@@ -879,7 +879,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.christian.LiNGUiD;
+				PRODUCT_BUNDLE_IDENTIFIER = com.LiNGUiD.LiNGUiD;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REGISTER_APP_GROUPS = YES;
@@ -1024,7 +1024,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */ = {
+				600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ciaranrobrien/SwiftUIFlow";
 			requirement = {

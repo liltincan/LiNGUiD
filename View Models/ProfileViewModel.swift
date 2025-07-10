@@ -16,6 +16,7 @@ class ProfileViewModel: ObservableObject {
     @Published var savedVideoThumbnails: [String] = []
     @Published var savedVideoURLs: [String] = []
     @Published var nativeLanguage: String? = nil
+    @Published var country: String? = nil
     
     private let db = Firestore.firestore()
     private let userSession: UserSessionViewModel
@@ -70,6 +71,11 @@ class ProfileViewModel: ObservableObject {
         return user?.nativeLanguage?.capitalized ?? ""
     }
     
+    var countryDisplay: String {
+        // Get country directly from user model
+        return user?.country?.capitalized ?? ""
+    }
+    
     var formattedLanguagesDisplay: String {
         if let languagesData = user?.languagesData {
             let nativeLanugage: String = user?.nativeLanguage?.capitalized ?? ""
@@ -111,6 +117,7 @@ class ProfileViewModel: ObservableObject {
         await MainActor.run {
             self.user = currentUser
             self.nativeLanguage = currentUser.nativeLanguage?.capitalized
+            self.country = currentUser.country?.capitalized // Get country from user model
             self.errorMessage = nil
         }
         
@@ -140,6 +147,7 @@ class ProfileViewModel: ObservableObject {
             await MainActor.run {
                 self.user = fetchedUser
                 self.nativeLanguage = fetchedUser.nativeLanguage?.capitalized
+                self.country = fetchedUser.country?.capitalized // Get country from user model
                 self.errorMessage = nil
             }
             
@@ -174,6 +182,7 @@ class ProfileViewModel: ObservableObject {
             await MainActor.run {
                 self.user = updatedUser
                 self.nativeLanguage = updatedUser.nativeLanguage?.capitalized
+                self.country = updatedUser.country?.capitalized // Update country from user model
                 self.errorMessage = nil
             }
             
@@ -346,8 +355,8 @@ class ProfileViewModel: ObservableObject {
         await MainActor.run {
             self.savedVideoThumbnails = thumbnails
             self.savedVideoURLs = videoURLs
-            print("Saved video thumbnails: \(thumbnails)")
-            print("Saved video URLs: \(videoURLs)")
+//            print("Saved video thumbnails: \(thumbnails)")
+//            print("Saved video URLs: \(videoURLs)")
         }
     }
     
@@ -384,5 +393,144 @@ class ProfileViewModel: ObservableObject {
         } catch {
             print("Error fetching thumbnail for \(path):", error.localizedDescription)
         }
+    }
+}
+
+// Rest of your CountryFlagConverter and String extension remain the same
+class CountryFlagConverter {
+    private static let countryToCode: [String: String] = [
+        // Major countries
+        "united states": "US",
+        "canada": "CA",
+        "united kingdom": "GB",
+        "germany": "DE",
+        "france": "FR",
+        "spain": "ES",
+        "italy": "IT",
+        "japan": "JP",
+        "china": "CN",
+        "south korea": "KR",
+        "australia": "AU",
+        "new zealand": "NZ",
+        "brazil": "BR",
+        "mexico": "MX",
+        "argentina": "AR",
+        "india": "IN",
+        "russia": "RU",
+        "netherlands": "NL",
+        "belgium": "BE",
+        "switzerland": "CH",
+        "austria": "AT",
+        "sweden": "SE",
+        "norway": "NO",
+        "denmark": "DK",
+        "finland": "FI",
+        "poland": "PL",
+        "czech republic": "CZ",
+        "hungary": "HU",
+        "portugal": "PT",
+        "greece": "GR",
+        "turkey": "TR",
+        "israel": "IL",
+        "south africa": "ZA",
+        "egypt": "EG",
+        "thailand": "TH",
+        "vietnam": "VN",
+        "singapore": "SG",
+        "malaysia": "MY",
+        "indonesia": "ID",
+        "philippines": "PH",
+        "pakistan": "PK",
+        "bangladesh": "BD",
+        "ukraine": "UA",
+        "romania": "RO",
+        "bulgaria": "BG",
+        "croatia": "HR",
+        "serbia": "RS",
+        "ireland": "IE",
+        "iceland": "IS",
+        "chile": "CL",
+        "peru": "PE",
+        "colombia": "CO",
+        "venezuela": "VE",
+        "ecuador": "EC",
+        "bolivia": "BO",
+        "uruguay": "UY",
+        "paraguay": "PY",
+        "kenya": "KE",
+        "nigeria": "NG",
+        "morocco": "MA",
+        "ethiopia": "ET",
+        "ghana": "GH",
+        "saudi arabia": "SA",
+        "united arab emirates": "AE",
+        "qatar": "QA",
+        "kuwait": "KW",
+        "bahrain": "BH",
+        "oman": "OM",
+        "jordan": "JO",
+        "lebanon": "LB",
+        "iran": "IR",
+        "iraq": "IQ",
+        "afghanistan": "AF",
+        "nepal": "NP",
+        "sri lanka": "LK",
+        "myanmar": "MM",
+        "cambodia": "KH",
+        "laos": "LA",
+        "mongolia": "MN",
+        "kazakhstan": "KZ",
+        "uzbekistan": "UZ",
+        "kyrgyzstan": "KG",
+        "tajikistan": "TJ",
+        "turkmenistan": "TM",
+        "azerbaijan": "AZ",
+        "armenia": "AM",
+        "georgia": "GE",
+        "belarus": "BY",
+        "moldova": "MD",
+        "estonia": "EE",
+        "latvia": "LV",
+        "lithuania": "LT",
+        "slovenia": "SI",
+        "slovakia": "SK",
+        "bosnia and herzegovina": "BA",
+        "montenegro": "ME",
+        "macedonia": "MK",
+        "albania": "AL",
+        "kosovo": "XK",
+        "malta": "MT",
+        "cyprus": "CY",
+        "luxembourg": "LU",
+        "monaco": "MC",
+        "andorra": "AD",
+        "san marino": "SM",
+        "vatican city": "VA",
+        "liechtenstein": "LI"
+    ]
+    
+    static func getFlag(for countryName: String) -> String {
+        let normalizedName = countryName.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard let countryCode = countryToCode[normalizedName] else {
+            return "🏳️" // Default flag if country not found
+        }
+        
+        return countryCode.countryCodeToFlag()
+    }
+}
+
+extension String {
+    func countryCodeToFlag() -> String {
+        let base: UInt32 = 127397
+        var flag = ""
+        
+        for v in self.unicodeScalars {
+            if let scalar = UnicodeScalar(base + v.value) {
+                flag.append(String(scalar))
+            }
+        }
+        
+        return flag
     }
 }
