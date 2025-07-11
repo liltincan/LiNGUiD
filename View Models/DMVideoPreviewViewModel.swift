@@ -1,3 +1,13 @@
+//
+//  DMVideoPreviewViewModel.swift
+//  LiNGUiD
+//
+//  Created by Jackson Sanders on 7/10/25.
+//
+import Foundation
+import FirebaseFirestore
+
+
 class DMVideoPreviewViewModel: ObservableObject {
     @Published var thumbnailURL: String?
     @Published var videoURL: String?
