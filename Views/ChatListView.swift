@@ -15,6 +15,8 @@ struct ChatListView: View {
     //controls what chat it is at -> currently empty
     @State private var selectedChat: ChatConversation? = nil
     @State private var discoveryPage = false
+    //update the parent and tell it how many messages are unread
+    @Binding var unreadChatCount: Int
     
     var body: some View {
         ZStack {
@@ -40,7 +42,7 @@ struct ChatListView: View {
                             Button(action: {
                                 discoveryPage = true
                             }) {
-                                Text("Find friends +")
+                                Image(systemName: "plus")
                                     .padding(8)
                                     .padding(.horizontal)
                                     .background(Color.linguidPurple)
@@ -77,7 +79,7 @@ struct ChatListView: View {
                                     Button(action: {
                                         selectedChat = conversation
                                     }) {
-                                        ChatRowView(chat: conversation.friend, hasUnreadMessages: conversation.hasUnreadMessages)
+                                        ChatRowView(chat: conversation.friend, hasUnreadMessages: conversation.hasUnreadMessages, statusText: conversation.lastMessageStatus)
                                     }
                                     .buttonStyle(PlainButtonStyle())
                                     .listRowBackground(Color.black)
@@ -96,6 +98,9 @@ struct ChatListView: View {
                             }
                             .background(Color.black)
                             .listStyle(PlainListStyle())
+                            .refreshable {
+                                viewModel.fetchChats()
+                            }
                         }
                     }
                     .padding(.top,10)
@@ -105,6 +110,10 @@ struct ChatListView: View {
                     Color.black.ignoresSafeArea()
                 }
             }
+        }
+        //this needs to be changes when changes are being made since it keeps track of the count
+        .onChange(of: viewModel.conversations) { conversations in
+            unreadChatCount = conversations.filter { $0.hasUnreadMessages }.count
         }
         .fullScreenCover(isPresented: $discoveryPage){
             DiscoveryView(viewModel: viewModel) {
@@ -128,6 +137,7 @@ struct ChatListView: View {
 struct ChatRowView: View {
     let chat: Chat
     var hasUnreadMessages: Bool
+    let statusText: String
     var body: some View {
         HStack(spacing: 12) {
             //the profile image should be overlayed with the flag and the active
@@ -147,28 +157,36 @@ struct ChatRowView: View {
             //this is now the convo information
             VStack(alignment: .leading, spacing: 4) {
                 Text(chat.username)
-                    //.fontWeight(.bold)
+                //.fontWeight(.bold)
                     .font(.headline.weight(.bold))
                     .foregroundColor(.white)
                 HStack(spacing: 2) {
-                    Circle()
-                        .fill(hasUnreadMessages ? Color.blue : Color.clear)
-                        .frame(width: 10, height: 10)
-                        .offset(x: 1)
+                    if(hasUnreadMessages) {
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: 10, height: 10)
+                            .offset(x: 1)
+                    }
                     Text(chat.lastMessage)
                         .foregroundColor(.gray)
                         .font(.subheadline)
                         .lineLimit(2)
                         .truncationMode(.tail)
                 }
-                //this converts
-                if let timestamp = chat.lastMessageTimestamp {
-                    Text(relativeTimeString(timestamp))
-                       // .font(.caption)
-                        .foregroundColor(.gray)
+                if (!statusText.isEmpty) {
+                    Text(statusText)
+                        .foregroundColor(.white)
                         .italic(true)
                         .font(.caption)
                 }
+                //if it is empty then just show the timestamp
+                else if let timestamp = chat.lastMessageTimestamp {
+                    Text(relativeTimeString(timestamp))
+                        .foregroundColor(.white)
+                        .italic(true)
+                        .font(.caption)
+                }
+               
             }
             Spacer()
         }
@@ -180,8 +198,8 @@ struct ChatRowView: View {
         formatter.unitsStyle = .full
         return formatter.localizedString(for: date, relativeTo: Date())
     }
-
 }
+
 //MARK: - Conversation View
 //precondition: pass in the model
 //postcondition: will show the full conversation with friend
@@ -216,9 +234,9 @@ struct ChatMessagesConvoView: View {
                             .font(.headline.weight(.bold))
                             .foregroundColor(.white)
                         /*Text(formattedLastSeenText(isActive: chat.isActive, lastSeen: chat.lastSeen))
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                            .italic(true)*/
+                         .font(.caption)
+                         .foregroundColor(.gray)
+                         .italic(true)*/
                     }
                     Spacer()
                     HStack(spacing: 20) {
@@ -283,10 +301,9 @@ struct ChatMessagesConvoView: View {
                 TextField("", text: $sendMessage)
                     .foregroundColor(.black)
                     .padding(.horizontal)
-                Spacer()
                 //TODO: fix the mic
-//                Image(systemName: "mic.fill")
-//                    .foregroundColor(.black)
+                //                Image(systemName: "mic.fill")
+                //                    .foregroundColor(.black)
                 
             }
             .padding(.horizontal)
@@ -370,6 +387,8 @@ struct DiscoveryView : View {
                         .font(.title)
                         .fontWeight(.bold)
                     Spacer()
+                    //TODO: users is allowed to search by 'username'
+                    SearchByUsernameView(viewModel: viewModel)
                 }
                 .padding()
                 NativeLanguageFilterView(viewModel: viewModel)
@@ -385,21 +404,25 @@ struct DiscoveryView : View {
                             //now the flag and the active need to be side to side
                             HStack(spacing: 4) {
                                 Text(user.flag)
-                                if (user.isActive) {
-                                    Circle()
-                                        .fill(Color.green)
-                                        .frame(width:10, height:10)
-                                }
+                                /*if (user.isActive) {
+                                 Circle()
+                                 .fill(Color.green)
+                                 .frame(width:10, height:10)
+                                 }*/
                             }
                             .padding(.bottom, -8)
                         }
                         VStack(alignment: .leading) {
                             Text(user.username)
                                 .foregroundColor(.white)
+                                .font(.headline.weight(.bold))
+                            Text("\(user.nativeLanguage.capitalized) → \(user.learningLanguage.capitalized) (Lvl. \(user.comprehensionLevel))")
+                                .foregroundColor(.white)
+                                .font(.subheadline)
                             /*Text(formattedLastSeenText(isActive: user.isActive, lastSeen: user.lastSeen))
-                                .font(.caption)
-                                .italic()
-                                .foregroundColor(.gray)*/
+                             .font(.caption)
+                             .italic()
+                             .foregroundColor(.gray)*/
                         }
                         Spacer()
                         Button(action: {
@@ -417,6 +440,7 @@ struct DiscoveryView : View {
                         .disabled(hasMessaged)
                         
                     }
+                    .padding(.vertical, 8)
                     .listRowBackground(Color.black)
                     .listRowSeparatorTint(.gray)
                 }
@@ -431,12 +455,22 @@ struct DiscoveryView : View {
         }
     }
 }
-//MARK: Search Language to filter
+//MARK: - Search Language to filter
 struct NativeLanguageFilterView: View {
     @ObservedObject var viewModel: ChatListViewModel
     @State private var selectedLanguages: [String] = []
-    @State private var allLanguages = ["en", "fr", "es", "de", "ja", "zh", "ko"]
-
+    @State private var allLanguages = [
+        "af", "am", "ar", "az", "be", "bg", "bn", "bs", "ca", "ceb", "cs", "cy",
+        "da", "de", "el", "en", "eo", "es", "et", "eu", "fa", "fi", "fil", "fj",
+        "fr", "fy", "ga", "gd", "gl", "gu", "ha", "haw", "he", "hi", "hmn", "hr",
+        "ht", "hu", "hy", "id", "ig", "is", "it", "iw", "ja", "jw", "ka", "kk",
+        "km", "kn", "ko", "ku", "ky", "la", "lb", "lo", "lt", "lv", "mg", "mi",
+        "mk", "ml", "mn", "mr", "ms", "mt", "my", "ne", "nl", "no", "ny", "pa",
+        "pl", "ps", "pt", "ro", "ru", "rw", "sd", "si", "sk", "sl", "sm", "sn",
+        "so", "sq", "sr", "st", "su", "sv", "sw", "ta", "te", "tg", "th", "tk",
+        "tl", "tr", "tt", "ug", "uk", "ur", "uz", "vi", "xh", "yi", "yo", "zh", "zu"
+    ]
+    
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
@@ -495,19 +529,173 @@ struct NativeLanguageFilterView: View {
         }
     }
     //function will allow me to convert the 'en' to the fullname for all languages
-    private func languageFullName( _ code: String) -> String {
+    private func languageFullName(_ code: String) -> String {
         let languageMap: [String: String] = [
-            "en": "English",
-            "fr": "French",
-            "es": "Spanish",
+            "af": "Afrikaans",
+            "am": "Amharic",
+            "ar": "Arabic",
+            "az": "Azerbaijani",
+            "be": "Belarusian",
+            "bg": "Bulgarian",
+            "bn": "Bengali",
+            "bs": "Bosnian",
+            "ca": "Catalan",
+            "ceb": "Cebuano",
+            "cs": "Czech",
+            "cy": "Welsh",
+            "da": "Danish",
             "de": "German",
+            "el": "Greek",
+            "en": "English",
+            "eo": "Esperanto",
+            "es": "Spanish",
+            "et": "Estonian",
+            "eu": "Basque",
+            "fa": "Persian",
+            "fi": "Finnish",
+            "fil": "Filipino",
+            "fj": "Fijian",
+            "fr": "French",
+            "fy": "Frisian",
+            "ga": "Irish",
+            "gd": "Scots Gaelic",
+            "gl": "Galician",
+            "gu": "Gujarati",
+            "ha": "Hausa",
+            "haw": "Hawaiian",
+            "he": "Hebrew",
+            "hi": "Hindi",
+            "hmn": "Hmong",
+            "hr": "Croatian",
+            "ht": "Haitian Creole",
+            "hu": "Hungarian",
+            "hy": "Armenian",
+            "id": "Indonesian",
+            "ig": "Igbo",
+            "is": "Icelandic",
+            "it": "Italian",
+            "iw": "Hebrew", // older ISO code
             "ja": "Japanese",
+            "jw": "Javanese",
+            "ka": "Georgian",
+            "kk": "Kazakh",
+            "km": "Khmer",
+            "kn": "Kannada",
+            "ko": "Korean",
+            "ku": "Kurdish",
+            "ky": "Kyrgyz",
+            "la": "Latin",
+            "lb": "Luxembourgish",
+            "lo": "Lao",
+            "lt": "Lithuanian",
+            "lv": "Latvian",
+            "mg": "Malagasy",
+            "mi": "Maori",
+            "mk": "Macedonian",
+            "ml": "Malayalam",
+            "mn": "Mongolian",
+            "mr": "Marathi",
+            "ms": "Malay",
+            "mt": "Maltese",
+            "my": "Burmese",
+            "ne": "Nepali",
+            "nl": "Dutch",
+            "no": "Norwegian",
+            "ny": "Nyanja",
+            "pa": "Punjabi",
+            "pl": "Polish",
+            "ps": "Pashto",
+            "pt": "Portuguese",
+            "ro": "Romanian",
+            "ru": "Russian",
+            "rw": "Kinyarwanda",
+            "sd": "Sindhi",
+            "si": "Sinhala",
+            "sk": "Slovak",
+            "sl": "Slovenian",
+            "sm": "Samoan",
+            "sn": "Shona",
+            "so": "Somali",
+            "sq": "Albanian",
+            "sr": "Serbian",
+            "st": "Sesotho",
+            "su": "Sundanese",
+            "sv": "Swedish",
+            "sw": "Swahili",
+            "ta": "Tamil",
+            "te": "Telugu",
+            "tg": "Tajik",
+            "th": "Thai",
+            "tk": "Turkmen",
+            "tl": "Tagalog",
+            "tr": "Turkish",
+            "tt": "Tatar",
+            "ug": "Uyghur",
+            "uk": "Ukrainian",
+            "ur": "Urdu",
+            "uz": "Uzbek",
+            "vi": "Vietnamese",
+            "xh": "Xhosa",
+            "yi": "Yiddish",
+            "yo": "Yoruba",
             "zh": "Chinese",
-            "ko": "Korean"
+            "zu": "Zulu"
         ]
-        return languageMap[code] ?? code.capitalized
+        return languageMap[code.lowercased()] ?? code.capitalized
     }
 }
+//MARK: - Search button by username
+//precondition: none
+//postcondition: creating a search button with animation that searches by username
+struct SearchByUsernameView: View {
+    @ObservedObject var viewModel: ChatListViewModel
+    @State private var searchUsername = ""
+    @State private var isSearching = false
+    var body: some View {
+        HStack {
+            //message over the text field
+            ZStack(alignment: .leading) {
+                if(isSearching) {
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.white)
+                        .frame(height: 30)
+                    if(searchUsername.isEmpty) {
+                        Text("Search")
+                            .foregroundColor(.black)
+                            .padding(.horizontal)
+                    }
+                    TextField("", text: $searchUsername)
+                        .foregroundColor(.black)
+                        .padding(.horizontal)
+                    //will change while user is typing the username so pops up by the start
+                        .onChange(of: searchUsername) { newText in
+                            if (newText.isEmpty) {
+                                viewModel.fetchDiscoverableUsersFromUsers()
+                            }
+                            else {
+                                viewModel.searchUsers(by: newText)
+                            }
+                        }
+                }
+            }
+            Spacer()
+            Button(action: {
+                withAnimation {
+                    isSearching.toggle()
+                    if (!isSearching) {
+                        searchUsername = ""
+                    }
+                }
+            }) {
+                Image(systemName: isSearching ? "xmark.circle.fill" : "magnifyingglass")
+                    .foregroundColor(.white)
+                    .font(.system(size: 22, weight: .bold))
+            }
+        }
+        .padding(.horizontal)
+    }
+}
+
 //MARK: - Profile Image Reusable
 //precondition: none
 //postcondition: allowed this to reuse so it can determine if users has a profile or not
@@ -515,7 +703,7 @@ struct ProfileImageView: View {
     var imageUrl: String
     var body: some View {
         KFImage(URL(string: imageUrl))
-            //this placeholder will only show up if the user does not have profile
+        //this placeholder will only show up if the user does not have profile
             .placeholder {
                 Image("defaultProfile")
                     .resizable()
@@ -526,7 +714,6 @@ struct ProfileImageView: View {
             .clipShape(Circle())
     }
 }
-
 //precondition: none
 //postcondition: going to return the divider line and reuse it
 func lineDivider() -> some View{
@@ -537,10 +724,4 @@ func lineDivider() -> some View{
         .background(Color.clear)
 }
 
-//MARK: - Previewing
-struct ChatListView_Previews: PreviewProvider {
-    static var previews: some View {
-        ChatListView()
-    }
-}
 

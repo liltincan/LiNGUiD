@@ -4,7 +4,9 @@ struct MainTabView: View {
     @State private var selection = 0
     @Binding var selectedTab: Int
     @Binding var deepLinkedVideoID: String?
-    
+    //need to keep track of the numbers
+    @State private var unreadChatCount: Int = 0
+
     @StateObject var userSession = UserSessionViewModel()
     
     // Add logout closure parameter
@@ -16,8 +18,10 @@ struct MainTabView: View {
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
 
-            ChatListView()
-                .tabItem { Label("Chats", systemImage: "bubble.left.and.bubble.right.fill") }
+            ChatListView(unreadChatCount: $unreadChatCount)
+                .tabItem { Label("Chats", systemImage: "bubble.left.and.bubble.right.fill")}
+                //the .badge will show a red notification bubble with the parameter inside being the number
+                .badge(unreadChatCount == 0 ? 0 : unreadChatCount)
                 .tag(1)
 
             DashboardView(userSession: userSession, selectedTab: $selection)
