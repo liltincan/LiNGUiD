@@ -400,7 +400,6 @@ class ProfileViewModel: ObservableObject {
             
             guard let urlString = data["video_url"] as? String,
                   let url = URL(string: urlString),
-                  let title = data["title"] as? String,
                   let likes = data["likes"] as? Int,
                   let saves = data["saves"] as? Int,
                   let language = data["language_detected"] as? String,
@@ -409,6 +408,7 @@ class ProfileViewModel: ObservableObject {
                 print("Malformed video data for path: \(path)")
                 return nil
             }
+            let title = (data["title"] as? String) ?? "N/A"
             
             let captions: [Captions] = captionDicts.compactMap { dict in
                 guard let start = dict["start"] as? Double,

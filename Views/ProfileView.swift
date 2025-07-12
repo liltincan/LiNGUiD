@@ -51,7 +51,7 @@ struct ProfileView: View {
                         ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL, isShowingUploadView: $isShowingUploadView)
                             .padding(.bottom, 15)
                         
-                        VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs, uploadingVideos: uploadManager.uploadingVideos, videoArray: vm.uploadedVideoArray )
+                        VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs, uploadingVideos: uploadManager.uploadingVideos, noVideosMessage: "No videos uploaded yet.", videoArray: vm.uploadedVideoArray )
                             
                     }
                     .padding()
@@ -273,38 +273,53 @@ struct VideoGridSection: View {
     let videoThumbnails: [String]
     let videoURLs: [String]
     let uploadingVideos: [UploadManager.UploadingVideo]
+    let noVideosMessage: String?  // Optional custom message
+    var videoArray: [Video]
+
     @EnvironmentObject var uploadManager: UploadManager
-var videoArray: [Video]
+
     var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
-            ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
-                Videos(thumbnailURL: thumbnailURL, videoURL: videoURLs[index], index: index, videoArray: videoArray)
+        if videoThumbnails.isEmpty && uploadingVideos.isEmpty {
+            VStack {
+                Spacer()
+                Text(noVideosMessage ?? "No videos available.")
+                    .font(.headline)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding()
+                Spacer()
             }
+        } else {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
+                ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
+                    Videos(thumbnailURL: thumbnailURL, videoURL: videoURLs[index], index: index, videoArray: videoArray)
+                }
 
-            ForEach(uploadingVideos) { video in
-                ZStack {
-                    Image(uiImage: video.thumbnail)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 180)
-                        .clipped()
+                ForEach(uploadingVideos) { video in
+                    ZStack {
+                        Image(uiImage: video.thumbnail)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 180)
+                            .clipped()
 
-                    if video.isUploading {
-                        Color.black.opacity(0.4)
-                        ProgressView().scaleEffect(1.5)
-                        VStack {
-                            HStack {
-                                Spacer()
-                                Button {
-                                    uploadManager.cancelUpload(for: video.localIdentifier)
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.title2)
-                                        .foregroundColor(.white)
-                                        .padding(8)
+                        if video.isUploading {
+                            Color.black.opacity(0.4)
+                            ProgressView().scaleEffect(1.5)
+                            VStack {
+                                HStack {
+                                    Spacer()
+                                    Button {
+                                        uploadManager.cancelUpload(for: video.localIdentifier)
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .font(.title2)
+                                            .foregroundColor(.white)
+                                            .padding(8)
+                                    }
                                 }
+                                Spacer()
                             }
-                            Spacer()
                         }
                     }
                 }

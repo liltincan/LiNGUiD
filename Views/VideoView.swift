@@ -8,6 +8,7 @@ struct VideoView: View {
 
     init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int) {
         self.videos = videos.reversed()
+        print(videos)
         self.userSession = userSession
         _currentIndex = State(initialValue: startIndex)
     }
