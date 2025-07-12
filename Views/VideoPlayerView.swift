@@ -899,7 +899,7 @@ func fetchUsername(for uid: String, completion: @escaping (String?) -> Void) {
             return
         }
 
-        if let data = snapshot?.data(), let username = data["username"] as? String {
+        if let data = snapshot?.data(), let username = data["userName"] as? String {
             completion(username)
         } else {
             completion(nil)

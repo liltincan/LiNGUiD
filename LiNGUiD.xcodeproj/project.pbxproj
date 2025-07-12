@@ -86,6 +86,8 @@
 		D61307E82E1B4D6C0089F942 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D61307E72E1B4D6C0089F942 /* NotificationService.swift */; };
 		D613080F2E1C8D680089F942 /* SharedVideoPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D613080E2E1C8D670089F942 /* SharedVideoPreviewView.swift */; };
 		D613085B2E1E0B970089F942 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = D613085A2E1E0B970089F942 /* FirebaseMessaging */; };
+		D62604692E2082FB00BA36FB /* DMVideoPreviewViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D62604682E2082FB00BA36FB /* DMVideoPreviewViewModel.swift */; };
+		D626046B2E20831000BA36FB /* DMVideoPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = D626046A2E20831000BA36FB /* DMVideoPreview.swift */; };
 		D6886D0A2E18995600304FE7 /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = D6886D092E18995600304FE7 /* CropViewController */; };
 		D6886D0C2E18995600304FE7 /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = D6886D0B2E18995600304FE7 /* TOCropViewController */; };
 		D69E51D42DE66EF600329D64 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */; };
@@ -182,6 +184,8 @@
 		8FB929702DE116CE0020AFCD /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		D61307E72E1B4D6C0089F942 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		D613080E2E1C8D670089F942 /* SharedVideoPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedVideoPreviewView.swift; sourceTree = "<group>"; };
+		D62604682E2082FB00BA36FB /* DMVideoPreviewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DMVideoPreviewViewModel.swift; sourceTree = "<group>"; };
+		D626046A2E20831000BA36FB /* DMVideoPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DMVideoPreview.swift; sourceTree = "<group>"; };
 		D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		D69E51D52DE6735A00329D64 /* VideoCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCache.swift; sourceTree = "<group>"; };
 		D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerLayerView.swift; sourceTree = "<group>"; };
@@ -287,6 +291,7 @@
 			isa = PBXGroup;
 			children = (
 				132D56572E20509800B6D237 /* OtherUserProfileViewModel.swift */,
+				D62604682E2082FB00BA36FB /* DMVideoPreviewViewModel.swift */,
 				7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */,
 				60E0B91C2DF53A550065B772 /* DashboardViewModel.swift */,
 				139ABECD2DF2270C00EB45FD /* ChangePasswordViewModel.swift */,
@@ -310,6 +315,7 @@
 				138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */,
 				8FB9296A2DE116820020AFCD /* ChatListView.swift */,
 				81F731932E0A1C8C0057786F /* CountrySelectionView.swift */,
+				D626046A2E20831000BA36FB /* DMVideoPreview.swift */,
 				8FB9296C2DE1169D0020AFCD /* DashboardView.swift */,
 				138F1B972DEF6D2900F3B31B /* EditProfileView.swift */,
 				81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */,
@@ -608,6 +614,8 @@
 				8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */,
 				13F4B15F2DFC99A70019BE81 /* ChangeLanguageFlowView.swift in Sources */,
 				81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */,
+				D62604692E2082FB00BA36FB /* DMVideoPreviewViewModel.swift in Sources */,
+				D626046B2E20831000BA36FB /* DMVideoPreview.swift in Sources */,
 				D69E53EC2DEA4B5000329D64 /* UserSessionViewModel.swift in Sources */,
 				0493FF562E0C614700D6F989 /* LaunchManager.swift in Sources */,
 				8FB929522DE02A600020AFCD /* VideoFeedCoordinatorView.swift in Sources */,

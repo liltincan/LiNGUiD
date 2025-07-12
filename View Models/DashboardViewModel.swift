@@ -180,7 +180,7 @@ class DashboardViewModel: ObservableObject{
             for (index, document) in snapshot.documents.enumerated() {
                 let data = document.data()
                 // Try to get username from Firestore, fallback to "Unknown"
-                let username = data["username"] as? String ?? data["userName"] as? String ?? "Unknown"
+                let username = data["userName"] as? String ?? data["userName"] as? String ?? "Unknown"
                 let watchTime = data["globalWatchTime"] as? Double ?? 0
                 let minutes = Int(watchTime / 60)
                 let rank = index + 1
