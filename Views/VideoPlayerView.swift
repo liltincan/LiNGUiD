@@ -71,10 +71,12 @@ struct VideoPlayerView: View {
     // Report functionality
     @State private var showingReportSheet = false
     @State private var showingReportConfirmation = false
+    @State private var showingDeleteConfirmation = false
 
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
     @State private var uploaderUsername: String? = nil
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationStack {
@@ -281,6 +283,19 @@ struct VideoPlayerView: View {
 
                                         handleReportVideo()
                                     }
+                                    if (uploaderId == Auth.auth().currentUser?.uid) {
+                                        Button("Delete Video", role: .destructive) {
+                                            showingDeleteConfirmation = true
+                                        }
+                                    }
+                                    Button("Cancel", role: .cancel) {}
+                                }
+                                .confirmationDialog("Are you sure you want to delete this video?", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
+                                    Button("Delete", role: .destructive) {
+                                        Task {
+                                            await FirestoreService.shared.deleteVideo(videoId: videoId, uid: uploaderId, language: language ?? "")
+                                            dismiss()
+                                        }                                    }
                                     Button("Cancel", role: .cancel) {}
                                 }
                             }

@@ -10,7 +10,6 @@ struct ProfileView: View {
     
     @State private var showingFullScreenProfilePicture: Bool = false
     @State private var fullScreenProfilePictureURL: String?
-    @State private var hasTaskExecuted = false
     
     @EnvironmentObject var uploadManager: UploadManager
     @State private var isShowingUploadView = false
@@ -48,7 +47,7 @@ struct ProfileView: View {
                         )
                         .padding(.bottom, 10)
                         
-                        ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL, isShowingUploadView: $isShowingUploadView)
+                        ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL, isShowingUploadView: $isShowingUploadView, onUploadComplete: {await refreshData()})
                             .padding(.bottom, 15)
                         
                         VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs, uploadingVideos: uploadManager.uploadingVideos, noVideosMessage: "No videos uploaded yet.", videoArray: vm.uploadedVideoArray )
@@ -60,7 +59,7 @@ struct ProfileView: View {
             .refreshable {
                 await refreshData()
             }
-            .task {
+            .onAppear {
                 Task {
                     await loadData()
                 }
@@ -132,11 +131,8 @@ struct ProfileView: View {
     @MainActor
     private func loadData() async {
         if let currentUser = Auth.auth().currentUser {
-            guard !hasTaskExecuted else { return }
-            hasTaskExecuted = true
             print("Loading data for user: \(currentUser.uid)")
-            await vm.fetchUserData()
-//            print("Loaded liked video thumbnails: \(vm.likedVideoThumbnails)")
+            await vm.fetchUserData(uid: currentUser.uid)
         } else {
             print("Error: No current user on appear.")
             await vm.fetchUserData()
@@ -249,6 +245,7 @@ struct ProfileActionButtons: View {
     let username: String
     let pfp: String
     @Binding var isShowingUploadView: Bool
+    let onUploadComplete: () async -> Void  // Add this parameter
     
     var body: some View {
         HStack {
@@ -260,6 +257,9 @@ struct ProfileActionButtons: View {
             NavigationLink(isActive: $isShowingUploadView) {
                 UploadView(onComplete: {
                     isShowingUploadView = false
+                    Task {
+                        await onUploadComplete()  // Wrap in Task
+                    }
                 })
             } label: {
                 Buttons(text: "upload")
