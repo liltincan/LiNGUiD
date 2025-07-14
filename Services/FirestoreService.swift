@@ -59,6 +59,25 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             try await videoStorageRef.delete()
             print("✅ Video deleted from storage.")
             
+            // 4. Delete all thumbnail files from the thumbnail directory
+            let thumbnailDirRef = storageRef.child("thumbnails/\(uid)/\(videoId)")
+            
+            do {
+                let listResult = try await thumbnailDirRef.listAll()
+                
+                if listResult.items.isEmpty {
+                    print("⚠️ No thumbnails found for \(videoId)")
+                } else {
+                    for item in listResult.items {
+                        try await item.delete()
+                        print("✅ Deleted thumbnail: \(item.name)")
+                    }
+                    print("✅ All thumbnails deleted from thumbnails/\(uid)/\(videoId)")
+                }
+            } catch {
+                print("❌ Error deleting thumbnails: \(error.localizedDescription)")
+            }
+            
         } catch {
             print("❌ Error deleting video: \(error.localizedDescription)")
         }

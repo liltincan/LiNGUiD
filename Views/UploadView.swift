@@ -551,7 +551,7 @@ struct AddThumbnailView: View {
         }
         .sheet(item: $showingFrameSelectorFor) { asset in
             ZStack {
-                Color.black.opacity(0.9) //darkens background
+                Color.black.opacity(1.0) //darkens background
                 if let url = compressedVideoURLs[asset.localIdentifier] {
                     VideoScrubberSelector(
                         videoURL: url,
