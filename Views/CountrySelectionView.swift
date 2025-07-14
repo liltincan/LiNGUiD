@@ -5,6 +5,8 @@ struct CountrySelectionView: View {
     @Binding var selectedCountry: String?               // single selection
     var onContinue: (() -> Void)?                      // called when Continue is tapped
 
+    @FocusState private var isSearchFieldFocused: Bool
+    
     // MARK: – State
     @State private var searchText = ""
     @State private var isSearching = false
@@ -81,14 +83,30 @@ struct CountrySelectionView: View {
                             .background(Color.white)
                             .cornerRadius(8)
                             .foregroundColor(.black)
+                            .focused($isSearchFieldFocused)
                             .transition(.move(edge: .trailing))
                     }
                     
                     Button(action: {
-                        withAnimation {
-                            isSearching.toggle()
-                            if !isSearching {
+                        if isSearching {
+                            // Animate closing
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                isSearching = false
+                            }
+
+                            // Delay cleanup until animation finishes
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                                 searchText = ""
+                                isSearchFieldFocused = false
+                            }
+                        } else {
+                            // Animate opening and focus keyboard
+                            withAnimation(.easeIn(duration: 0.2)) {
+                                isSearching = true
+                            }
+
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                isSearchFieldFocused = true
                             }
                         }
                     }) {
@@ -97,6 +115,8 @@ struct CountrySelectionView: View {
                             .font(.system(size: 24, weight: .bold))
                             .padding(.trailing, 15)
                     }
+
+
                 }
                 .padding(.vertical, 30)
                 .background(Color.white.opacity(0.2))
