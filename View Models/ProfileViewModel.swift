@@ -409,6 +409,7 @@ class ProfileViewModel: ObservableObject {
                 return nil
             }
             let title = (data["title"] as? String) ?? "N/A"
+            let commentCount = data["commentCount"] as? Int ?? 0
             
             let captions: [Captions] = captionDicts.compactMap { dict in
                 guard let start = dict["start"] as? Double,
@@ -431,6 +432,7 @@ class ProfileViewModel: ObservableObject {
                 uploaderId: uploaderId,
                 likes: likes,
                 saves: saves,
+                commentCount: commentCount,
                 language: language
             )
             

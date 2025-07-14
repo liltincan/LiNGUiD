@@ -133,7 +133,8 @@ struct VideoPageView: View {
                 isActive: isActive,
                 captions: video.captions,
                 videoLikes: video.likes,
-                videoSaves: video.saves
+                videoSaves: video.saves,
+                commentCount: video.commentCount
             )
             .environmentObject(userSession)
             .id(video.id)

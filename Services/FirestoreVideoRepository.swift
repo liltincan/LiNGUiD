@@ -50,7 +50,8 @@ final class FirestoreVideoRepository: VideoRepository {
             }
             let title = document.data()["title"] as? String ?? ""
             let detectedLevel = document.data()["detected_level"] as? Int ?? 2
-            return Video(id: document.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes, saves: saves, language: langCode)
+            let commentCount = document.data()["commentCount"] as? Int ?? 0
+            return Video(id: document.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes, saves: saves, commentCount: commentCount, language: langCode)
         }
 
         // Filter: only include videos within ±1 of user's level - Gerardo De La Torre
@@ -95,8 +96,9 @@ final class FirestoreVideoRepository: VideoRepository {
                 
                 let uploaderId = document.data()["uploaderId"] as? String ?? ""
                 let title = document.data()["title"] as? String ?? ""
+                let commentCount = document.data()["commentCount"] as? Int ?? 0
                 
-                return Video(id: document.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes as! Int, saves: saves as! Int, language: langCode)
+                return Video(id: document.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes as! Int, saves: saves as! Int, commentCount: commentCount, language: langCode)
             }
             return allVideosAtLevel
         } else {
@@ -147,9 +149,9 @@ final class FirestoreVideoRepository: VideoRepository {
         }
 
         let detectedLevel = data["detected_level"] as? Int ?? 2
-        
+        let commentCount = data["commentCount"] as? Int ?? 0
         let title = data["title"] as? String ?? ""
-        return Video(id: videoId, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes, saves: saves, language: langCode)
+        return Video(id: videoId, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes, saves: saves, commentCount: commentCount, language: langCode)
     }
 
 

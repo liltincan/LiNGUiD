@@ -281,6 +281,7 @@ class OtherUserProfileViewModel: ObservableObject {
             }
             
             let detectedLevel = data["detected_level"] as? Int ?? 2
+            let commentCount = data["commentCount"] as? Int ?? 0
             
             return Video(
                 id: docId,
@@ -291,6 +292,7 @@ class OtherUserProfileViewModel: ObservableObject {
                 uploaderId: uploaderId,
                 likes: likes,
                 saves: saves,
+                commentCount: commentCount,
                 language: language
             )
             

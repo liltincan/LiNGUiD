@@ -14,6 +14,17 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
     static let shared = FirestoreService() //singleton instance of FirebaseService to be used everywhere
     internal let db = Firestore.firestore() //database instance
     
+    func updateNumberOfComments(videoId: String, language: String) async {
+        let db = Firestore.firestore()
+        do {
+            let videoRef = db.collection("videos").document(language).collection("items").document(videoId)
+            try await videoRef.updateData([
+                "commentCount": FieldValue.increment(Int64(1))
+            ])
+        } catch {
+            print("Error updating comment count: \(error.localizedDescription)")
+        }
+    }
     func deleteVideo(videoId: String, uid: String, language: String) async {
         let db = Firestore.firestore()
         let videoPath = "\(language)/items/\(videoId)"

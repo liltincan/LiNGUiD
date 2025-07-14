@@ -16,6 +16,7 @@ struct VideoPlayerView: View {
     let captions: [Captions]?
     @State private var videoLikes = 0
     @State private var videoSaves = 0
+    @State private var commentCount = 0
     
     init(
         url: URL,
@@ -29,6 +30,7 @@ struct VideoPlayerView: View {
         captions: [Captions]? = nil,
         videoLikes: Int,
         videoSaves: Int,
+        commentCount: Int,
     ) {
         self.url = url
         self.videoId = videoId
@@ -41,6 +43,7 @@ struct VideoPlayerView: View {
         self.uploaderPfp = uploaderPfp
         _videoLikes = State(initialValue: videoLikes)
         _videoSaves = State(initialValue: videoSaves)
+        _commentCount = State(initialValue: commentCount)
     }
 
     @State private var isPlaying = false
@@ -72,6 +75,7 @@ struct VideoPlayerView: View {
     @State private var showingReportSheet = false
     @State private var showingReportConfirmation = false
     @State private var showingDeleteConfirmation = false
+    @State private var showingComments = false
 
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
@@ -180,13 +184,24 @@ struct VideoPlayerView: View {
                                         .font(.system(size: 12))
                                         .foregroundStyle(Color.white)
                                 }
-                                
-                                ActionButton(
-                                    icon: "bubble.fill",
-                                    color: .white,
-                                    size: 25,
-                                    isSystemImage: true
-                                ) {}
+                                VStack(spacing: 5){
+                                    ActionButton(
+                                        icon: "bubble.fill",
+                                        color: .white,
+                                        size: 25,
+                                        isSystemImage: true
+                                    ) {
+                                        if isPlaying {
+                                            player.pause()
+                                            isPlaying = false
+                                            stopWatchTimer()
+                                        }
+                                        showingComments = true
+                                    }
+                                    Text("\(commentCount)")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Color.white)
+                                }
                                 VStack(spacing: 5){
                                     ActionButton(
                                         icon: "bookmark.fill",
@@ -414,6 +429,11 @@ struct VideoPlayerView: View {
         }
         .sheet(isPresented: $isShareSheetPresented) {
             ShareSheetView(videoId: videoId)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }.sheet(isPresented: $showingComments) {
+            VideoCommentView(videoId: videoId, language: language, commentCount: $commentCount)
+                .environmentObject(userSession)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
