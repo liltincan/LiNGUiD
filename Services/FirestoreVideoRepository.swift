@@ -32,7 +32,6 @@ final class FirestoreVideoRepository: VideoRepository {
         let unwatchedVideos: [Video] = unwatchedDocuments.compactMap { document in
             guard let urlString = document.data()["video_url"] as? String,
                   let url = URL(string: urlString),
-                  let title = document.data()["title"] as? String,
                   let likes = document.data()["likes"] as? Int,
                   let saves = document.data()["saves"] as? Int,
                   let uploaderId = document.data()["uploaderId"] as? String,
@@ -49,9 +48,7 @@ final class FirestoreVideoRepository: VideoRepository {
                 let words = dict["words"] as? [String]
                 return Captions(end: end, start: start, text: text, words: words)
             }
-
-            
-            
+            let title = document.data()["title"] as? String ?? ""
             let detectedLevel = document.data()["detected_level"] as? Int ?? 2
             return Video(id: document.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes, saves: saves, language: langCode)
         }
@@ -76,7 +73,6 @@ final class FirestoreVideoRepository: VideoRepository {
             let allVideosAtLevel: [Video] = snapshot.documents.compactMap { document in
                 guard let urlString = document.data()["video_url"] as? String,
                     let url = URL(string: urlString),
-                    let title = document.data()["title"] as? String,
                     let likes = document.data()["likes"],
                     let saves = document.data()["saves"],
                     let captionDicts = document.data()["captions"] as? [[String: Any]] else {
@@ -98,6 +94,8 @@ final class FirestoreVideoRepository: VideoRepository {
                 }
                 
                 let uploaderId = document.data()["uploaderId"] as? String ?? ""
+                let title = document.data()["title"] as? String ?? ""
+                
                 return Video(id: document.documentID, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes as! Int, saves: saves as! Int, language: langCode)
             }
             return allVideosAtLevel
@@ -129,7 +127,6 @@ final class FirestoreVideoRepository: VideoRepository {
         guard
             let urlString = data["video_url"] as? String,
             let url = URL(string: urlString),
-            let title = data["title"] as? String,
             let likes = data["likes"] as? Int,
             let saves = data["saves"] as? Int,
             let uploaderId = data["uploaderId"] as? String,
@@ -150,6 +147,8 @@ final class FirestoreVideoRepository: VideoRepository {
         }
 
         let detectedLevel = data["detected_level"] as? Int ?? 2
+        
+        let title = data["title"] as? String ?? ""
         return Video(id: videoId, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes, saves: saves, language: langCode)
     }
 
