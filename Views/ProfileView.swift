@@ -68,10 +68,10 @@ struct ProfileView: View {
             }
             .overlay(
                 ZStack {
-                    // 🔄 Upload Progress Bar
+                    // Upload Progress Bar
                     VStack {
-                        if uploadManager.totalCount > 0 && uploadManager.currentIndex < uploadManager.totalCount {
-                            Text("Uploading \(uploadManager.currentIndex + 1)/\(uploadManager.totalCount)")
+                        if uploadManager.totalCount > 0 {
+                            Text("Uploading \(uploadManager.completedCount + 1)/\(uploadManager.totalToUpload)")
                                 .font(.caption)
                                 .padding(8)
                                 .frame(maxWidth: .infinity)
@@ -80,7 +80,7 @@ struct ProfileView: View {
                         }
                         Spacer()
                     }
-                    .animation(.easeInOut, value: uploadManager.currentIndex)
+                    .animation(.easeInOut, value: uploadManager.completedCount)
 
                     // 🖼 Fullscreen Profile Picture
                     if showingFullScreenProfilePicture,

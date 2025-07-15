@@ -17,7 +17,9 @@ class UploadManager: ObservableObject {
         let thumbnail: UIImage
         var isUploading: Bool
     }
-
+    
+    @Published var totalToUpload: Int = 0
+    @Published var completedCount: Int = 0
     @Published var uploadingVideos: [UploadingVideo] = []
     @Published var currentIndex: Int = 0
     var totalCount: Int { uploadingVideos.count }
@@ -25,6 +27,7 @@ class UploadManager: ObservableObject {
     private var uploadTasks: [String: Task<Void, Never>] = [:]
 
     func addUploadingVideos(_ assets: [PHAsset], thumbnails: [String: UIImage]) {
+        totalToUpload = assets.count // <- set this once
         for asset in assets {
             let id = asset.localIdentifier
             let thumbnail = thumbnails[id] ?? UIImage(systemName: "video")!
@@ -50,13 +53,17 @@ class UploadManager: ObservableObject {
     func markUploaded(_ id: String) {
         if let index = uploadingVideos.firstIndex(where: { $0.localIdentifier == id }) {
             uploadingVideos.remove(at: index)
+            completedCount += 1
         }
         uploadTasks.removeValue(forKey: id)
     }
-
+    
     func reset() {
         uploadTasks.values.forEach { $0.cancel() }
         uploadTasks.removeAll()
         uploadingVideos.removeAll()
+        totalToUpload = 0
+        completedCount = 0
     }
+
 }

@@ -242,13 +242,13 @@ struct OtherUserProfileActionButtons: View {
                     }
                 }
             } label: {
-                Text(isFollowing ? "Following" : "Follow")
-                    .foregroundColor(isFollowing ? .primary : .white)
+                Text(isFollowing ? "Followed" : "Follow")
+                    .foregroundColor(isFollowing ? .white : .white)
                     .fontWeight(.medium)
                     .font(.system(size: 16))
                     .padding(15)
                     .frame(maxWidth: 100, maxHeight: 45)
-                    .background(isFollowing ? Color.secondary.opacity(0.2) : Color.appPrimaryColor)
+                    .background(isFollowing ? Color.appSecondaryColor : Color.appPrimaryColor)
                     .cornerRadius(10)
             }
             
@@ -276,7 +276,7 @@ struct OtherUserProfileActionButtons: View {
                     .font(.system(size: 16))
                     .padding(15)
                     .frame(maxWidth: 100, maxHeight: 45)
-                    .background(Color.purple)
+                    .background(Color.appPrimaryColor)
                     .cornerRadius(10)
             }
             
@@ -289,7 +289,7 @@ struct OtherUserProfileActionButtons: View {
                     .font(.system(size: 16))
                     .padding(15)
                     .frame(maxWidth: 100, maxHeight: 45)
-                    .background(Color.purple)
+                    .background(Color.appPrimaryColor)
                     .cornerRadius(10)
             }
         }
