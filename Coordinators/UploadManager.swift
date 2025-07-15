@@ -22,7 +22,9 @@ class UploadManager: ObservableObject {
     @Published var completedCount: Int = 0
     @Published var uploadingVideos: [UploadingVideo] = []
     @Published var currentIndex: Int = 0
+    
     var totalCount: Int { uploadingVideos.count }
+    var onUploadFinished: (() -> Void)?
 
     private var uploadTasks: [String: Task<Void, Never>] = [:]
 
@@ -51,11 +53,23 @@ class UploadManager: ObservableObject {
     }
 
     func markUploaded(_ id: String) {
-        if let index = uploadingVideos.firstIndex(where: { $0.localIdentifier == id }) {
-            uploadingVideos.remove(at: index)
-            completedCount += 1
+        guard let index = uploadingVideos.firstIndex(where: { $0.localIdentifier == id }) else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.uploadingVideos.removeAll { $0.localIdentifier == id }
+            self.uploadTasks.removeValue(forKey: id)
+            self.completedCount += 1
+
+            // Trigger refresh
+            self.onUploadFinished?()
+
+            // If this was the last upload, schedule a cleanup/reset
+            if self.completedCount == self.totalToUpload {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    self.reset()
+                }
+            }
         }
-        uploadTasks.removeValue(forKey: id)
     }
     
     func reset() {

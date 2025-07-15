@@ -62,6 +62,11 @@ struct ProfileView: View {
                 await refreshData()
             }
             .onAppear {
+                uploadManager.onUploadFinished = {
+                    Task {
+                        await refreshData()
+                    }
+                }
                 Task {
                     await loadData()
                 }
@@ -70,16 +75,21 @@ struct ProfileView: View {
                 ZStack {
                     // Upload Progress Bar
                     VStack {
-                        if uploadManager.totalCount > 0 {
-                            Text("Uploading \(uploadManager.completedCount + 1)/\(uploadManager.totalToUpload)")
-                                .font(.caption)
-                                .padding(8)
-                                .frame(maxWidth: .infinity)
-                                .background(Color.black.opacity(0.8))
-                                .foregroundColor(.white)
+                        if uploadManager.totalToUpload > 0 {
+                            Text(
+                                uploadManager.completedCount == uploadManager.totalToUpload
+                                ? "Upload complete!"
+                                : "Uploading \(uploadManager.completedCount + 1)/\(uploadManager.totalToUpload)"
+                            )
+                            .font(.caption)
+                            .padding(8)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.black.opacity(0.8))
+                            .foregroundColor(.white)
                         }
                         Spacer()
                     }
+                    .transition(.opacity)
                     .animation(.easeInOut, value: uploadManager.completedCount)
 
                     // 🖼 Fullscreen Profile Picture
