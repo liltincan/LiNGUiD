@@ -11,23 +11,72 @@ import FirebaseFirestore
 class DMVideoPreviewViewModel: ObservableObject {
     @Published var thumbnailURL: String?
     @Published var videoURL: String?
+    @Published var language: String?
+    @Published var videoId: String?
     
     private let db = Firestore.firestore()
     
-    func fetchVideoInfo(from path: String) async {
-        var thumbnails = [""]
-        var videoURLs = [""]
+    func fetchVideoObjectFromPath(_ path: String) async -> Video? {
+        let components = path.split(separator: "/")
+        guard components.count == 3 else {
+            print("Invalid path format: \(path) - Skipping video fetch.")
+            return nil
+        }
         
-        await fetchSingleVideoThumbnail(
-            path: path,
-            index: 0,
-            thumbnails: &thumbnails,
-            videoURLs: &videoURLs
-        )
+        let lang = String(components[0])
+        let docId = String(components[2])
         
-        DispatchQueue.main.async {
-            self.thumbnailURL = thumbnails.first
-            self.videoURL = videoURLs.first
+        do {
+            let document = try await db.collection("videos")
+                .document(lang)
+                .collection("items")
+                .document(docId)
+                .getDocument()
+            
+            guard document.exists, let data = document.data() else {
+                print("Video document missing or no data for \(path)")
+                return nil
+            }
+            
+            guard let urlString = data["video_url"] as? String,
+                  let url = URL(string: urlString),
+                  let title = data["title"] as? String,
+                  let likes = data["likes"] as? Int,
+                  let saves = data["saves"] as? Int,
+                  let language = data["language_detected"] as? String,
+                  let uploaderId = data["uploaderId"] as? String,
+                  let captionDicts = data["captions"] as? [[String: Any]] else {
+                print("Malformed video data for path: \(path)")
+                return nil
+            }
+            
+            let captions: [Captions] = captionDicts.compactMap { dict in
+                guard let start = dict["start"] as? Double,
+                      let end = dict["end"] as? Double,
+                      let text = dict["text"] as? String else {
+                    return nil
+                }
+                let words = dict["words"] as? [String]
+                return Captions(end: end, start: start, text: text, words: words)
+            }
+            
+            let detectedLevel = data["detected_level"] as? Int ?? 2
+            
+            return Video(
+                id: docId,
+                url: url,
+                captions: captions,
+                title: title,
+                detectedLevel: detectedLevel,
+                uploaderId: uploaderId,
+                likes: likes,
+                saves: saves,
+                language: language
+            )
+            
+        } catch {
+            print("Error fetching video object for \(path):", error.localizedDescription)
+            return nil
         }
     }
     
