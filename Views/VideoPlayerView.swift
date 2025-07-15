@@ -900,7 +900,7 @@ struct OptionsSheetView: View {
 }
 
 func reportVideo(videoId: String, reporterUid: String, reporterUsername: String, posterUid: String, posterUsername: String) {
-    guard let url = URL(string: "https://your-backend.com/api/report") else { return }
+    guard let url = URL(string: "https://learnwithlinguid.com/api/report") else { return }
     
     var request = URLRequest(url: url)
     request.httpMethod = "POST"
