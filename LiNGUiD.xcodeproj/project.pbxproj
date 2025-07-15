@@ -10,6 +10,8 @@
 		047C2F532E0C5FA40052C0C3 /* VideoUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */; };
 		0493FF562E0C614700D6F989 /* LaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0493FF552E0C614700D6F989 /* LaunchManager.swift */; };
 		132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1320204F2DE8D07100DD8AF1 /* SettingsView.swift */; };
+		132B93412E257D27003F6DA9 /* Comment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132B93402E257D27003F6DA9 /* Comment.swift */; };
+		132B93432E257D64003F6DA9 /* VideoCommentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132B93422E257D64003F6DA9 /* VideoCommentView.swift */; };
 		132D56582E20509800B6D237 /* OtherUserProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132D56572E20509800B6D237 /* OtherUserProfileViewModel.swift */; };
 		134970E42E1B3E030053E214 /* OtherUserProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 134970E32E1B3E030053E214 /* OtherUserProfileView.swift */; };
 		138018E52DF0AD01003FC3D6 /* ChangePasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */; };
@@ -122,6 +124,8 @@
 		047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoUploadService.swift; sourceTree = "<group>"; };
 		0493FF552E0C614700D6F989 /* LaunchManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchManager.swift; sourceTree = "<group>"; };
 		1320204F2DE8D07100DD8AF1 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		132B93402E257D27003F6DA9 /* Comment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Comment.swift; sourceTree = "<group>"; };
+		132B93422E257D64003F6DA9 /* VideoCommentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCommentView.swift; sourceTree = "<group>"; };
 		132D56572E20509800B6D237 /* OtherUserProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherUserProfileViewModel.swift; sourceTree = "<group>"; };
 		134970E32E1B3E030053E214 /* OtherUserProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OtherUserProfileView.swift; sourceTree = "<group>"; };
 		138018E42DF0ACFB003FC3D6 /* ChangePasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangePasswordView.swift; sourceTree = "<group>"; };
@@ -267,6 +271,7 @@
 		8F51F2172DE01C0D00397726 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				132B93402E257D27003F6DA9 /* Comment.swift */,
 				7EFDD81B2E0C8DB200154192 /* Chat.swift */,
 				60F9307F2DE98E2A00E37156 /* User.swift */,
 				8F51F22F2DE0236100397726 /* Video.swift */,
@@ -308,6 +313,7 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				132B93422E257D64003F6DA9 /* VideoCommentView.swift */,
 				134970E32E1B3E030053E214 /* OtherUserProfileView.swift */,
 				60974D872DE79D100075CAAE /* AppColors.swift */,
 				13F4B15E2DFC99A20019BE81 /* ChangeLanguageFlowView.swift */,
@@ -614,6 +620,7 @@
 				8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */,
 				13F4B15F2DFC99A70019BE81 /* ChangeLanguageFlowView.swift in Sources */,
 				81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */,
+				132B93412E257D27003F6DA9 /* Comment.swift in Sources */,
 				D62604692E2082FB00BA36FB /* DMVideoPreviewViewModel.swift in Sources */,
 				D626046B2E20831000BA36FB /* DMVideoPreview.swift in Sources */,
 				D69E53EC2DEA4B5000329D64 /* UserSessionViewModel.swift in Sources */,
@@ -645,6 +652,7 @@
 				8FB9294F2DE02A3F0020AFCD /* Video.swift in Sources */,
 				81F436432DF2831300DA9BDA /* LanguageSelectionView.swift in Sources */,
 				8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */,
+				132B93432E257D64003F6DA9 /* VideoCommentView.swift in Sources */,
 				132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */,
 				D6BA584B2DED2B1F00E6E137 /* VideoPlayerViewModel.swift in Sources */,
 				7EFDD81C2E0C8DB400154192 /* Chat.swift in Sources */,

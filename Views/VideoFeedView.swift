@@ -191,6 +191,7 @@ struct FeedVideoPage: View {
                 captions: video.captions,
                 videoLikes: video.likes,
                 videoSaves: video.saves,
+                commentCount: video.commentCount
             )
             .environmentObject(userSession)
             .id(video.id)

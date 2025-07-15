@@ -63,6 +63,7 @@ struct OtherUserProfileView: View {
                             videoThumbnails: vm.videoThumbnails,
                             videoURLs: vm.videoURLs,
                             uploadingVideos: [],
+                            noVideosMessage: "The user hasn't uploaded any videos yet.",
                             videoArray: vm.uploadedVideoArray
                         )
                             

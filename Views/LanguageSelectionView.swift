@@ -5,6 +5,7 @@ struct LanguageSelectionView: View {
     let allLanguages = ["Arabic", "Chinese", "English", "French", "German", "Italian", "Portuguese", "Russian", "Spanish", "Afrikaans", "Armenian", "Azerbaijani", "Belarusian", "Bosnian", "Bulgarian", "Catalan", "Croatian", "Czech", "Danish", "Dutch", "Estonian", "Finnish", "Galician", "Greek", "Hebrew", "Hindi", "Hungarian", "Icelandic", "Indonesian", "Japanese", "Kannada", "Kazakh", "Korean", "Latvian", "Lithuanian", "Macedonian", "Malay", "Maori", "Marathi", "Nepali", "Norwegian", "Persian", "Polish", "Romanian", "Serbian", "Slovak", "Slovenian", "Swahili", "Swedish", "Tagalog", "Tamil", "Thai", "Turkish", "Ukrainian", "Urdu", "Vietnamese", "Welsh"]
     let selectionLimit: Int
     
+    @FocusState private var isSearchFieldFocused: Bool
     @Binding var selectedLanguages: Set<String>
     @State private var searchText = ""
     @State private var isSearching = false
@@ -49,14 +50,21 @@ struct LanguageSelectionView: View {
                             .background(Color.white)
                             .cornerRadius(8)
                             .foregroundColor(.black)
+                            .focused($isSearchFieldFocused)
                             .transition(.move(edge: .trailing))
                     }
 
                     Button(action: {
                         withAnimation {
                             isSearching.toggle()
-                            if !isSearching {
+                            if isSearching {
+                                // Delay slightly to allow the view to update first
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    isSearchFieldFocused = true
+                                }
+                            } else {
                                 searchText = ""
+                                isSearchFieldFocused = false
                             }
                         }
                     }) {
@@ -107,12 +115,6 @@ struct LanguageSelectionView: View {
                             Divider()
                                 .background(Color.white.opacity(1.0))
 
-//                            if language != filteredLanguages.last {
-//                                Rectangle()
-//                                    .fill(Color.white.opacity(0.2))
-//                                    .frame(height: 1)
-//                                    .padding(.horizontal)
-//                            }
                         }
                         .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: selectedLanguages)
                     }
@@ -143,7 +145,9 @@ struct LanguageSelectionView: View {
             //Spacer()
         }
         .padding()
-        .background(Color.black.ignoresSafeArea())
+        .background(Color.black.ignoresSafeArea().onTapGesture {
+            isSearchFieldFocused = false
+        })
         .overlay(
             Group {
                 if showCustomAlert {

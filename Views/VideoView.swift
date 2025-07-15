@@ -8,6 +8,7 @@ struct VideoView: View {
 
     init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int) {
         self.videos = videos.reversed()
+        print(videos)
         self.userSession = userSession
         _currentIndex = State(initialValue: startIndex)
     }
@@ -132,7 +133,8 @@ struct VideoPageView: View {
                 isActive: isActive,
                 captions: video.captions,
                 videoLikes: video.likes,
-                videoSaves: video.saves
+                videoSaves: video.saves,
+                commentCount: video.commentCount
             )
             .environmentObject(userSession)
             .id(video.id)

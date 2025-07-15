@@ -8,11 +8,82 @@
 import Firebase
 import FirebaseFirestore
 import FirebaseAuth
+import FirebaseStorage
 
 class FirestoreService { //talks to Firebase so users are not doing it directly
     static let shared = FirestoreService() //singleton instance of FirebaseService to be used everywhere
     internal let db = Firestore.firestore() //database instance
     
+    func updateNumberOfComments(videoId: String, language: String) async {
+        let db = Firestore.firestore()
+        do {
+            let videoRef = db.collection("videos").document(language).collection("items").document(videoId)
+            try await videoRef.updateData([
+                "commentCount": FieldValue.increment(Int64(1))
+            ])
+        } catch {
+            print("Error updating comment count: \(error.localizedDescription)")
+        }
+    }
+    func deleteVideo(videoId: String, uid: String, language: String) async {
+        let db = Firestore.firestore()
+        let videoPath = "\(language)/items/\(videoId)"
+        
+        do {
+            // 1. Remove from user's uploadedVideos
+            let userRef = db.collection("users").document(uid)
+            let snapshot = try await userRef.getDocument()
+            
+            if let data = snapshot.data(),
+               var uploadedVideos = data["uploadedVideos"] as? [String] {
+                uploadedVideos.removeAll { $0 == videoPath }
+                try await userRef.updateData(["uploadedVideos": uploadedVideos])
+                print("✅ Removed video \(videoPath) from uploadedVideos.")
+            } else {
+                print("⚠️ No uploadedVideos found or data cast failed.")
+            }
+            
+            // 2. Delete video document from Firestore
+            let videoRef = db
+                .collection("videos")
+                .document(language)
+                .collection("items")
+                .document(videoId)
+            
+            try await videoRef.delete()
+            print("✅ Firestore video document deleted.")
+            
+            // 3. Delete video file from Firebase Storage
+            let storageRef = Storage.storage().reference(forURL: "gs://linguid-fe2b7.firebasestorage.app")
+            let videoStorageRef = storageRef.child("videos/\(language)/\(videoId).MOV")
+            try await videoStorageRef.delete()
+            print("✅ Video deleted from storage.")
+            
+            // 4. Delete all thumbnail files from the thumbnail directory
+            let thumbnailDirRef = storageRef.child("thumbnails/\(uid)/\(videoId)")
+            
+            do {
+                let listResult = try await thumbnailDirRef.listAll()
+                
+                if listResult.items.isEmpty {
+                    print("⚠️ No thumbnails found for \(videoId)")
+                } else {
+                    for item in listResult.items {
+                        try await item.delete()
+                        print("✅ Deleted thumbnail: \(item.name)")
+                    }
+                    print("✅ All thumbnails deleted from thumbnails/\(uid)/\(videoId)")
+                }
+            } catch {
+                print("❌ Error deleting thumbnails: \(error.localizedDescription)")
+            }
+            
+        } catch {
+            print("❌ Error deleting video: \(error.localizedDescription)")
+        }
+    }
+
+
     func getUserProfilePicture(forUserId uid: String) async throws -> String? {
         let snapshot = try await db.collection("users").document(uid).getDocument()
 
