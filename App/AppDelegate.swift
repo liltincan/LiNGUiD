@@ -14,7 +14,7 @@ import FirebaseMessaging
 import UserNotifications
 
 
-class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil
@@ -23,6 +23,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         
         FirebaseApp.configure()
         UNUserNotificationCenter.current().delegate = self
+        Messaging.messaging().delegate = self
         // 🔑 Log out user if app is freshly installed
         LaunchManager.shared.checkFirstLaunchAndLogoutIfNeeded()
         
@@ -32,7 +33,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func application(_ application: UIApplication,
                          didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
             Messaging.messaging().apnsToken = deviceToken
+            Messaging.messaging().token { token, error in
+                    if let error = error {
+                        print("Error fetching FCM token after setting APNs token: \(error)")
+                        return
+                    }
+                    print("FCM token after APNs token set: \(token ?? "none")")
+                }
     }
+    
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+            print("Firebase registration token: \(fcmToken ?? "")")
+            // Save token to backend here
+        }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                     didReceive response: UNNotificationResponse,
