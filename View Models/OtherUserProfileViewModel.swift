@@ -260,7 +260,6 @@ class OtherUserProfileViewModel: ObservableObject {
             
             guard let urlString = data["video_url"] as? String,
                   let url = URL(string: urlString),
-                  let title = data["title"] as? String,
                   let likes = data["likes"] as? Int,
                   let saves = data["saves"] as? Int,
                   let language = data["language_detected"] as? String,
@@ -282,7 +281,7 @@ class OtherUserProfileViewModel: ObservableObject {
             
             let detectedLevel = data["detected_level"] as? Int ?? 2
             let commentCount = data["commentCount"] as? Int ?? 0
-            
+            let title = data["title"] as? String ?? "Untitled"
             return Video(
                 id: docId,
                 url: url,

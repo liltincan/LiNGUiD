@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @State private var selection = 0
     @Binding var selectedTab: Int
     @Binding var deepLinkedVideoID: String?
     //need to keep track of the numbers
@@ -13,8 +12,8 @@ struct MainTabView: View {
     let onLogout: () -> Void
 
     var body: some View {
-        TabView(selection: $selection) {
-            VideoFeedView(userSession: userSession, startingVideoId: deepLinkedVideoID)
+        TabView(selection: $selectedTab) {  // Changed from $selection to $selectedTab
+            VideoFeedView(userSession: userSession, startingVideoId: deepLinkedVideoID, selectedTab: $selectedTab)
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
 
@@ -24,7 +23,7 @@ struct MainTabView: View {
                 .badge(unreadChatCount == 0 ? 0 : unreadChatCount)
                 .tag(1)
 
-            DashboardView(userSession: userSession, selectedTab: $selection)
+            DashboardView(userSession: userSession, selectedTab: $selectedTab)
                 .environmentObject(userSession)
                 .tabItem { Label("Dashboard", systemImage: "chart.bar.fill") }
                 .tag(2)
@@ -32,7 +31,7 @@ struct MainTabView: View {
             PracticeView(userSession: userSession)
                 .tabItem {
                     VStack {
-                        Image(selection == 3 ? "practiceImg2" : "practiceImg1")
+                        Image(selectedTab == 3 ? "practiceImg2" : "practiceImg1")  // Changed from selection to selectedTab
                             .renderingMode(.template)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
@@ -44,7 +43,7 @@ struct MainTabView: View {
                 .tag(3)
 
             // Pass logout closure to ProfileView
-            ProfileView(userSession: userSession, onLogout: onLogout)
+            ProfileView(userSession: userSession, onLogout: onLogout, selectedTab: $selectedTab)
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
                 .tag(4)
         }

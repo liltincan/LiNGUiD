@@ -5,12 +5,13 @@ struct VideoView: View {
     let videos: [Video]
     @State private var currentIndex: Int
     @ObservedObject var userSession: UserSessionViewModel
-
-    init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int) {
+    @Binding var selectedTab: Int
+    init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int, selectedTab: Binding<Int>) {
         self.videos = videos.reversed()
         print(videos)
         self.userSession = userSession
         _currentIndex = State(initialValue: startIndex)
+        self._selectedTab = selectedTab
     }
 
     var body: some View {
@@ -26,7 +27,8 @@ struct VideoView: View {
                 VerticalVideoScrollView(
                     videos: videos,
                     currentIndex: $currentIndex,
-                    userSession: userSession
+                    userSession: userSession,
+                    selectedTab: $selectedTab
                 )
             }
         }
@@ -39,7 +41,7 @@ struct VerticalVideoScrollView: View {
     @Binding var currentIndex: Int
     @ObservedObject var userSession: UserSessionViewModel
     @State private var hasInitialized = false
-    
+    @Binding var selectedTab: Int
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
@@ -54,7 +56,8 @@ struct VerticalVideoScrollView: View {
                                 isActive: index == currentIndex,
                                 userSession: userSession,
                                 containerWidth: screenWidth,
-                                containerHeight: screenHeight
+                                containerHeight: screenHeight,
+                                selectedTab: $selectedTab
                             )
                             .frame(width: screenWidth, height: screenHeight)
                             .id(index)
@@ -115,7 +118,7 @@ struct VideoPageView: View {
     @ObservedObject var userSession: UserSessionViewModel
     let containerWidth: CGFloat
     let containerHeight: CGFloat
-    
+    @Binding var selectedTab: Int
     @State private var uploaderPfp: String?
     
     var body: some View {
@@ -134,7 +137,8 @@ struct VideoPageView: View {
                 captions: video.captions,
                 videoLikes: video.likes,
                 videoSaves: video.saves,
-                commentCount: video.commentCount
+                commentCount: video.commentCount,
+                selectedTab: $selectedTab
             )
             .environmentObject(userSession)
             .id(video.id)

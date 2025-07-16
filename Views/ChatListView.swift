@@ -12,25 +12,21 @@ import Kingfisher
 //MARK: - View (Main View)
 struct ChatListView: View {
     @StateObject private var viewModel = ChatListViewModel()
-    //controls what chat it is at -> currently empty
     @State private var selectedChat: ChatConversation? = nil
     @State private var discoveryPage = false
-    //update the parent and tell it how many messages are unread
+    @State private var pendingChatUserId: String? = nil
     @Binding var unreadChatCount: Int
     
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
             if let conversation = selectedChat {
-                ChatMessagesConvoView(chatID:conversation.friend.id, viewModel: viewModel) {
-                    //then set it back to nil once they go back
+                ChatMessagesConvoView(chatID: conversation.friend.id, viewModel: viewModel) {
                     selectedChat = nil
                 }
             }
             else {
-                //this shows when all the information is loaded then go in here
                 if (viewModel.isInitialLoadDone) {
-                    //keep this together and not with the headlines
                     VStack {
                         HStack {
                             Text("Chats")
@@ -38,7 +34,6 @@ struct ChatListView: View {
                                 .font(.title)
                                 .fontWeight(.bold)
                             Spacer()
-                            //once click the button then it goes to
                             Button(action: {
                                 discoveryPage = true
                             }) {
@@ -52,7 +47,7 @@ struct ChatListView: View {
                         }
                         .padding()
                         lineDivider()
-                        //checking if user has any conversations
+                        
                         if (viewModel.conversations.isEmpty) {
                             Spacer()
                             VStack(spacing: 16) {
@@ -84,7 +79,6 @@ struct ChatListView: View {
                                     .buttonStyle(PlainButtonStyle())
                                     .listRowBackground(Color.black)
                                     .listRowSeparatorTint(.gray)
-                                    //need this so i can add image aka just a delete trash butto
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                         Button(role: .destructive) {
                                             if let index = viewModel.conversations.firstIndex(where: { $0.id == conversation.id }) {
@@ -105,31 +99,66 @@ struct ChatListView: View {
                     }
                     .padding(.top,10)
                 }
-                //simple black background like imessages
                 else {
                     Color.black.ignoresSafeArea()
                 }
             }
         }
-        //this needs to be changes when changes are being made since it keeps track of the count
         .onChange(of: viewModel.conversations) { conversations in
             unreadChatCount = conversations.filter { $0.hasUnreadMessages }.count
+            
+            // Check if we need to open a specific chat after conversations are loaded
+            if let userId = pendingChatUserId,
+               let conversation = conversations.first(where: { $0.friend.id == userId }) {
+                selectedChat = conversation
+                pendingChatUserId = nil
+            }
         }
         .fullScreenCover(isPresented: $discoveryPage){
             DiscoveryView(viewModel: viewModel) {
                 discoveryPage = false
             }
         }
-    }
-    //function will delete the chat based on the index
-    private func deleteChat(at offsets: IndexSet) {
-        for index in offsets {
-            let conversation = viewModel.conversations[index]
-            //going to delete the id of the user
-            viewModel.softDeleteChatForCurrentUser(chatID: conversation.friend.id)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StartChatWithUser"))) { notification in
+            if let userInfo = notification.userInfo,
+               let userId = userInfo["userId"] as? String,
+               let username = userInfo["username"] as? String {
+                let conversation = viewModel.conversations[0]
+                if(conversation.friend.participantIDs.contains(userId)){
+                    selectedChat = conversation
+                } else{
+                    print("\(conversation.friend.id) - \(userId) NOT SAME")
+                    handleStartChat(userId: userId, username: username)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(700)) {
+                        viewModel.fetchChats()
+                        let conversation = viewModel.conversations[0]
+                        selectedChat = conversation
+                    }
+                    
+                }
+                
+            }
         }
     }
     
+    private func handleStartChat(userId: String, username: String) {
+        // First check if conversation already exists
+        if let existingConversation = viewModel.conversations.first(where: { $0.friend.id == userId }) {
+            selectedChat = existingConversation
+        } else {
+            // Start a new chat
+            viewModel.startChat(with: userId)
+            // Store the userId to open the chat once conversations are updated
+            pendingChatUserId = userId
+        }
+    }
+    
+    private func deleteChat(at offsets: IndexSet) {
+        for index in offsets {
+            let conversation = viewModel.conversations[index]
+            viewModel.softDeleteChatForCurrentUser(chatID: conversation.friend.id)
+        }
+    }
 }
 //MARK: - Chat Row View
 //precondition: pass in the model

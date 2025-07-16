@@ -17,7 +17,7 @@ struct VideoPlayerView: View {
     @State private var videoLikes = 0
     @State private var videoSaves = 0
     @State private var commentCount = 0
-    
+    @Binding var selectedTab: Int
     init(
         url: URL,
         videoId: String,
@@ -31,6 +31,7 @@ struct VideoPlayerView: View {
         videoLikes: Int,
         videoSaves: Int,
         commentCount: Int,
+        selectedTab: Binding<Int>
     ) {
         self.url = url
         self.videoId = videoId
@@ -44,6 +45,7 @@ struct VideoPlayerView: View {
         _videoLikes = State(initialValue: videoLikes)
         _videoSaves = State(initialValue: videoSaves)
         _commentCount = State(initialValue: commentCount)
+        self._selectedTab = selectedTab
     }
 
     @State private var isPlaying = false
@@ -132,7 +134,7 @@ struct VideoPlayerView: View {
                                     }
                                 }
                                 
-                                NavigationLink(destination: OtherUserProfileView(userId: uploaderId)) {
+                                NavigationLink(destination: OtherUserProfileView(userId: uploaderId, selectedTab: $selectedTab)) {
                                     ProfilePictureView(
                                         uploaderPfp: uploaderPfp,
                                         size: 40
@@ -362,10 +364,12 @@ struct VideoPlayerView: View {
                                             }
                                         )
                                         .onTapGesture {
-                                            if isPlaying {
-                                                togglePlayPause()
+                                            if isActive{
+                                                if isPlaying {
+                                                    togglePlayPause()
+                                                }
+                                                actionFunction(word: word)
                                             }
-                                            actionFunction(word: word)
                                         }
                                 }
                             }
