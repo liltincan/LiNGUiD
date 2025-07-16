@@ -11,6 +11,10 @@ struct RootCoordinatorView: View {
     @State private var navigationPath = NavigationPath()
     
     @State private var startingVideoId: String? = nil
+    
+    @EnvironmentObject var notificationService: NotificationService
+    @State private var showNotificationVideo = false
+    @State private var videoIdFromNotification: String?
 
     init() {
         // logout()
@@ -30,6 +34,24 @@ struct RootCoordinatorView: View {
         .onChange(of: deepLinkCoordinator.deepLinkVideoID) { _, newId in
             handleDeepLinkChange(newId)
         }
+        .onChange(of: notificationService.notificationVideoId) { _, newId in
+            guard let id = newId
+                  else { return }
+
+            print("Opening video from notification: \(id)")
+
+            startingVideoId = nil
+            selectedTab = 0 // Go to main feed
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                startingVideoId = id
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                notificationService.notificationVideoId = nil
+            }
+
+        }
+
     }
 
     
