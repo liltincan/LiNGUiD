@@ -4,6 +4,31 @@ import FirebaseAuth
 import UserNotifications
 
 class NotificationService: NSObject, ObservableObject, UNUserNotificationCenterDelegate, MessagingDelegate {
+    @Published var notificationVideoId: String?
+
+    override init() {
+        super.init()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleNotificationOpen(_:)),
+            name: .openFromNotification,
+            object: nil
+        )
+    }
+
+    @objc private func handleNotificationOpen(_ notification: Notification) {
+        guard
+            let userInfo = notification.userInfo,
+            let videoId = userInfo["videoId"] as? String
+        else {
+            return
+        }
+
+        print("🔔 Notification tapped: \(videoId)")
+        notificationVideoId = videoId
+    }
+    
+    
     
     func setupNotifications() {
         UNUserNotificationCenter.current().delegate = self

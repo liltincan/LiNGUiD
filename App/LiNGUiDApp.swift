@@ -24,6 +24,7 @@ struct LiNGUiDApp: App {
                 .environmentObject(uploadManager)
                 .environment(\.font, .custom("Poppins", size: 16))
                 .environmentObject(deepLinkCoordinator)
+                .environmentObject(notificationService)
                 .onOpenURL { url in
                     deepLinkCoordinator.handle(url: url)
                 }

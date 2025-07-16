@@ -14,7 +14,7 @@ struct UploadView: View {
     
     @State private var videoAssets: [PHAsset] = []
     @State private var selectedAssets: [PHAsset] = []
-    @State private var isMultiSelect = false
+    @State private var isMultiSelect = true
     @State private var navigateToThumbnail = false
     @State private var uploadService = VideoUploadService()
     @State private var thumbnailOverrides: [String: UIImage] = [:]
@@ -37,28 +37,28 @@ struct UploadView: View {
                     .padding(.bottom, 30)
 
                 // 🟣 Selection Menu
-                HStack {
-                    Menu {
-                        Button("Select One") {
-                            isMultiSelect = false
-                            selectedAssets.removeAll()
-                        }
-                        Button("Select Multiple") {
-                            isMultiSelect = true
-                            selectedAssets.removeAll()
-                        }
-                    } label: {
-                        HStack {
-                            Text("Select \(isMultiSelect ? "Multiple" : "One")")
-                            Image(systemName: "chevron.down")
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal)
-                    }
-
-                    Spacer()
-                }
-                .padding(.bottom, 20)
+//                HStack {
+//                    Menu {
+//                        Button("Select One") {
+//                            isMultiSelect = false
+//                            selectedAssets.removeAll()
+//                        }
+//                        Button("Select Multiple") {
+//                            isMultiSelect = true
+//                            selectedAssets.removeAll()
+//                        }
+//                    } label: {
+//                        HStack {
+//                            Text("Select \(isMultiSelect ? "Multiple" : "One")")
+//                            Image(systemName: "chevron.down")
+//                        }
+//                        .foregroundColor(.white)
+//                        .padding(.horizontal)
+//                    }
+//
+//                    Spacer()
+//                }
+//                .padding(.bottom, 20)
 
                 // 🟣 Video Grid
                 GeometryReader { geometry in
@@ -551,7 +551,7 @@ struct AddThumbnailView: View {
         }
         .sheet(item: $showingFrameSelectorFor) { asset in
             ZStack {
-                Color.black.opacity(0.9) //darkens background
+                Color.black.opacity(1.0) //darkens background
                 if let url = compressedVideoURLs[asset.localIdentifier] {
                     VideoScrubberSelector(
                         videoURL: url,

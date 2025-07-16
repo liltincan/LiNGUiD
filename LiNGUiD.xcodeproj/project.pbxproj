@@ -287,6 +287,7 @@
 				8F51F2322DE023C300397726 /* VideoRepository.swift */,
 				8F51F2312DE023A600397726 /* FirebaseAuthService.swift */,
 				D69E53ED2DEA4C5E00329D64 /* FirestoreService.swift */,
+				D61307E72E1B4D6C0089F942 /* NotificationService.swift */,
 				8F51F2302DE0238900397726 /* AuthService.swift */,
 			);
 			path = Services;
@@ -362,7 +363,6 @@
 			isa = PBXGroup;
 			children = (
 				0493FF552E0C614700D6F989 /* LaunchManager.swift */,
-				D61307E72E1B4D6C0089F942 /* NotificationService.swift */,
 				603628C12DFA91C900C6D0E5 /* AppTextTranslate.swift */,
 				60974D852DE79BDF0075CAAE /* AppTitleText.swift */,
 				604101EE2DE3D42F00B187B7 /* NonceGenerator.swift */,

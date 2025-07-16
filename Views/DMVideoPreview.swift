@@ -102,7 +102,7 @@
 //        .clipped()
 //        .onAppear {
 //            Task {
-//                await vm.fetchVideoInfo(from: videoPath)
+//                await vm.fetchVideoObjectFromPath(<#T##String#>)
 //            }
 //        }
 //    }
