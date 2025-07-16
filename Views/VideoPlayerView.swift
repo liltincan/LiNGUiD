@@ -17,7 +17,7 @@ struct VideoPlayerView: View {
     @State private var videoLikes = 0
     @State private var videoSaves = 0
     @State private var commentCount = 0
-    
+    @Binding var selectedTab: Int
     init(
         url: URL,
         videoId: String,
@@ -31,6 +31,7 @@ struct VideoPlayerView: View {
         videoLikes: Int,
         videoSaves: Int,
         commentCount: Int,
+        selectedTab: Binding<Int>
     ) {
         self.url = url
         self.videoId = videoId
@@ -44,6 +45,7 @@ struct VideoPlayerView: View {
         _videoLikes = State(initialValue: videoLikes)
         _videoSaves = State(initialValue: videoSaves)
         _commentCount = State(initialValue: commentCount)
+        self._selectedTab = selectedTab
     }
 
     @State private var isPlaying = false
@@ -76,6 +78,8 @@ struct VideoPlayerView: View {
     @State private var showingReportConfirmation = false
     @State private var showingDeleteConfirmation = false
     @State private var showingComments = false
+    let speedArray: [Float] = [1.0, 0.75, 0.5]
+    @State private var currentSpeedIndex = 0
 
     @EnvironmentObject var userSession: UserSessionViewModel
     @StateObject var videoPlayerViewModel = VideoPlayerViewModel()
@@ -130,7 +134,7 @@ struct VideoPlayerView: View {
                                     }
                                 }
                                 
-                                NavigationLink(destination: OtherUserProfileView(userId: uploaderId)) {
+                                NavigationLink(destination: OtherUserProfileView(userId: uploaderId, selectedTab: $selectedTab)) {
                                     ProfilePictureView(
                                         uploaderPfp: uploaderPfp,
                                         size: 40
@@ -255,13 +259,27 @@ struct VideoPlayerView: View {
                                     }
                                     isShareSheetPresented = true
                                 }
-                                
-                                ActionButton(
-                                    icon: "clock.fill",
-                                    color: .white,
-                                    size: 25,
-                                    isSystemImage: true
-                                ) {}
+                                VStack(spacing: 5){
+                                    ActionButton(
+                                        icon: "clock.fill",
+                                        color: .white,
+                                        size: 25,
+                                        isSystemImage: true
+                                    ) {
+                                        if(currentSpeedIndex != 2){
+                                            currentSpeedIndex += 1
+                                        } else if (currentSpeedIndex == 2){
+                                            currentSpeedIndex = 0
+                                        }
+                                        
+                                        // Apply the speed with better audio processing
+                                        let newSpeed = speedArray[currentSpeedIndex]
+                                        setPlayerSpeed(newSpeed)
+                                    }
+                                    Text("\(speedArray[currentSpeedIndex], specifier: "%.2f")x")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.white)
+                                }
                                 
                                 ActionButton(
                                     icon: "ellipsis",
@@ -346,10 +364,12 @@ struct VideoPlayerView: View {
                                             }
                                         )
                                         .onTapGesture {
-                                            if isPlaying {
-                                                togglePlayPause()
+                                            if isActive{
+                                                if isPlaying {
+                                                    togglePlayPause()
+                                                }
+                                                actionFunction(word: word)
                                             }
-                                            actionFunction(word: word)
                                         }
                                 }
                             }
@@ -462,7 +482,10 @@ struct VideoPlayerView: View {
 
         let asset = VideoAssetCache.shared.asset(for: url)
         let item = AVPlayerItem(asset: asset)
-
+        
+        // Enable audio processing for better quality at different speeds
+        item.audioTimePitchAlgorithm = .timeDomain // Better for pitch preservation at slower speeds
+        
         let queuePlayer = AVQueuePlayer()
         looper = AVPlayerLooper(player: queuePlayer, templateItem: item)
         player = queuePlayer
@@ -505,21 +528,49 @@ struct VideoPlayerView: View {
             if isActive {
                 player.seek(to: .zero)
                 player.play()
+                // Set initial speed with smooth transition
+                self.setPlayerSpeed(self.speedArray[self.currentSpeedIndex])
                 isPlaying = true
             }
         }
     }
 
+    private func setPlayerSpeed(_ speed: Float) {
+        guard isPlayerReady else { return }
+        
+        if speed == 0.5 {
+            player.currentItem?.audioTimePitchAlgorithm = .timeDomain
+        } else if speed < 1.0 {
+            player.currentItem?.audioTimePitchAlgorithm = .spectral
+        } else {
+            player.currentItem?.audioTimePitchAlgorithm = .lowQualityZeroLatency
+        }
+        
+        player.rate = speed
+    }
+
+    
     private func configureAudioSession() {
         do {
-            try AVAudioSession.sharedInstance().setCategory(
+            let audioSession = AVAudioSession.sharedInstance()
+            
+            // Use .playback category with better options for audio processing
+            try audioSession.setCategory(
                 .playback,
-                mode: .default,
-                options: []
+                mode: .moviePlayback, // Use .moviePlayback for better video audio processing
+                options: [.allowBluetooth, .allowBluetoothA2DP, .allowAirPlay]
             )
-            try AVAudioSession.sharedInstance().setActive(true)
-        } catch {}
+            
+            // Set preferred sample rate and buffer duration for better audio quality
+            try audioSession.setPreferredSampleRate(44100.0)
+            try audioSession.setPreferredIOBufferDuration(0.005)
+            
+            try audioSession.setActive(true)
+        } catch {
+            print("Audio session configuration failed: \(error)")
+        }
     }
+
 
     private func handleActiveStateChange(_ active: Bool) {
         guard isPlayerReady else {
@@ -534,6 +585,7 @@ struct VideoPlayerView: View {
         if active {
             player.seek(to: .zero)
             player.play()
+            setPlayerSpeed(speedArray[currentSpeedIndex])
             isPlaying = true
             totalWatchTime = 0
             hasBeenMarkedAsWatched = false
@@ -545,19 +597,22 @@ struct VideoPlayerView: View {
             stopWatchTimer()
         }
     }
-
+    
     private func togglePlayPause() {
         guard isPlayerReady else { return }
 
         isPlaying.toggle()
         if isPlaying {
             player.play()
+            // Maintain the current speed when resuming with proper audio processing
+            setPlayerSpeed(speedArray[currentSpeedIndex])
             startWatchTimer()
         } else {
             player.pause()
             stopWatchTimer()
         }
     }
+
 
     private func startWatchTimer() {
         guard watchTimer == nil else { return }
@@ -595,7 +650,7 @@ struct VideoPlayerView: View {
     }
 
     private func handleReportVideo() {
-        guard let userID = Auth.auth().currentUser?.uid else { return }
+        guard (Auth.auth().currentUser?.uid) != nil else { return }
         
         Task {
             print("Video \(language ?? "ERROR")/items/\(videoId) reported")
@@ -612,7 +667,7 @@ struct VideoPlayerView: View {
                 sourceLang: userSession.currentUser?.targetLanguage ?? "",
                 targetLang: userSession.currentUser?.nativeLanguage ?? ""
             ) { result in
-                if let translated = result {
+                if result != nil {
                     isTranslatingCaption = false
                     translatedText = result
                 }

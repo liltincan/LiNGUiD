@@ -6,16 +6,17 @@ struct VideoFeedView: View {
     @StateObject private var vm = VideoFeedViewModel()
     @State private var currentIndex = 0
     @ObservedObject var userSession: UserSessionViewModel
-    
+    @Binding var selectedTab: Int
     // Add optional starting video ID parameter
     let startingVideoId: String?
     
     @State private var hasScrolledToInitialVideo = false
     
     // Add initializer to accept optional video ID
-    init(userSession: UserSessionViewModel, startingVideoId: String? = nil) {
+    init(userSession: UserSessionViewModel, startingVideoId: String? = nil, selectedTab: Binding<Int>) {
         self.userSession = userSession
         self.startingVideoId = startingVideoId
+        self._selectedTab = selectedTab
         print("startingVideoId: \(String(describing: startingVideoId))")
     }
 
@@ -41,7 +42,8 @@ struct VideoFeedView: View {
                     userSession: userSession,
                     vm: vm,
                     startingVideoId: startingVideoId,
-                    hasScrolledToInitialVideo: $hasScrolledToInitialVideo
+                    hasScrolledToInitialVideo: $hasScrolledToInitialVideo,
+                    selectedTab: $selectedTab
                 )
             }
         }
@@ -78,7 +80,7 @@ struct VerticalVideoFeed: View {
     let startingVideoId: String?
 
     @Binding var hasScrolledToInitialVideo: Bool
-    
+    @Binding var selectedTab: Int
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
@@ -96,7 +98,8 @@ struct VerticalVideoFeed: View {
                                 userSession: userSession,
                                 language: vm.selectedLanguage,
                                 containerWidth: screenWidth,
-                                containerHeight: screenHeight
+                                containerHeight: screenHeight,
+                                selectedTab: $selectedTab
                             )
                             .frame(width: screenWidth, height: screenHeight)
                             .id(video.id) // Use stable video ID for scrolling
@@ -172,7 +175,7 @@ struct FeedVideoPage: View {
     let language: String?
     let containerWidth: CGFloat
     let containerHeight: CGFloat
-    
+    @Binding var selectedTab: Int
     @State private var uploaderPfp: String?
     
     var body: some View {
@@ -191,7 +194,8 @@ struct FeedVideoPage: View {
                 captions: video.captions,
                 videoLikes: video.likes,
                 videoSaves: video.saves,
-                commentCount: video.commentCount
+                commentCount: video.commentCount,
+                selectedTab: $selectedTab
             )
             .environmentObject(userSession)
             .id(video.id)

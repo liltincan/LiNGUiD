@@ -17,7 +17,7 @@ struct SettingsView: View {
     @StateObject private var loginVM = LoginViewModel()
     @EnvironmentObject var state: AppState
     @Environment(\.dismiss) var dismiss
-    
+    @Binding var selectedTab: Int
     let onLogout: () -> Void
 
     var body: some View {
@@ -30,8 +30,8 @@ struct SettingsView: View {
                         DividerLine()
                         
                         SettingsSection(title: "Your activity") {
-                            SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumbnails: likedVideos, videoURLs: likedVideoURLs, likedVideoArray: likedVideoArray))
-                            SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumbnails: savedVideos, videoURLs: savedVideoURLs, savedVideoArray: savedVideoArray))
+                            SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumbnails: likedVideos, videoURLs: likedVideoURLs, likedVideoArray: likedVideoArray, selectedTab: $selectedTab))
+                            SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumbnails: savedVideos, videoURLs: savedVideoURLs, savedVideoArray: savedVideoArray, selectedTab: $selectedTab))
                         }
 
                         DividerLine()
@@ -227,10 +227,10 @@ struct LikedView: View {
     var videoThumbnails: [String]
     var videoURLs: [String]
     var likedVideoArray: [Video]
-    
+    @Binding var selectedTab: Int
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't liked any videos yet.", videoArray: likedVideoArray)
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't liked any videos yet.", videoArray: likedVideoArray, selectedTab: $selectedTab)
         }
         .navigationTitle("Liked Videos")
     }
@@ -240,10 +240,10 @@ struct SavedView: View {
     var videoThumbnails: [String]
     var videoURLs: [String]
     var savedVideoArray: [Video]
-    
+    @Binding var selectedTab: Int
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't saved any videos yet.", videoArray: savedVideoArray)
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't saved any videos yet.", videoArray: savedVideoArray, selectedTab: $selectedTab)
         }
         .navigationTitle("Saved Videos")
     }

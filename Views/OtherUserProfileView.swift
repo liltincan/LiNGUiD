@@ -20,121 +20,123 @@ struct OtherUserProfileView: View {
     @State private var hasTaskExecuted = false
     
     let userId: String
-
-    init(userId: String) {
+    @Binding var selectedTab: Int
+    
+    init(userId: String, selectedTab: Binding<Int>) {
         self.userId = userId
+        self._selectedTab = selectedTab
         _vm = StateObject(wrappedValue: OtherUserProfileViewModel(userId: userId))
     }
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                ScrollView {
-                    VStack {
-                        OtherUserProfileHeaderView(
-                            userName: vm.userName,
-                            profilePictureURL: vm.profilePictureURL,
-                            languageDisplay: vm.formattedLanguagesDisplay,
-                            vm: vm,
-                            showingFullScreenProfilePicture: $showingFullScreenProfilePicture,
-                            fullScreenProfilePictureURL: $fullScreenProfilePictureURL,
-                            onBackTapped: {
-                                dismiss()
-                            }
-                        )
-                        .padding(.bottom, 10)
-                        
-                        ProfileStatsView(
-                            videoCount: vm.videoCount,
-                            inputAmount: vm.inputAmount,
-                            followerCount: vm.followerCount
-                        )
-                        .padding(.bottom, 10)
-                        
-                        OtherUserProfileActionButtons(
-                            userId: userId,
-                            username: vm.userName,
-                            isFollowing: vm.isFollowing,
-                            vm: vm
-                        )
-                        .padding(.bottom, 15)
-                        
-                        VideoGridSection(
-                            videoThumbnails: vm.videoThumbnails,
-                            videoURLs: vm.videoURLs,
-                            uploadingVideos: [],
-                            noVideosMessage: "The user hasn't uploaded any videos yet.",
-                            videoArray: vm.uploadedVideoArray
-                        )
-                            
-                    }
-                    
-                }
-            }
-            .safeAreaInset(edge: .top) {
-                Color.clear.frame(height: 60) // Allows pull-to-refresh spinner to show
-            }
-            .refreshable {
-                await refreshData()
-            }
-            .task {
-                Task {
-                    await loadData()
-                }
-            }
-            .overlay(
-                Group {
-                    if showingFullScreenProfilePicture, let urlString = fullScreenProfilePictureURL, let url = URL(string: urlString) {
-                        Rectangle()
-                            .fill(Material.ultraThinMaterial)
-                            .ignoresSafeArea()
-                        
-                        ZStack {
-                            ZStack(alignment: .topTrailing) {
-                                AsyncImage(url: url) { phase in
-                                    if let image = phase.image {
-                                        image
-                                            .resizable()
-                                            .scaledToFit()
-                                    } else if phase.error != nil {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .foregroundColor(.red)
-                                            .frame(width: 100, height: 100)
-                                    } else {
-                                        ProgressView()
-                                    }
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                
-                                Button {
-                                    showingFullScreenProfilePicture = false
-                                    fullScreenProfilePictureURL = nil
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.largeTitle)
-                                        .foregroundColor(.white)
-                                        .padding(15)
-                                }
-                            }
-                        }
-                        .transition(.opacity)
-                    }
-                }
-            )
-            .animation(.easeInOut, value: showingFullScreenProfilePicture)
-            .navigationBarBackButtonHidden(true)
-            .gesture(
-                DragGesture()
-                    .onEnded { value in
-                        // Enable swipe-to-go-back from left edge
-                        if value.translation.width > 100 {
+        ZStack {
+            ScrollView {
+                VStack {
+                    OtherUserProfileHeaderView(
+                        userName: vm.userName,
+                        profilePictureURL: vm.profilePictureURL,
+                        languageDisplay: vm.formattedLanguagesDisplay,
+                        vm: vm,
+                        showingFullScreenProfilePicture: $showingFullScreenProfilePicture,
+                        fullScreenProfilePictureURL: $fullScreenProfilePictureURL,
+                        onBackTapped: {
                             dismiss()
                         }
-                    }
-            )
+                    )
+                    .padding(.bottom, 10)
+                    
+                    ProfileStatsView(
+                        videoCount: vm.videoCount,
+                        inputAmount: vm.inputAmount,
+                        followerCount: vm.followerCount
+                    )
+                    .padding(.bottom, 10)
+                    
+                    OtherUserProfileActionButtons(
+                        userId: userId,
+                        username: vm.userName,
+                        isFollowing: vm.isFollowing,
+                        selectedTab: $selectedTab,
+                        vm: vm
+                    )
+                    .padding(.bottom, 15)
+                    
+                    VideoGridSection(
+                        videoThumbnails: vm.videoThumbnails,
+                        videoURLs: vm.videoURLs,
+                        uploadingVideos: [],
+                        noVideosMessage: "The user hasn't uploaded any videos yet.",
+                        videoArray: vm.uploadedVideoArray,
+                        selectedTab: $selectedTab
+                    )
+                        
+                }
+                
+            }
         }
+        .safeAreaInset(edge: .top) {
+            Color.clear.frame(height: 60) // Allows pull-to-refresh spinner to show
+        }
+        .refreshable {
+            await refreshData()
+        }
+        .task {
+            Task {
+                await loadData()
+            }
+        }
+        .overlay(
+            Group {
+                if showingFullScreenProfilePicture, let urlString = fullScreenProfilePictureURL, let url = URL(string: urlString) {
+                    Rectangle()
+                        .fill(Material.ultraThinMaterial)
+                        .ignoresSafeArea()
+                    
+                    ZStack {
+                        ZStack(alignment: .topTrailing) {
+                            AsyncImage(url: url) { phase in
+                                if let image = phase.image {
+                                    image
+                                        .resizable()
+                                        .scaledToFit()
+                                } else if phase.error != nil {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .foregroundColor(.red)
+                                        .frame(width: 100, height: 100)
+                                } else {
+                                    ProgressView()
+                                }
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            
+                            Button {
+                                showingFullScreenProfilePicture = false
+                                fullScreenProfilePictureURL = nil
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.largeTitle)
+                                    .foregroundColor(.white)
+                                    .padding(15)
+                            }
+                        }
+                    }
+                    .transition(.opacity)
+                }
+            }
+        )
+        .animation(.easeInOut, value: showingFullScreenProfilePicture)
+        .navigationBarBackButtonHidden(true)
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    // Enable swipe-to-go-back from left edge
+                    if value.translation.width > 100 {
+                        dismiss()
+                    }
+                }
+        )
     }
     
     @MainActor
@@ -226,6 +228,7 @@ struct OtherUserProfileActionButtons: View {
     let userId: String
     let username: String
     let isFollowing: Bool
+    @Binding var selectedTab: Int
     @StateObject var vm: OtherUserProfileViewModel
     
     var body: some View {
@@ -250,8 +253,22 @@ struct OtherUserProfileActionButtons: View {
             }
             
             Button {
-                // Navigate to message view
-                // This would need to be implemented based on your messaging system
+                // Navigate to chat tab and start/open chat with this user
+                selectedTab = 1
+                
+                // You'll need to add a method to your ChatListViewModel to handle this
+                // This could be done through a notification or by updating the ChatListView
+                // to accept a parameter for which user to chat with
+                
+                // Option 1: Using NotificationCenter (recommended)
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("StartChatWithUser"),
+                    object: nil,
+                    userInfo: ["userId": userId, "username": username]
+                )
+                // Option 2: You could also use a shared state manager or dependency injection
+                // to communicate between views
+                
             } label: {
                 Text("Message")
                     .foregroundColor(.white)

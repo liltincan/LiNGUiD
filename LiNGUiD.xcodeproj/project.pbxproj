@@ -338,10 +338,10 @@
 				D6BA59E52DF3682000E6E137 /* ShareSheetView.swift */,
 				8177D3E52DF8D4AC00FA6800 /* UploadView.swift */,
 				60974D892DE803760075CAAE /* PracticeWordView.swift */,
-				8F51F2382DE0247000397726 /* VideoFeedView.swift */,
 				D69E51FE2DE6C0F600329D64 /* VideoPlayerLayerView.swift */,
-				D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */,
 				D613080E2E1C8D670089F942 /* SharedVideoPreviewView.swift */,
+				D69E51D32DE66EF600329D64 /* VideoPlayerView.swift */,
+				8F51F2382DE0247000397726 /* VideoFeedView.swift */,
 				8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */,
 				138F1B952DEE0DF300F3B31B /* VideoView.swift */,
 			);

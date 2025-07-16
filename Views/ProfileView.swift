@@ -13,11 +13,12 @@ struct ProfileView: View {
     
     @EnvironmentObject var uploadManager: UploadManager
     @State private var isShowingUploadView = false
-    
+    @Binding var selectedTab: Int
     let onLogout: () -> Void
 
-    init(userSession: UserSessionViewModel, onLogout: @escaping () -> Void = {}) {
+    init(userSession: UserSessionViewModel, onLogout: @escaping () -> Void = {}, selectedTab: Binding<Int>) {
         self.onLogout = onLogout
+        self._selectedTab = selectedTab
         _userSession = StateObject(wrappedValue: userSession)
         _vm = StateObject(wrappedValue: ProfileViewModel(userSession: userSession))
         _viewModel = StateObject(wrappedValue: SavedWordViewModel(userSession: userSession))
@@ -36,7 +37,8 @@ struct ProfileView: View {
                             vm: vm,
                             onLogout: onLogout,
                             showingFullScreenProfilePicture: $showingFullScreenProfilePicture,
-                            fullScreenProfilePictureURL: $fullScreenProfilePictureURL
+                            fullScreenProfilePictureURL: $fullScreenProfilePictureURL,
+                            selectedTab: $selectedTab
                         )
                         .padding(.bottom, 10)
                         
@@ -50,7 +52,7 @@ struct ProfileView: View {
                         ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL, isShowingUploadView: $isShowingUploadView, onUploadComplete: {await refreshData()})
                             .padding(.bottom, 15)
                         
-                        VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs, uploadingVideos: uploadManager.uploadingVideos, noVideosMessage: "No videos uploaded yet.", videoArray: vm.uploadedVideoArray )
+                        VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs, uploadingVideos: uploadManager.uploadingVideos, noVideosMessage: "No videos uploaded yet.", videoArray: vm.uploadedVideoArray, selectedTab: $selectedTab )
                             
                     }
                     .padding()
@@ -161,7 +163,7 @@ struct ProfileHeaderView: View {
     var onLogout: () -> Void
     @Binding var showingFullScreenProfilePicture: Bool
     @Binding var fullScreenProfilePictureURL: String?
-    
+    @Binding var selectedTab: Int
     var body: some View {
         VStack {
             ZStack{
@@ -182,6 +184,7 @@ struct ProfileHeaderView: View {
                             languages: vm.allLanguageNames,
                             uid: uid,
                             selectedNativeLanguages: Set([vm.nativeLanguage?.lowercased() ?? ""]),
+                            selectedTab: $selectedTab,
                             onLogout: onLogout
                         )
                     } label: {
@@ -275,7 +278,7 @@ struct VideoGridSection: View {
     let uploadingVideos: [UploadManager.UploadingVideo]
     let noVideosMessage: String?  // Optional custom message
     var videoArray: [Video]
-
+    @Binding var selectedTab: Int
     @EnvironmentObject var uploadManager: UploadManager
 
     var body: some View {
@@ -292,7 +295,7 @@ struct VideoGridSection: View {
         } else {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
                 ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
-                    Videos(thumbnailURL: thumbnailURL, videoURL: videoURLs[index], index: index, videoArray: videoArray)
+                    Videos(thumbnailURL: thumbnailURL, videoURL: videoURLs[index], index: index, videoArray: videoArray, selectedTab: $selectedTab)
                 }
 
                 ForEach(uploadingVideos) { video in
@@ -350,10 +353,11 @@ struct Videos: View {
     let videoURL: String
     let index: Int
     let videoArray: [Video]
+    @Binding var selectedTab: Int
     var body: some View {
         if URL(string: videoURL) != nil {
             NavigationLink {
-                VideoView(videos: videoArray, userSession: UserSessionViewModel(), startIndex: index)
+                VideoView(videos: videoArray, userSession: UserSessionViewModel(), startIndex: index, selectedTab: $selectedTab)
                     .environmentObject(UserSessionViewModel())
                     .onAppear{
                         print(index)
