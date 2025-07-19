@@ -130,7 +130,8 @@ struct VideoPlayerView: View {
                                 ) {
                                     isCaptionVisible.toggle()
                                     if isCaptionVisible && !currentCaptionText.isEmpty {
-                                        words = currentCaptionText.components(separatedBy: .whitespacesAndNewlines)
+                                        let separator = CharacterSet.whitespacesAndNewlines.union(.punctuationCharacters)
+                                        words = currentCaptionText.components(separatedBy: separator).filter{ !$0.isEmpty}
                                     }
                                 }
                                 
@@ -368,7 +369,10 @@ struct VideoPlayerView: View {
                                                 if isPlaying {
                                                     togglePlayPause()
                                                 }
-                                                actionFunction(word: word)
+                                                let cleanedWord = word
+                                                            .trimmingCharacters(in: .punctuationCharacters)
+
+                                                actionFunction(word: cleanedWord)
                                             }
                                         }
                                 }
@@ -506,6 +510,7 @@ struct VideoPlayerView: View {
                         currentCaptionText
                         .replacingOccurrences(of: "\n", with: " ")
                         .components(separatedBy: .whitespaces)
+//                        .map{ $0.trimmingCharacters(in: .punctuationCharacters) }
                         .filter { !$0.isEmpty }
                 }
             } else {
