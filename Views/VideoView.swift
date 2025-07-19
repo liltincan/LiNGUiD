@@ -7,7 +7,7 @@ struct VideoView: View {
     @ObservedObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
     init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int, selectedTab: Binding<Int>) {
-        self.videos = videos.reversed()
+        self.videos = videos
         print(videos)
         self.userSession = userSession
         _currentIndex = State(initialValue: startIndex)
@@ -50,9 +50,10 @@ struct VerticalVideoScrollView: View {
             ScrollViewReader { proxy in
                 ScrollView(.vertical, showsIndicators: false) {
                     LazyVStack(spacing: 0) {
-                        ForEach(videos.indices, id: \.self) { index in
+                        ForEach(videos, id: \.id) { video in
+                            let index = videos.firstIndex(where: { $0.id == video.id }) ?? 0
                             VideoPageView(
-                                video: videos[index],
+                                video: video,
                                 isActive: index == currentIndex,
                                 userSession: userSession,
                                 containerWidth: screenWidth,
@@ -60,7 +61,7 @@ struct VerticalVideoScrollView: View {
                                 selectedTab: $selectedTab
                             )
                             .frame(width: screenWidth, height: screenHeight)
-                            .id(index)
+                            .id(video.id)  // Using stable video ID
                         }
                     }
                     .background(
@@ -81,13 +82,15 @@ struct VerticalVideoScrollView: View {
                         currentIndex = 0
                     }
                     
-                    // Scroll to initial position
+                    // Scroll to initial position using video ID
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        proxy.scrollTo(currentIndex, anchor: .top)
-                        
-                        // Mark as initialized after scrolling
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            hasInitialized = true
+                        if currentIndex < videos.count {
+                            proxy.scrollTo(videos[currentIndex].id, anchor: .top)
+                            
+                            // Mark as initialized after scrolling
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                hasInitialized = true
+                            }
                         }
                     }
                 }
@@ -103,7 +106,7 @@ struct VerticalVideoScrollView: View {
     }
     
     private func updateCurrentIndex(scrollOffset: CGFloat, screenHeight: CGFloat) {
-        let newIndex = Int(round(abs(scrollOffset) / screenHeight))
+        let newIndex = Int(round(-(scrollOffset) / screenHeight))
         let clampedIndex = max(0, min(newIndex, videos.count - 1))
         
         if clampedIndex != currentIndex {

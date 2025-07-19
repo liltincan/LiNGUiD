@@ -27,39 +27,65 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
     }
     func deleteVideo(videoId: String, uid: String, language: String) async {
         let db = Firestore.firestore()
-        let videoPath = "\(language)/items/\(videoId)"
         
         do {
-            // 1. Remove from user's uploadedVideos
-            let userRef = db.collection("users").document(uid)
-            let snapshot = try await userRef.getDocument()
+            // 1. Get video document path that's stored in users' liked/saved arrays
+            let videoRef = db.collection("videos").document(language).collection("items").document(videoId)
+            let videoPath = "\(language)/items/\(videoId)"
             
-            if let data = snapshot.data(),
-               var uploadedVideos = data["uploadedVideos"] as? [String] {
-                uploadedVideos.removeAll { $0 == videoPath }
-                try await userRef.updateData(["uploadedVideos": uploadedVideos])
-                print("✅ Removed video \(videoPath) from uploadedVideos.")
-            } else {
-                print("⚠️ No uploadedVideos found or data cast failed.")
+            // 2. Query all users who have liked or saved this video
+            let usersWithVideoLiked = try await db.collection("users")
+                .whereField("likedVideos", arrayContains: videoPath)
+                .getDocuments()
+            
+            let usersWithVideoSaved = try await db.collection("users")
+                .whereField("savedVideos", arrayContains: videoPath)
+                .getDocuments()
+            
+            // 3. Remove video from liked videos
+            for userDoc in usersWithVideoLiked.documents {
+                if var likedVideos = userDoc.data()["likedVideos"] as? [String] {
+                    likedVideos.removeAll { $0 == videoPath }
+                    try await db.collection("users").document(userDoc.documentID).updateData([
+                        "likedVideos": likedVideos
+                    ])
+                    print("✅ Removed from liked videos for user: \(userDoc.documentID)")
+                }
             }
             
-            // 2. Delete video document from Firestore
-            let videoRef = db
-                .collection("videos")
-                .document(language)
-                .collection("items")
-                .document(videoId)
+            // 4. Remove video from saved videos
+            for userDoc in usersWithVideoSaved.documents {
+                if var savedVideos = userDoc.data()["savedVideos"] as? [String] {
+                    savedVideos.removeAll { $0 == videoPath }
+                    try await db.collection("users").document(userDoc.documentID).updateData([
+                        "savedVideos": savedVideos
+                    ])
+                    print("✅ Removed from saved videos for user: \(userDoc.documentID)")
+                }
+            }
             
+            // 5. Remove from uploader's uploadedVideos
+            let uploaderRef = db.collection("users").document(uid)
+            let uploaderSnapshot = try await uploaderRef.getDocument()
+            
+            if let data = uploaderSnapshot.data(),
+               var uploadedVideos = data["uploadedVideos"] as? [String] {
+                uploadedVideos.removeAll { $0 == videoPath }
+                try await uploaderRef.updateData(["uploadedVideos": uploadedVideos])
+                print("✅ Removed video \(videoPath) from uploadedVideos.")
+            }
+            
+            // 6. Delete video document from Firestore
             try await videoRef.delete()
             print("✅ Firestore video document deleted.")
             
-            // 3. Delete video file from Firebase Storage
+            // 7. Delete video file from Firebase Storage
             let storageRef = Storage.storage().reference(forURL: "gs://linguid-fe2b7.firebasestorage.app")
             let videoStorageRef = storageRef.child("videos/\(language)/\(videoId).MOV")
             try await videoStorageRef.delete()
             print("✅ Video deleted from storage.")
             
-            // 4. Delete all thumbnail files from the thumbnail directory
+            // 8. Delete all thumbnail files
             let thumbnailDirRef = storageRef.child("thumbnails/\(uid)/\(videoId)")
             
             do {

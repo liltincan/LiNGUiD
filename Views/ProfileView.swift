@@ -280,6 +280,7 @@ struct VideoGridSection: View {
     var videoArray: [Video]
     @Binding var selectedTab: Int
     @EnvironmentObject var uploadManager: UploadManager
+    @EnvironmentObject var userSession: UserSessionViewModel
 
     var body: some View {
         if videoThumbnails.isEmpty && uploadingVideos.isEmpty {
@@ -295,7 +296,15 @@ struct VideoGridSection: View {
         } else {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
                 ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
-                    Videos(thumbnailURL: thumbnailURL, videoURL: videoURLs[index], index: index, videoArray: videoArray, selectedTab: $selectedTab)
+                    Videos(
+                        thumbnailURL: thumbnailURL,
+                        videoURL: videoURLs[index],
+                        index: index,
+                        videoArray: videoArray,
+                        allVideoURLs: videoURLs,  // Pass the full array of URLs
+                        selectedTab: $selectedTab
+                    )
+                    .environmentObject(userSession)
                 }
 
                 ForEach(uploadingVideos) { video in
@@ -353,15 +362,39 @@ struct Videos: View {
     let videoURL: String
     let index: Int
     let videoArray: [Video]
+    let allVideoURLs: [String]  // Add this parameter
+    @EnvironmentObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
+    
+    private var selectedVideo: Video? {
+        // Find the video that matches this thumbnail's URL
+        videoArray.first { $0.url.absoluteString == videoURL }
+    }
+    
+    private var orderedVideos: [Video] {
+        // Reorder videos to match the order of thumbnails/URLs
+        var ordered: [Video] = []
+        for url in allVideoURLs {
+            if let video = videoArray.first(where: { $0.url.absoluteString == url }) {
+                ordered.append(video)
+            }
+        }
+        return ordered
+    }
+    
     var body: some View {
-        if URL(string: videoURL) != nil {
+        if let video = selectedVideo {
             NavigationLink {
-                VideoView(videos: videoArray, userSession: UserSessionViewModel(), startIndex: index, selectedTab: $selectedTab)
-                    .environmentObject(UserSessionViewModel())
-                    .onAppear{
-                        print(index)
-                    }
+                VideoView(
+                    videos: orderedVideos,
+                    userSession: userSession,
+                    startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
+                    selectedTab: $selectedTab
+                )
+                .onAppear {
+                    print("Opening video: \(video.title)")
+                    print("Video index in ordered array: \(orderedVideos.firstIndex(where: { $0.id == video.id }) ?? -1)")
+                }
             } label: {
                 AsyncImage(url: URL(string: thumbnailURL)) { phase in
                     if let image = phase.image {
