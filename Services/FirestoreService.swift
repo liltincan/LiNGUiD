@@ -6,18 +6,19 @@
 //
 
 import Firebase
-import FirebaseFirestore
 import FirebaseAuth
+import FirebaseFirestore
 import FirebaseStorage
 
-class FirestoreService { //talks to Firebase so users are not doing it directly
-    static let shared = FirestoreService() //singleton instance of FirebaseService to be used everywhere
-    internal let db = Firestore.firestore() //database instance
-    
+class FirestoreService {  //talks to Firebase so users are not doing it directly
+    static let shared = FirestoreService()  //singleton instance of FirebaseService to be used everywhere
+    internal let db = Firestore.firestore()  //database instance
+
     func updateNumberOfComments(videoId: String, language: String) async {
         let db = Firestore.firestore()
         do {
-            let videoRef = db.collection("videos").document(language).collection("items").document(videoId)
+            let videoRef = db.collection("videos").document(language)
+                .collection("items").document(videoId)
             try await videoRef.updateData([
                 "commentCount": FieldValue.increment(Int64(1))
             ])
@@ -28,43 +29,51 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
     func deleteVideo(videoId: String, uid: String, language: String) async {
         let db = Firestore.firestore()
         let videoPath = "\(language)/items/\(videoId)"
-        
+
         do {
             // 1. Remove from user's uploadedVideos
             let userRef = db.collection("users").document(uid)
             let snapshot = try await userRef.getDocument()
-            
+
             if let data = snapshot.data(),
-               var uploadedVideos = data["uploadedVideos"] as? [String] {
+                var uploadedVideos = data["uploadedVideos"] as? [String]
+            {
                 uploadedVideos.removeAll { $0 == videoPath }
                 try await userRef.updateData(["uploadedVideos": uploadedVideos])
                 print("✅ Removed video \(videoPath) from uploadedVideos.")
             } else {
                 print("⚠️ No uploadedVideos found or data cast failed.")
             }
-            
+
             // 2. Delete video document from Firestore
-            let videoRef = db
+            let videoRef =
+                db
                 .collection("videos")
                 .document(language)
                 .collection("items")
                 .document(videoId)
-            
+
             try await videoRef.delete()
             print("✅ Firestore video document deleted.")
-            
+
             // 3. Delete video file from Firebase Storage
-            let storageRef = Storage.storage().reference(forURL: "gs://linguid-fe2b7.firebasestorage.app")
-            let videoStorageRef = storageRef.child("videos/\(language)/\(videoId).MOV")
+            let storageRef = Storage.storage().reference(
+                forURL: "gs://linguid-fe2b7.firebasestorage.app"
+            )
+            let videoStorageRef = storageRef.child(
+                "videos/\(language)/\(videoId).MOV"
+            )
             try await videoStorageRef.delete()
             print("✅ Video deleted from storage.")
-            
+
             // 4. Delete all thumbnail files from the thumbnail directory
-            let thumbnailDirRef = storageRef.child("thumbnails/\(uid)/\(videoId)")
-            
+            let thumbnailDirRef = storageRef.child(
+                "thumbnails/\(uid)/\(videoId)"
+            )
+
             do {
                 let listResult = try await thumbnailDirRef.listAll()
-                
+
                 if listResult.items.isEmpty {
                     print("⚠️ No thumbnails found for \(videoId)")
                 } else {
@@ -72,57 +81,67 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
                         try await item.delete()
                         print("✅ Deleted thumbnail: \(item.name)")
                     }
-                    print("✅ All thumbnails deleted from thumbnails/\(uid)/\(videoId)")
+                    print(
+                        "✅ All thumbnails deleted from thumbnails/\(uid)/\(videoId)"
+                    )
                 }
             } catch {
-                print("❌ Error deleting thumbnails: \(error.localizedDescription)")
+                print(
+                    "❌ Error deleting thumbnails: \(error.localizedDescription)"
+                )
             }
-            
+
         } catch {
             print("❌ Error deleting video: \(error.localizedDescription)")
         }
     }
 
-
     func getUserProfilePicture(forUserId uid: String) async throws -> String? {
-        let snapshot = try await db.collection("users").document(uid).getDocument()
+        let snapshot = try await db.collection("users").document(uid)
+            .getDocument()
 
         guard let data = snapshot.data() else {
             return nil
         }
         return data["profilePhotoUrl"] as? String
     }
-    
+
     func getUserCountry(forUserId uid: String) async throws -> String? {
-        let snapshot = try await db.collection("users").document(uid).getDocument()
-        
+        let snapshot = try await db.collection("users").document(uid)
+            .getDocument()
+
         guard let data = snapshot.data() else {
             return nil
         }
         return data["country"] as? String
     }
-    
+
     func getCurrentUser(completion: @escaping (Result<User, Error>) -> Void) {
-        guard let uid = Auth.auth().currentUser?.uid else { //makes sure user exists
+        guard let uid = Auth.auth().currentUser?.uid else {  //makes sure user exists
             completion(.failure(NSError(domain: "", code: -1)))
             return
         }
-        
+
         db.collection("users").document(uid).getDocument { snapshot, error in
-            if let error = error { //fails if corresponding document does not exist
+            if let error = error {  //fails if corresponding document does not exist
                 completion(.failure(error))
                 return
             }
-            
+
             if let user = try? snapshot?.data(as: User.self) {
-                completion(.success(user)) //The user is returned with the success value
+                completion(.success(user))  //The user is returned with the success value
             } else {
                 completion(.failure(NSError(domain: "", code: -1)))
             }
         }
     }
-    
-    func addUnknownWord(forUserId uid: String, targetLanguage: String, languagesData: [String: LanguagesData], completion: @escaping (Result<Void, Error>) -> Void) {
+
+    func addUnknownWord(
+        forUserId uid: String,
+        targetLanguage: String,
+        languagesData: [String: LanguagesData],
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
         do {
             let encoded = try Firestore.Encoder().encode(languagesData)
             db.collection("users").document(uid).updateData([
@@ -139,28 +158,48 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         }
     }
 
-    func updateLikedVideos(forUserId uid: String, likedVideos: [String], likedVideoId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+    func updateLikedVideos(
+        forUserId uid: String,
+        likedVideos: [String],
+        likedVideoId: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
         // Update user's liked videos list
-        db.collection("users").document(uid).updateData(["likedVideos": likedVideos]) { [weak self] error in
+        db.collection("users").document(uid).updateData([
+            "likedVideos": likedVideos
+        ]) { [weak self] error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
-            
+
             // Update the video's like count
             let path = likedVideoId.split(separator: "/")
             guard path.count == 3 else {
-                completion(.failure(NSError(domain: "InvalidVideoId", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid video ID format"])))
+                completion(
+                    .failure(
+                        NSError(
+                            domain: "InvalidVideoId",
+                            code: -1,
+                            userInfo: [
+                                NSLocalizedDescriptionKey:
+                                    "Invalid video ID format"
+                            ]
+                        )
+                    )
+                )
                 return
             }
-            
+
             let incrementValue = likedVideos.contains(likedVideoId) ? 1 : -1
-            
+
             self?.db.collection("videos")
                 .document(String(path[0]))
                 .collection(String(path[1]))
                 .document(String(path[2]))
-                .updateData(["likes": FieldValue.increment(Int64(incrementValue))]) { error in
+                .updateData([
+                    "likes": FieldValue.increment(Int64(incrementValue))
+                ]) { error in
                     if let error = error {
                         completion(.failure(error))
                     } else {
@@ -169,10 +208,17 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
                 }
         }
     }
-    
-    func updateSavedVideos(forUserId uid: String, savedVideos: [String], savedVideoId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+
+    func updateSavedVideos(
+        forUserId uid: String,
+        savedVideos: [String],
+        savedVideoId: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
         // Update user's saved videos list
-        db.collection("users").document(uid).updateData(["savedVideos": savedVideos]) { [weak self] error in
+        db.collection("users").document(uid).updateData([
+            "savedVideos": savedVideos
+        ]) { [weak self] error in
             if let error = error {
                 completion(.failure(error))
                 return
@@ -181,7 +227,18 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             // Update the video's save count
             let path = savedVideoId.split(separator: "/")
             guard path.count == 3 else {
-                completion(.failure(NSError(domain: "InvalidVideoId", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid video ID format"])))
+                completion(
+                    .failure(
+                        NSError(
+                            domain: "InvalidVideoId",
+                            code: -1,
+                            userInfo: [
+                                NSLocalizedDescriptionKey:
+                                    "Invalid video ID format"
+                            ]
+                        )
+                    )
+                )
                 return
             }
 
@@ -191,7 +248,9 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
                 .document(String(path[0]))
                 .collection(String(path[1]))
                 .document(String(path[2]))
-                .updateData(["saves": FieldValue.increment(Int64(incrementValue))]) { error in
+                .updateData([
+                    "saves": FieldValue.increment(Int64(incrementValue))
+                ]) { error in
                     if let error = error {
                         completion(.failure(error))
                     } else {
@@ -201,18 +260,33 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         }
     }
 
-    
-    func getVideoURL(for videoId: String, completion: @escaping (Result<URL, Error>) -> Void) {
-        db.collection("videos").document(videoId).getDocument { snapshot, error in
+    func getVideoURL(
+        for videoId: String,
+        completion: @escaping (Result<URL, Error>) -> Void
+    ) {
+        db.collection("videos").document(videoId).getDocument {
+            snapshot,
+            error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
 
             guard let data = snapshot?.data(),
-                  let urlString = data["url"] as? String,
-                  let url = URL(string: urlString) else {
-                completion(.failure(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL data"])))
+                let urlString = data["url"] as? String,
+                let url = URL(string: urlString)
+            else {
+                completion(
+                    .failure(
+                        NSError(
+                            domain: "",
+                            code: -1,
+                            userInfo: [
+                                NSLocalizedDescriptionKey: "Invalid URL data"
+                            ]
+                        )
+                    )
+                )
                 return
             }
 
@@ -234,18 +308,29 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         let db = Firestore.firestore()
 
         let languageCodes: [String: String] = [
-            "Afrikaans": "af", "Arabic": "ar", "Armenian": "hy", "Azerbaijani": "az", "Belarusian": "be",
-            "Bosnian": "bs", "Bulgarian": "bg", "Catalan": "ca", "Chinese": "zh", "Croatian": "hr",
-            "Czech": "cs", "Danish": "da", "Dutch": "nl", "English": "en", "Estonian": "et",
-            "Finnish": "fi", "French": "fr", "Galician": "gl", "German": "de", "Greek": "el",
-            "Hebrew": "he", "Hindi": "hi", "Hungarian": "hu", "Icelandic": "is", "Indonesian": "id",
-            "Italian": "it", "Japanese": "ja", "Kannada": "kn", "Kazakh": "kk", "Korean": "ko",
-            "Latvian": "lv", "Lithuanian": "lt", "Macedonian": "mk", "Malay": "ms", "Maori": "mi",
-            "Marathi": "mr", "Nepali": "ne", "Norwegian": "no", "Persian": "fa", "Polish": "pl",
-            "Portuguese": "pt", "Romanian": "ro", "Russian": "ru", "Serbian": "sr", "Slovak": "sk",
-            "Slovenian": "sl", "Spanish": "es", "Swahili": "sw", "Swedish": "sv", "Tagalog": "tl",
-            "Tamil": "ta", "Thai": "th", "Turkish": "tr", "Ukrainian": "uk", "Urdu": "ur",
-            "Vietnamese": "vi", "Welsh": "cy"
+            "Afrikaans": "af", "Arabic": "ar", "Armenian": "hy",
+            "Azerbaijani": "az", "Belarusian": "be",
+            "Bosnian": "bs", "Bulgarian": "bg", "Catalan": "ca",
+            "Chinese": "zh", "Croatian": "hr",
+            "Czech": "cs", "Danish": "da", "Dutch": "nl", "English": "en",
+            "Estonian": "et",
+            "Finnish": "fi", "French": "fr", "Galician": "gl", "German": "de",
+            "Greek": "el",
+            "Hebrew": "he", "Hindi": "hi", "Hungarian": "hu", "Icelandic": "is",
+            "Indonesian": "id",
+            "Italian": "it", "Japanese": "ja", "Kannada": "kn", "Kazakh": "kk",
+            "Korean": "ko",
+            "Latvian": "lv", "Lithuanian": "lt", "Macedonian": "mk",
+            "Malay": "ms", "Maori": "mi",
+            "Marathi": "mr", "Nepali": "ne", "Norwegian": "no", "Persian": "fa",
+            "Polish": "pl",
+            "Portuguese": "pt", "Romanian": "ro", "Russian": "ru",
+            "Serbian": "sr", "Slovak": "sk",
+            "Slovenian": "sl", "Spanish": "es", "Swahili": "sw",
+            "Swedish": "sv", "Tagalog": "tl",
+            "Tamil": "ta", "Thai": "th", "Turkish": "tr", "Ukrainian": "uk",
+            "Urdu": "ur",
+            "Vietnamese": "vi", "Welsh": "cy",
         ]
 
         let levelMapping: [String: Int] = [
@@ -253,66 +338,114 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             "Beginner": 2,
             "Intermediate": 3,
             "Advanced": 4,
-            "Expert": 5
+            "Expert": 5,
         ]
 
-        // 1. First native language code
-        let firstNative = nativeLanguages.first.flatMap { languageCodes[$0.capitalized] } ?? ""
-        // 2. First target language code
-        let firstTarget = targetLanguages.first.flatMap { languageCodes[$0] } ?? ""
-
-        // 3. Native language list (converted to codes)
-        let nativeLanguageList = nativeLanguages.compactMap { languageCodes[$0] }
-
-        // 4. Build languagesData dictionary
-        var languagesData: [String: LanguagesData] = [:]
-        for language in targetLanguages {
-            //print("⚠️ Not Skipping \(language) \(languageLevels[language]): Missing code or level")
-            guard
-                let code = languageCodes[language],
-                let levelStr = languageLevels[language],
-                let level = levelMapping[levelStr]
-                
-            else {
-                //print("⚠️ Skipping \(language) \(languageLevels[language]): Missing code or level")
-                continue
-            }
-
-            languagesData[code] = LanguagesData(comprehensionLevel: level, timestamp: Date())
+        let firstNative =
+            nativeLanguages.first.flatMap { languageCodes[$0.capitalized] }
+            ?? ""
+        let firstTarget =
+            targetLanguages.first.flatMap { languageCodes[$0] } ?? ""
+        let nativeLanguageList = nativeLanguages.compactMap {
+            languageCodes[$0]
         }
 
-        // 5. Encode to Firestore format
-        do {
-            var encodedLanguagesData: [String: [String: Any]] = [:]
-            for (code, data) in languagesData {
-                encodedLanguagesData[code] = try Firestore.Encoder().encode(data)
+        let userRef = db.collection("users").document(uid)
+
+        userRef.getDocument(completion: { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
             }
 
-            let dataToSave: [String: Any] = [
-                "nativeLanguage": firstNative,
-                "targetLanguage": firstTarget,
-                "nativeLanguageList": nativeLanguageList,
-                "languagesData": encodedLanguagesData
-            ]
-
-            db.collection("users").document(uid).updateData(dataToSave) { error in
-                if let error = error {
-                    completion(.failure(error))
-                } else {
-                    completion(.success(()))
+            // Decode existing languagesData if it exists
+            var existingData: [String: LanguagesData] = [:]
+            if let raw = snapshot?.data()?["languagesData"]
+                as? [String: [String: Any]]
+            {
+                for (code, value) in raw {
+                    do {
+                        let decoded = try Firestore.Decoder().decode(
+                            LanguagesData.self,
+                            from: value
+                        )
+                        existingData[code] = decoded
+                    } catch {
+                        print("⚠️ Failed to decode \(code): \(error)")
+                    }
                 }
             }
-        } catch {
-            completion(.failure(error))
-        }
+
+            // Merge new data
+
+            for language in targetLanguages {
+                guard
+                    let code = languageCodes[language],
+                    let levelStr = languageLevels[language],
+                    let level = levelMapping[levelStr]
+                else { continue }
+
+                let existing = existingData[code]
+
+                let updated = LanguagesData(
+                    savedWords: existing?.savedWords,
+                    comprehensionLevel: level,
+                    dailyGoal: existing?.dailyGoal,
+                    isBeginnerLevel: existing?.isBeginnerLevel,
+                    motivation: existing?.motivation,
+                    timestamp: Date(),
+                    watchTime: existing?.watchTime
+                )
+
+
+                existingData[code] = updated
+            }
+
+            // Encode for Firestore
+            var encodedLanguagesData: [String: [String: Any]] = [:]
+            do {
+                for (code, data) in existingData {
+                    encodedLanguagesData[code] = try Firestore.Encoder().encode(
+                        data
+                    )
+                }
+
+                let dataToSave: [String: Any] = [
+                    "nativeLanguage": firstNative,
+                    "targetLanguage": firstTarget,
+                    "nativeLanguageList": nativeLanguageList,
+                    "languagesData": encodedLanguagesData,
+                ]
+
+                userRef.updateData(dataToSave) { error in
+                    if let error = error {
+                        completion(.failure(error))
+                    } else {
+                        completion(.success(()))
+                    }
+                }
+            } catch {
+                completion(.failure(error))
+            }
+        })
     }
-    
+
     func updateUserCountry(
         country: String,
         completion: @escaping (Result<Void, Error>) -> Void
     ) {
         guard let userId = Auth.auth().currentUser?.uid else {
-            completion(.failure(NSError(domain: "AuthError", code: 0, userInfo: [NSLocalizedDescriptionKey: "User not logged in"])))
+            completion(
+                .failure(
+                    NSError(
+                        domain: "AuthError",
+                        code: 0,
+                        userInfo: [
+                            NSLocalizedDescriptionKey: "User not logged in"
+                        ]
+                    )
+                )
+            )
             return
         }
 
@@ -321,18 +454,35 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
         // Use updateData to add/modify only the 'country' field
         userRef.updateData(["country": country]) { error in
             if let error = error {
-                print("Error updating country for user \(userId): \(error.localizedDescription)")
+                print(
+                    "Error updating country for user \(userId): \(error.localizedDescription)"
+                )
                 completion(.failure(error))
             } else {
-                print("Country '\(country)' successfully added/updated for user \(userId).")
+                print(
+                    "Country '\(country)' successfully added/updated for user \(userId)."
+                )
                 completion(.success(()))
             }
         }
     }
-    
-    func updateUsername(username: String, completion: @escaping (Result<Void, Error>) -> Void) {
+
+    func updateUsername(
+        username: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
         guard let userID = Auth.auth().currentUser?.uid else {
-            completion(.failure(NSError(domain: "auth", code: 401, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])))
+            completion(
+                .failure(
+                    NSError(
+                        domain: "auth",
+                        code: 401,
+                        userInfo: [
+                            NSLocalizedDescriptionKey: "User not authenticated"
+                        ]
+                    )
+                )
+            )
             return
         }
 
@@ -347,31 +497,37 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             }
         }
     }
-    
+
     // In FirestoreService.swift
-    func getOnboardingStatus(completion: @escaping (Result<Bool, Error>) -> Void) {
+    func getOnboardingStatus(
+        completion: @escaping (Result<Bool, Error>) -> Void
+    ) {
         guard let uid = Auth.auth().currentUser?.uid else {
             completion(.failure(NSError(domain: "NoUID", code: -1)))
             return
         }
-        
+
         db.collection("users").document(uid).getDocument { snapshot, error in
             if let error = error {
                 completion(.failure(error))
                 return
             }
-            
-            let status = snapshot?.data()?["didCompleteOnboarding"] as? Bool ?? false
+
+            let status =
+                snapshot?.data()?["didCompleteOnboarding"] as? Bool ?? false
             completion(.success(status))
         }
     }
 
-    func setOnboardingStatus(completed: Bool, completion: @escaping (Result<Void, Error>) -> Void) {
+    func setOnboardingStatus(
+        completed: Bool,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
         guard let uid = Auth.auth().currentUser?.uid else {
             completion(.failure(NSError(domain: "NoUID", code: -1)))
             return
         }
-        
+
         db.collection("users").document(uid).updateData([
             "didCompleteOnboarding": completed
         ]) { error in
@@ -382,26 +538,27 @@ class FirestoreService { //talks to Firebase so users are not doing it directly
             }
         }
     }
-    
+
 }
 extension FirestoreService {
     func updateOnboardingStatus(completed: Bool) async throws {
-        guard let uid = Auth.auth().currentUser?.uid else { throw AuthError.noUser }
+        guard let uid = Auth.auth().currentUser?.uid else {
+            throw AuthError.noUser
+        }
         try await db.collection("users").document(uid).updateData([
             "didCompleteOnboarding": completed
         ])
     }
-    
+
     func getOnboardingStatus() async throws -> Bool {
-        guard let uid = Auth.auth().currentUser?.uid else { throw AuthError.noUser }
+        guard let uid = Auth.auth().currentUser?.uid else {
+            throw AuthError.noUser
+        }
         let doc = try await db.collection("users").document(uid).getDocument()
         return doc.data()?["didCompleteOnboarding"] as? Bool ?? false
     }
-    
+
     enum AuthError: Error {
         case noUser
     }
 }
-
-
-
