@@ -59,7 +59,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             }
 
             completionHandler()
-        }
+    }
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        // Show the banner even in foreground
+        completionHandler([.banner, .sound])
+    }
+
 }
 
 extension Notification.Name {
