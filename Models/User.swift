@@ -137,38 +137,39 @@ struct LanguagesData: Codable {
     var watchTime: WatchTime?
 
     enum CodingKeys: String, CodingKey {
-        case savedWords, comprehensionLevel, dailyGoal, isBeginnerLevel,
-            motivation, timestamp, watchTime
-    }
+            case savedWords, comprehensionLevel, dailyGoal, isBeginnerLevel,
+                 motivation, timestamp, watchTime
+        }
 
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        savedWords = try container.decodeIfPresent(
-            WordLists.self,
-            forKey: .savedWords
-        )
-        comprehensionLevel = try container.decodeIfPresent(
-            Int.self,
-            forKey: .comprehensionLevel
-        )
-        dailyGoal = try container.decodeIfPresent(
-            String.self,
-            forKey: .dailyGoal
-        )
-        isBeginnerLevel = try container.decodeIfPresent(
-            Bool.self,
-            forKey: .isBeginnerLevel
-        )
-        motivation = try container.decodeIfPresent(
-            String.self,
-            forKey: .motivation
-        )
-        timestamp = try container.decodeIfPresent(Date.self, forKey: .timestamp)
-        watchTime = try container.decodeIfPresent(
-            WatchTime.self,
-            forKey: .watchTime
-        )
-    }
+        // ✅ Full flexible initializer (covers all use cases)
+        init(
+            savedWords: WordLists? = nil,
+            comprehensionLevel: Int? = nil,
+            dailyGoal: String? = nil,
+            isBeginnerLevel: Bool? = nil,
+            motivation: String? = nil,
+            timestamp: Date? = nil,
+            watchTime: WatchTime? = nil
+        ) {
+            self.savedWords = savedWords
+            self.comprehensionLevel = comprehensionLevel
+            self.dailyGoal = dailyGoal
+            self.isBeginnerLevel = isBeginnerLevel
+            self.motivation = motivation
+            self.timestamp = timestamp
+            self.watchTime = watchTime
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            savedWords = try container.decodeIfPresent(WordLists.self, forKey: .savedWords)
+            comprehensionLevel = try container.decodeIfPresent(Int.self, forKey: .comprehensionLevel)
+            dailyGoal = try container.decodeIfPresent(String.self, forKey: .dailyGoal)
+            isBeginnerLevel = try container.decodeIfPresent(Bool.self, forKey: .isBeginnerLevel)
+            motivation = try container.decodeIfPresent(String.self, forKey: .motivation)
+            timestamp = try container.decodeIfPresent(Date.self, forKey: .timestamp)
+            watchTime = try container.decodeIfPresent(WatchTime.self, forKey: .watchTime)
+        }
 
     init(savedWords: WordLists) {
         self.savedWords = savedWords
