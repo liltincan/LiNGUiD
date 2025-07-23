@@ -12,7 +12,8 @@ struct MainTabView: View {
     let onLogout: () -> Void
 
     var body: some View {
-        TabView(selection: $selectedTab) {  // Changed from $selection to $selectedTab
+        print("deepLinkedVideoID: \(deepLinkedVideoID ?? "nil")")
+        return TabView(selection: $selectedTab) {  // Changed from $selection to $selectedTab
             VideoFeedView(userSession: userSession, startingVideoId: deepLinkedVideoID, selectedTab: $selectedTab)
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)

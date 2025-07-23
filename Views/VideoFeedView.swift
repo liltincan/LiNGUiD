@@ -130,6 +130,19 @@ struct VerticalVideoFeed: View {
                         hasScrolledToInitialVideo = true
                     }
                 }
+                .onAppear {
+                    guard !hasScrolledToInitialVideo,
+                          let startingVideoId = startingVideoId,
+                          videos.contains(where: { $0.id == startingVideoId }) else { return }
+
+                    currentIndex = videos.firstIndex(where: { $0.id == startingVideoId }) ?? 0
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        proxy.scrollTo(startingVideoId, anchor: .center)
+                        hasScrolledToInitialVideo = true
+                    }
+                }
+
                 .onChange(of: currentIndex) { oldIndex, newIndex in
                     if newIndex >= videos.count - 2 && !vm.isLoading {
                         Task { await vm.fetchMoreVideos() }
