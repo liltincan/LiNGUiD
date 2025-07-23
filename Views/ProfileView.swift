@@ -62,25 +62,35 @@ struct ProfileView: View {
                 await refreshData()
             }
             .onAppear {
+                uploadManager.onUploadFinished = {
+                    Task {
+                        await refreshData()
+                    }
+                }
                 Task {
                     await loadData()
                 }
             }
             .overlay(
                 ZStack {
-                    // 🔄 Upload Progress Bar
+                    // Upload Progress Bar
                     VStack {
-                        if uploadManager.totalCount > 0 && uploadManager.currentIndex < uploadManager.totalCount {
-                            Text("Uploading \(uploadManager.currentIndex + 1)/\(uploadManager.totalCount)")
-                                .font(.caption)
-                                .padding(8)
-                                .frame(maxWidth: .infinity)
-                                .background(Color.black.opacity(0.8))
-                                .foregroundColor(.white)
+                        if uploadManager.totalToUpload > 0 {
+                            Text(
+                                uploadManager.completedCount == uploadManager.totalToUpload
+                                ? "Upload complete!"
+                                : "Uploading \(uploadManager.completedCount + 1)/\(uploadManager.totalToUpload)"
+                            )
+                            .font(.caption)
+                            .padding(8)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.black.opacity(0.8))
+                            .foregroundColor(.white)
                         }
                         Spacer()
                     }
-                    .animation(.easeInOut, value: uploadManager.currentIndex)
+                    .transition(.opacity)
+                    .animation(.easeInOut, value: uploadManager.completedCount)
 
                     // 🖼 Fullscreen Profile Picture
                     if showingFullScreenProfilePicture,
