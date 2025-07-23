@@ -52,8 +52,14 @@ struct ProfileView: View {
                         ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL, isShowingUploadView: $isShowingUploadView, onUploadComplete: {await refreshData()})
                             .padding(.bottom, 15)
                         
-                        VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs, uploadingVideos: uploadManager.uploadingVideos, noVideosMessage: "No videos uploaded yet.", videoArray: vm.uploadedVideoArray, selectedTab: $selectedTab )
-                            
+                        VideoGridSection(
+                            videoThumbnails: vm.videoThumbnails.reversed(),
+                            videoURLs: vm.videoURLs.reversed(),
+                            uploadingVideos: uploadManager.uploadingVideos,
+                            noVideosMessage: "No videos uploaded yet.",
+                            videoArray: vm.uploadedVideoArray.reversed(),
+                            selectedTab: $selectedTab
+                        )
                     }
                     .padding()
                 }
@@ -305,19 +311,7 @@ struct VideoGridSection: View {
             }
         } else {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
-                ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
-                    Videos(
-                        thumbnailURL: thumbnailURL,
-                        videoURL: videoURLs[index],
-                        index: index,
-                        videoArray: videoArray,
-                        allVideoURLs: videoURLs,  // Pass the full array of URLs
-                        selectedTab: $selectedTab
-                    )
-                    .environmentObject(userSession)
-                }
-
-                ForEach(uploadingVideos) { video in
+                ForEach(uploadingVideos.reversed()) { video in
                     ZStack {
                         Image(uiImage: video.thumbnail)
                             .resizable()
@@ -345,6 +339,17 @@ struct VideoGridSection: View {
                         }
                     }
                 }
+                ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
+                    Videos(
+                        thumbnailURL: thumbnailURL,
+                        videoURL: videoURLs[index],
+                        index: index,
+                        videoArray: videoArray,
+                        allVideoURLs: videoURLs,  // Pass the full array of URLs
+                        selectedTab: $selectedTab
+                    )
+                    .environmentObject(userSession)
+                }                
             }
         }
     }
