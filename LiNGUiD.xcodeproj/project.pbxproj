@@ -85,6 +85,7 @@
 		8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296C2DE1169D0020AFCD /* DashboardView.swift */; };
 		8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296E2DE116BC0020AFCD /* PracticeView.swift */; };
 		8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929702DE116CE0020AFCD /* ProfileView.swift */; };
+		8FFAB9082E32B3D000D7DFD6 /* GetProView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FFAB9072E32B3D000D7DFD6 /* GetProView.swift */; };
 		D61307E82E1B4D6C0089F942 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D61307E72E1B4D6C0089F942 /* NotificationService.swift */; };
 		D613080F2E1C8D680089F942 /* SharedVideoPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D613080E2E1C8D670089F942 /* SharedVideoPreviewView.swift */; };
 		D613085B2E1E0B970089F942 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = D613085A2E1E0B970089F942 /* FirebaseMessaging */; };
@@ -186,6 +187,7 @@
 		8FB9296C2DE1169D0020AFCD /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		8FB9296E2DE116BC0020AFCD /* PracticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeView.swift; sourceTree = "<group>"; };
 		8FB929702DE116CE0020AFCD /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		8FFAB9072E32B3D000D7DFD6 /* GetProView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetProView.swift; sourceTree = "<group>"; };
 		D61307E72E1B4D6C0089F942 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		D613080E2E1C8D670089F942 /* SharedVideoPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedVideoPreviewView.swift; sourceTree = "<group>"; };
 		D62604682E2082FB00BA36FB /* DMVideoPreviewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DMVideoPreviewViewModel.swift; sourceTree = "<group>"; };
@@ -314,6 +316,7 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				8FFAB9072E32B3D000D7DFD6 /* GetProView.swift */,
 				132B93422E257D64003F6DA9 /* VideoCommentView.swift */,
 				134970E32E1B3E030053E214 /* OtherUserProfileView.swift */,
 				60974D872DE79D100075CAAE /* AppColors.swift */,
@@ -630,6 +633,7 @@
 				604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */,
 				8FB929632DE115090020AFCD /* AppState.swift in Sources */,
 				8FB9296B2DE1168B0020AFCD /* ChatListView.swift in Sources */,
+				8FFAB9082E32B3D000D7DFD6 /* GetProView.swift in Sources */,
 				D69E53EE2DEA4C5E00329D64 /* FirestoreService.swift in Sources */,
 				8FB929542DE02A790020AFCD /* FirestoreVideoRepository.swift in Sources */,
 				8FB929552DE02A790020AFCD /* AuthService.swift in Sources */,

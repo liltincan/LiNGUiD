@@ -321,7 +321,7 @@ struct VideoGridSection: View {
 
                         if video.isUploading {
                             Color.black.opacity(0.4)
-                            ProgressView().scaleEffect(1.5)
+                            ProgressView().scaleEffect(1.5).progressViewStyle(CircularProgressViewStyle(tint: .white))
                             VStack {
                                 HStack {
                                     Spacer()
@@ -377,17 +377,17 @@ struct Videos: View {
     let videoURL: String
     let index: Int
     let videoArray: [Video]
-    let allVideoURLs: [String]  // Add this parameter
+    let allVideoURLs: [String]
     @EnvironmentObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
-    
+
+    @State private var reloadID = UUID() //force reload by changing this
+
     private var selectedVideo: Video? {
-        // Find the video that matches this thumbnail's URL
         videoArray.first { $0.url.absoluteString == videoURL }
     }
-    
+
     private var orderedVideos: [Video] {
-        // Reorder videos to match the order of thumbnails/URLs
         var ordered: [Video] = []
         for url in allVideoURLs {
             if let video = videoArray.first(where: { $0.url.absoluteString == url }) {
@@ -396,7 +396,7 @@ struct Videos: View {
         }
         return ordered
     }
-    
+
     var body: some View {
         if let video = selectedVideo {
             NavigationLink {
@@ -406,30 +406,43 @@ struct Videos: View {
                     startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
                     selectedTab: $selectedTab
                 )
-                .onAppear {
-                    print("Opening video: \(video.title)")
-                    print("Video index in ordered array: \(orderedVideos.firstIndex(where: { $0.id == video.id }) ?? -1)")
-                }
             } label: {
-                AsyncImage(url: URL(string: thumbnailURL)) { phase in
-                    if let image = phase.image {
+                AsyncImage(url: URL(string: thumbnailURL), transaction: Transaction(animation: .easeInOut)) { phase in
+                    switch phase {
+                    case .success(let image):
                         image
                             .resizable()
                             .scaledToFill()
                             .frame(height: 180)
                             .clipped()
-                    } else if phase.error != nil {
-                        Color.red.frame(height: 180)
-                    } else {
+
+                    case .failure(_):
+                        VStack {
+                            Color.gray.frame(height: 180)
+                            Button(action: {
+                                reloadID = UUID() // force AsyncImage to reload
+                            }) {
+                                Image(systemName: "arrow.clockwise.circle")
+                                    .foregroundColor(.white)
+                                    .font(.title2)
+                            }
+                            .padding(.top, -160)
+                        }
+
+                    case .empty:
+                        Color.gray.frame(height: 180)
+                    @unknown default:
                         Color.gray.frame(height: 180)
                     }
                 }
+                .id(reloadID) //forces reload when ID changes
             }
         } else {
             Color.gray.frame(height: 180)
         }
     }
 }
+
 
 struct Buttons: View{
     let text: String
