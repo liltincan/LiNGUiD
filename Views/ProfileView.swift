@@ -30,6 +30,7 @@ struct ProfileView: View {
                 ScrollView {
                     VStack {
                         ProfileHeaderView(
+                            userSession: userSession,
                             userName: vm.userName,
                             profilePictureURL: vm.profilePictureURL,
                             country: vm.country ?? "ERROR",
@@ -154,6 +155,7 @@ struct ProfileView: View {
 }
 
 struct ProfileHeaderView: View {
+    let userSession: UserSessionViewModel
     let userName: String
     let profilePictureURL: String
     let country: String
@@ -164,6 +166,8 @@ struct ProfileHeaderView: View {
     @Binding var showingFullScreenProfilePicture: Bool
     @Binding var fullScreenProfilePictureURL: String?
     @Binding var selectedTab: Int
+    
+    
     var body: some View {
         VStack {
             ZStack{
@@ -208,13 +212,13 @@ struct ProfileHeaderView: View {
                             .contentShape(Circle())
                     }
                     .frame(width: 100, height: 100)
-                    .padding(.bottom, 15)
+                    .padding(.bottom, 10)
                 } else {
                     Image(systemName: "person.crop.circle.fill")
                         .resizable()
                         .frame(width: 100, height: 100)
                         .foregroundColor(.secondary)
-                        .padding(.bottom, 15)
+                        .padding(.bottom, 10)
                 }
             }
             
@@ -223,13 +227,53 @@ struct ProfileHeaderView: View {
                 .font(.largeTitle)
                 .padding(.top, -65)
                 .padding(.leading, -55)
-            Text(languageDisplay)
-                .lineLimit(1)
-                .padding(.bottom, 10)
-                .foregroundColor(.primary)
+//            Text(languageDisplay)
+//                .lineLimit(1)
+//                .padding(.bottom, 10)
+//                .foregroundColor(.primary)
+            
+            VStack(spacing: 0){
+                HStack(spacing: 10) {
+                    Text(userSession.currentUser?.nativeLanguage?.uppercased() ?? "")
+                        .font(.system(size: 20, weight: .bold))
+                    
+                    Image(systemName: "chevron.right.2")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 15, height: 15)
+                    
+                    Text(userSession.currentUser?.targetLanguage.uppercased() ?? "")
+                        .font(.system(size: 20, weight: .bold))
+                }
+                
+                LevelDotsView(level: userSession.currentUser?.languagesData?[userSession.currentUser?.targetLanguage ?? ""]?.comprehensionLevel ?? 0)
+                    .padding(.top, -5)
+            }
         }
     }
 }
+
+struct LevelDotsView: View {
+    let level: Int // current level, e.g., 3
+    let maxLevel: Int = 5 // total dots
+
+    var body: some View {
+        HStack(spacing: 5) {
+            ForEach(0..<maxLevel, id: \.self) { index in
+                Circle()
+                    .fill(index < level ? Color.purple : Color.clear)
+                    .frame(width: 8, height: 8)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white, lineWidth: 1.5)
+                    )
+            }
+        }
+        .padding()
+        .background(Color.black)
+    }
+}
+
 struct ProfileStatsView: View {
     let videoCount: String
     let inputAmount: String

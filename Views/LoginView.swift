@@ -109,20 +109,29 @@ struct LoginView: View {
                     }
                 )
                 
-                Button {
-                    vm.startSignInWithAppleFlow(appState: appState) {
-                        onSuccess()
+                SignInWithAppleButton(
+                    .signIn,
+                    onRequest: { request in
+                        vm.prepareAppleSignInRequest(request)
+                    },
+                    onCompletion: { result in
+                        switch result {
+                        case .success(let auth):
+                            if let credential = auth.credential as? ASAuthorizationAppleIDCredential {
+                                vm.loginWithApple(credential: credential, appState: appState) {
+                                    onSuccess()
+                                }
+                            }
+                        case .failure(let error):
+                            vm.errorMessage = error.localizedDescription
+                        }
                     }
-                } label: {
-                    SignInWithAppleButton(
-                        .signIn,
-                        onRequest: { _ in },
-                        onCompletion: {_ in }
-                    )
-                        .signInWithAppleButtonStyle(.whiteOutline)
-                        .frame(height: 55)
-                        .cornerRadius(12)
-                }
+                )
+
+                .signInWithAppleButtonStyle(.whiteOutline)
+                .frame(height: 55)
+                .cornerRadius(12)
+
 
 
                 VStack {

@@ -11,6 +11,11 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
     @Published var password = ""
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
+    
+    private var currentNonce: String?
+    private var onSuccessCallback: (() -> Void)?
+    private var currentAppState: AppState?
+
 
 
     private let authService: AuthService
@@ -73,9 +78,6 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
         }
     }
 
-    
-    private var currentNonce: String?
-
     func prepareAppleSignInRequest(_ request: ASAuthorizationAppleIDRequest) {
         let nonce = randomNonceString()
         currentNonce = nonce
@@ -102,6 +104,9 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
     }
     
     func startSignInWithAppleFlow(appState: AppState, onSuccess: @escaping () -> Void) {
+        self.currentAppState = appState
+        self.onSuccessCallback = onSuccess
+
         let nonce = randomNonceString()
         currentNonce = nonce
 
@@ -113,19 +118,28 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
         controller.delegate = self
         controller.presentationContextProvider = self
         controller.performRequests()
-
-        self.onSuccessCallback = onSuccess
     }
-    
-    private var onSuccessCallback: (() -> Void)?
 
-    func authorizationController( appState: AppState, controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
-        if let credential = authorization.credential as? ASAuthorizationAppleIDCredential {
-            loginWithApple(credential: credential, appState: appState) {
-                self.onSuccessCallback?()
-            }
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        print("✅ Apple delegate method called")
+
+        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let nonce = currentNonce,
+              let appState = currentAppState else {
+            print("❌ Missing credential, nonce, or appState")
+            errorMessage = "Missing required Apple Sign-In data"
+            return
+        }
+
+        loginWithApple(credential: credential, appState: appState) {
+            print("✅ Firebase login with Apple succeeded")
+            self.onSuccessCallback?()
         }
     }
+
+
+
+
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
            // Convert to ASAuthorizationError if possible
