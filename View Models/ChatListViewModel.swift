@@ -18,7 +18,7 @@ class ChatListViewModel: ObservableObject {
     @Published var conversations : [ChatConversation] = []
     @Published var chattedUserIDs: Set<String> = []
     @Published var isInitialLoadDone = false
-
+    
     //look at the database now
     private var db = Firestore.firestore()
     //will keep track of each updates that are being made at the moment
@@ -267,12 +267,17 @@ class ChatListViewModel: ObservableObject {
                 guard let text = data["text"] as? String,
                       let senderID = data["senderID"] as? String else { return nil }
                 let isRead = data["isRead"] as? Bool ?? false
-                //let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                let repliedToText = data["repliedToText"] as? String
+                let isLiked = data["isLiked"] as? Bool ?? false
                 return ChatMessages(
                     text: text,
                     isFromCurrentUser: senderID == Auth.auth().currentUser?.uid,
                     isRead: isRead,
-                    //timestamp: timestamp
+                    timestamp: timestamp,
+                    repliedToText: repliedToText,
+                    isLiked: isLiked,
+                    documentID: doc.documentID
                 )
             }
             completion(messages)
@@ -281,7 +286,7 @@ class ChatListViewModel: ObservableObject {
     //MARK: - Send Message
     //precondition: none
     //postcondition: this is the message when user sends a message to another user
-    func sendMessage(_ text: String, to chatID: String) {
+    func sendMessage(_ text: String, to chatID: String, replyingTo: ChatMessages? = nil) {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
 
         let chatRef = db.collection("chat").document(chatID)
@@ -300,19 +305,21 @@ class ChatListViewModel: ObservableObject {
                 "text": text,
                 "senderID": currentUserID,
                 "timestamp": FieldValue.serverTimestamp(),
-                "isRead": false
+                "isRead": false,
+                "repliedToText": replyingTo?.text ?? NSNull()
             ]
             //creating a collection now called 'messages'
             chatRef.collection("messages").addDocument(data: message) { error in
                 if let error = error {
                     print(" Failed to send message: \(error)")
                 }
+                //this data is the updated for chats
                 else {
                     chatRef.updateData([
                         "lastMessage": text,
                         "lastMessageTimestamp": FieldValue.serverTimestamp(),
                         "hiddenFor": FieldValue.arrayRemove([recipientID]),
-                        "messageResetTimestamps.\(recipientID)": FieldValue.delete()
+                        //"messageResetTimestamps.\(recipientID)": FieldValue.delete()
                     ]) { _ in
                         self.fetchChats()
                     }
@@ -363,10 +370,12 @@ class ChatListViewModel: ObservableObject {
         //this will hide the chat only
         let chatRef = db.collection("chat").document(chatID)
         chatRef.updateData([
-            "hiddenFor": FieldValue.arrayUnion([currentUserID])
+            "hiddenFor": FieldValue.arrayUnion([currentUserID]),
+            "messageResetTimestamps.\(currentUserID)": FieldValue.serverTimestamp()
         ]) { [weak self] error in
             if let error = error {
                 print("Failed to hide chat: \(error)")
+                print("The user that tried to hide the chat is: \(currentUserID)")
             }
             else {
                 self?.conversations.removeAll(where: { $0.friend.id == chatID })
@@ -448,7 +457,7 @@ class ChatListViewModel: ObservableObject {
                     let firstLearning = languagesData.first
                     let learningLangCode = firstLearning?.key ?? ""
                     let comprehensionLevel = firstLearning?.value["comprehensionLevel"] as? Int ?? 0
-
+                    //data we want to return with the users information
                     return Chat(
                         id: doc.documentID,
                         participantIDs: [],
@@ -517,6 +526,40 @@ class ChatListViewModel: ObservableObject {
             }
         }
     }
+    // MARK: - Toggle Like on Message
+    //precondition: none
+    //postcondition: will going to add the liking in the database
+    func toggleLike(for message: ChatMessages, in chatID: String) {
+        let chatRef = db.collection("chat").document(chatID)
+        let messagesRef = chatRef.collection("messages")
+        let docID = message.documentID
+        guard !docID.isEmpty else {
+            print("Missing document ID; cannot toggle like.")
+            return
+        }
+        let messageDoc = messagesRef.document(docID)
+        let newLike = !message.isLiked
+        //this will now add the 'isLiked' field to the message collection with the updated
+        self.updateLocalMessage(chatID: chatID, matching: docID, newLike: newLike)
+        messageDoc.updateData(["isLiked": newLike]) { error in
+            if let error = error {
+                print("Error updating like: \(error.localizedDescription)")
+            }
+            else {
+                print("Message like toggled in Firestore.")
+            }
+        }
+    }
+    private func updateLocalMessage(chatID: String, matching documentID: String, newLike: Bool) {
+        if let convoIndex = self.conversations.firstIndex(where: { $0.friend.id == chatID }) {
+            var convo = self.conversations[convoIndex]
+            if let msgIndex = convo.messages.firstIndex(where: { $0.documentID == documentID }) {
+                convo.messages[msgIndex].isLiked = newLike
+                self.conversations[convoIndex] = convo
+            }
+        }
+    }
+
 
     //MARK: - Real time updates (will update right when the database changes)
     //precondition: none
@@ -553,12 +596,17 @@ class ChatListViewModel: ObservableObject {
 
                     let isRead = data["isRead"] as? Bool ?? false
                     let isFromCurrentUser = senderID == currentUserID
-                    //let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                    let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                    let repliedToText = data["repliedToText"] as? String
+                    let isLiked = data["isLiked"] as? Bool ?? false
                     return ChatMessages(
                         text: text,
                         isFromCurrentUser: isFromCurrentUser,
                         isRead: isRead,
-                        //timestamp: timestamp
+                        timestamp: timestamp,
+                        repliedToText: repliedToText,
+                        isLiked: isLiked,
+                        documentID: doc.documentID
                     )
                 }
 
@@ -573,6 +621,7 @@ class ChatListViewModel: ObservableObject {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
 
         let messagesRef = db.collection("chat").document(chatID).collection("messages")
+        //looking at the 'isRead' field to see if its true or false
         messagesRef.whereField("isRead", isEqualTo: false)
             .getDocuments { snapshot, error in
                 guard let docs = snapshot?.documents else { return }
@@ -606,21 +655,6 @@ class ChatListViewModel: ObservableObject {
     }
 }
 
-//extension so i can reuse the data in chat conversation
-extension ChatConversation {
-    //checks for which message is not read
-    var hasUnreadMessages: Bool {
-        messages.contains { !$0.isFromCurrentUser && !$0.isRead }
-    }
-    //checks for the last message then determines if it is read, delivered, or sent
-    var lastMessageStatus: String {
-        guard let last = messages.last else { return "" }
-        return last.isFromCurrentUser ? (last.isRead ? "read" : "sent") : ""
-    }
-    //checks how many unread messages it has and returns an int
-    var unreadCount: Int {
-        messages.filter { !$0.isFromCurrentUser && !$0.isRead }.count
-    }
 
-}
+
 

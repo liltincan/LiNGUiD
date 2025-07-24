@@ -245,14 +245,18 @@ func countryCodeFromCountryName(_ name: String) -> String {
     return countryMapping[name] ?? ""
 }
 
-
 //MARK: - Model for Chat Messages
 struct ChatMessages: Identifiable, Equatable {
-    let id = UUID()
+    //let id = UUID()
     var text: String
     //who is replying
     var isFromCurrentUser: Bool
     var isRead: Bool
+    var timestamp: Date?
+    var repliedToText: String?
+    var isLiked: Bool = false
+    var documentID: String
+    var id: String { documentID }
 }
 //MARK: - Model for which Conversation it is with their messages
 struct ChatConversation: Identifiable, Equatable {
@@ -269,6 +273,30 @@ struct ChatConversation: Identifiable, Equatable {
 //MARK: - Focus Field to control the keyboard typing
 enum FocusField {
     case sendMessage, searchUsername
+}
+//MARK: - Extension so i can reuse the data in chat conversation
+extension ChatConversation {
+    //checks for which message is not read
+    var hasUnreadMessages: Bool {
+        messages.contains { !$0.isFromCurrentUser && !$0.isRead }
+    }
+    //checks for the last message then determines if it is read, delivered, or sent
+    var lastMessageStatus: String {
+        guard let last = messages.last else { return "" }
+        return last.isFromCurrentUser ? (last.isRead ? "read" : "sent") : ""
+    }
+    //checks how many unread messages it has and returns an int
+    var unreadCount: Int {
+        messages.filter { !$0.isFromCurrentUser && !$0.isRead }.count
+    }
+
+}
+//MARK: - Extension will allow me to get the users ID participant that is not the current users
+extension Chat {
+    func otherUserID(currentUserID: String) -> String? {
+        //look through the array from start and find the first userID that will satisfy the closure inside the 'where' (will return the other users ids)
+        participantIDs.first(where: { $0 != currentUserID })
+    }
 }
 
 
