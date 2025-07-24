@@ -286,6 +286,7 @@ struct ProfileHeaderView: View {
                     .padding(.top, 5)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 
@@ -373,6 +374,7 @@ struct VideoGridSection: View {
                     .padding()
                 Spacer()
             }
+            .frame(maxWidth: .infinity, alignment: .center)
         } else {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
                 ForEach(uploadingVideos.reversed()) { video in
@@ -415,6 +417,7 @@ struct VideoGridSection: View {
                     .environmentObject(userSession)
                 }                
             }
+            .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 }
