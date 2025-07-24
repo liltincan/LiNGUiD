@@ -38,6 +38,7 @@
 		60E0B91D2DF53A5C0065B772 /* DashboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60E0B91C2DF53A550065B772 /* DashboardViewModel.swift */; };
 		60F930802DE98E3100E37156 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F9307F2DE98E2A00E37156 /* User.swift */; };
 		60F930CE2DEA83F300E37156 /* SavedWordsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */; };
+		7ED8BA4B2E32C7960048C37C /* ChatMessagesConvoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ED8BA4A2E32C7900048C37C /* ChatMessagesConvoView.swift */; };
 		7EE63CF72E1E415F005F5466 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 7EE63CF62E1E415F005F5466 /* Kingfisher */; };
 		7EFDD81C2E0C8DB400154192 /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81B2E0C8DB200154192 /* Chat.swift */; };
 		7EFDD81E2E0C8DD600154192 /* ChatListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */; };
@@ -85,6 +86,7 @@
 		8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296C2DE1169D0020AFCD /* DashboardView.swift */; };
 		8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB9296E2DE116BC0020AFCD /* PracticeView.swift */; };
 		8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FB929702DE116CE0020AFCD /* ProfileView.swift */; };
+		8FFAB9082E32B3D000D7DFD6 /* GetProView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FFAB9072E32B3D000D7DFD6 /* GetProView.swift */; };
 		D61307E82E1B4D6C0089F942 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D61307E72E1B4D6C0089F942 /* NotificationService.swift */; };
 		D613080F2E1C8D680089F942 /* SharedVideoPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D613080E2E1C8D670089F942 /* SharedVideoPreviewView.swift */; };
 		D613085B2E1E0B970089F942 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = D613085A2E1E0B970089F942 /* FirebaseMessaging */; };
@@ -147,6 +149,7 @@
 		60E0B91C2DF53A550065B772 /* DashboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardViewModel.swift; sourceTree = "<group>"; };
 		60F9307F2DE98E2A00E37156 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWordsViewModel.swift; sourceTree = "<group>"; };
+		7ED8BA4A2E32C7900048C37C /* ChatMessagesConvoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessagesConvoView.swift; sourceTree = "<group>"; };
 		7EFDD81B2E0C8DB200154192 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
 		7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListViewModel.swift; sourceTree = "<group>"; };
 		8177D3E52DF8D4AC00FA6800 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
@@ -186,6 +189,7 @@
 		8FB9296C2DE1169D0020AFCD /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		8FB9296E2DE116BC0020AFCD /* PracticeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeView.swift; sourceTree = "<group>"; };
 		8FB929702DE116CE0020AFCD /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		8FFAB9072E32B3D000D7DFD6 /* GetProView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetProView.swift; sourceTree = "<group>"; };
 		D61307E72E1B4D6C0089F942 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		D613080E2E1C8D670089F942 /* SharedVideoPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedVideoPreviewView.swift; sourceTree = "<group>"; };
 		D62604682E2082FB00BA36FB /* DMVideoPreviewViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DMVideoPreviewViewModel.swift; sourceTree = "<group>"; };
@@ -314,6 +318,8 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				7ED8BA4A2E32C7900048C37C /* ChatMessagesConvoView.swift */,
+				8FFAB9072E32B3D000D7DFD6 /* GetProView.swift */,
 				132B93422E257D64003F6DA9 /* VideoCommentView.swift */,
 				134970E32E1B3E030053E214 /* OtherUserProfileView.swift */,
 				60974D872DE79D100075CAAE /* AppColors.swift */,
@@ -630,6 +636,7 @@
 				604101EF2DE3D43500B187B7 /* NonceGenerator.swift in Sources */,
 				8FB929632DE115090020AFCD /* AppState.swift in Sources */,
 				8FB9296B2DE1168B0020AFCD /* ChatListView.swift in Sources */,
+				8FFAB9082E32B3D000D7DFD6 /* GetProView.swift in Sources */,
 				D69E53EE2DEA4C5E00329D64 /* FirestoreService.swift in Sources */,
 				8FB929542DE02A790020AFCD /* FirestoreVideoRepository.swift in Sources */,
 				8FB929552DE02A790020AFCD /* AuthService.swift in Sources */,
@@ -637,6 +644,7 @@
 				138F1B982DEF6D2F00F3B31B /* EditProfileView.swift in Sources */,
 				D61307E82E1B4D6C0089F942 /* NotificationService.swift in Sources */,
 				60F930CE2DEA83F300E37156 /* SavedWordsViewModel.swift in Sources */,
+				7ED8BA4B2E32C7960048C37C /* ChatMessagesConvoView.swift in Sources */,
 				60974D882DE79D130075CAAE /* AppColors.swift in Sources */,
 				81E960722E20351600EEE22D /* UploadManager.swift in Sources */,
 				8FB929672DE116370020AFCD /* MainTabView.swift in Sources */,
@@ -836,6 +844,7 @@
 				INFOPLIST_FILE = "";
 				"INFOPLIST_FILE[sdk=*]" = Resources/Info.plist;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app uses your location to improve personalization.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app uses your microphone to record audio for messages.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to your photo library to upload videos.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -885,6 +894,7 @@
 				INFOPLIST_FILE = "";
 				"INFOPLIST_FILE[sdk=*]" = Resources/Info.plist;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app uses your location to improve personalization.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app uses your microphone to record audio for messages.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to your photo library to upload videos.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;

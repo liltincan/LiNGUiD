@@ -138,7 +138,7 @@ struct UploadView: View {
                                     Text("Next")
                                         .padding(.horizontal, 20)
                                         .padding(.vertical, 10)
-                                        .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                                        .background(Color.appPrimaryColor)
                                         .foregroundColor(.white)
                                         .cornerRadius(8)
                                 }
@@ -450,25 +450,15 @@ struct AddThumbnailView: View {
 
                             Spacer()
 
-                            Menu {
-                                Button("Choose from Photo Library") {
-                                    showingPickerFor = asset
-                                }
-                                Button("Pick a frame from the Video") {
-                                    showingFrameSelectorFor = asset
-                                }
-                            } label: {
-                                Button(action: {
-                                    print("Tapped thumbnail button for \(asset.localIdentifier)")
-                                    // Present image picker or video frame selector here
-                                }) {
-                                    Text("Edit Thumbnail")
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal)
-                                        .padding(.vertical, 8)
-                                        .background(Color(red: 124/255, green: 58/255, blue: 237/255))
-                                        .cornerRadius(6)
-                                }
+                            Button(action: {
+                                showingFrameSelectorFor = asset
+                            }) {
+                                Text("Edit Thumbnail")
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal)
+                                    .padding(.vertical, 8)
+                                    .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                                    .cornerRadius(8)
                             }
 
                             Spacer()
@@ -540,7 +530,7 @@ struct AddThumbnailView: View {
         .onAppear {
             preloadDefaultThumbnails()
         }
-        .sheet(item: $showingPickerFor) { asset in
+        .fullScreenCover(item: $showingPickerFor) { asset in
             ImagePickerView { image in
                 // Crop this image before assigning
                 croppingImage = CroppingImage(image: image)
@@ -549,26 +539,25 @@ struct AddThumbnailView: View {
             }
             .preferredColorScheme(.dark)
         }
-        .sheet(item: $showingFrameSelectorFor) { asset in
-            ZStack {
-                Color.black.opacity(1.0) //darkens background
-                if let url = compressedVideoURLs[asset.localIdentifier] {
-                    VideoScrubberSelector(
-                        videoURL: url,
-                        onCancel: { showingFrameSelectorFor = nil },
-                        onFrameSelected: { image in
-                            thumbnailOverrides[asset.localIdentifier] = image
-                            showingFrameSelectorFor = nil
-                        }
-                    )
-                } else {
-                    Text("Error: Compressed video not found.")
-                        .foregroundColor(.white)
-                }
+        .fullScreenCover(item: $showingFrameSelectorFor) { asset in
+            if let url = compressedVideoURLs[asset.localIdentifier] {
+                VideoScrubberSelector(
+                    videoURL: url,
+                    onCancel: { showingFrameSelectorFor = nil },
+                    onFrameSelected: { image in
+                        thumbnailOverrides[asset.localIdentifier] = image
+                        showingFrameSelectorFor = nil
+                    },
+                    onPickFromLibrary: {
+                        showingFrameSelectorFor = nil
+                        showingPickerFor = asset
+                    }
+                )
+            } else {
+                Text("Error: Compressed video not found.")
             }
-            .ignoresSafeArea()
         }
-        .sheet(item: $croppingImage) { cropping in
+        .fullScreenCover(item: $croppingImage) { cropping in
             TOCropView(
                 image: cropping.image,
                 onCropped: { croppedImage in
@@ -764,7 +753,9 @@ struct ImagePickerView: UIViewControllerRepresentable {
 struct VideoScrubberSelector: View {
     let videoURL: URL
     let onCancel: () -> Void
-    var onFrameSelected: (UIImage) -> Void
+    let onFrameSelected: (UIImage) -> Void
+    let onPickFromLibrary: () -> Void
+
 
     @State private var playerItem: AVPlayerItem?
     @State private var videoAsset: AVAsset?
@@ -782,7 +773,7 @@ struct VideoScrubberSelector: View {
                     Button(action: {
                         onCancel()
                     }) {
-                        Image("Return_Button") // or "xmark" if you want a close icon
+                        Image("Return_Button")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(.white)
                     }
@@ -805,7 +796,8 @@ struct VideoScrubberSelector: View {
             }
 
             if let duration = videoAsset?.duration.seconds {
-                HStack {
+                VStack(spacing: 16) {
+                    // Keep the slider
                     Slider(value: Binding(
                         get: { currentTime.seconds },
                         set: { newValue in
@@ -815,26 +807,43 @@ struct VideoScrubberSelector: View {
                         }
                     ), in: 0...duration)
                     .tint(Color.appPrimaryColor)
-                    
-                    Button(action: {
-                        if let currentFrame = currentFrame {
-                            onFrameSelected(currentFrame)
+                    .padding(.horizontal, 30)
+
+                    // Replace the old HStack with this one
+                    HStack(spacing: 12) {
+                        Button(action: onPickFromLibrary) {
+                            Text("Pick from Photos")
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.appPrimaryColor)
+                                .foregroundColor(.white)
+                                .cornerRadius(6)
                         }
-                    }) {
-                        Text("Next")
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 8)
-                            .background(Color.appPrimaryColor)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
+
+                        Spacer()
+
+                        Button(action: {
+                            if let currentFrame = currentFrame {
+                                onFrameSelected(currentFrame)
+                            }
+                        }) {
+                            Text("Use This Frame")
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.appPrimaryColor)
+                                .foregroundColor(.white)
+                                .cornerRadius(6)
+                        }
                     }
+                    .padding(.horizontal, 30)
                 }
-                .padding(.horizontal, 30)
             }
         }
         .onAppear {
             loadAsset()
         }
+        .background(Color.black.ignoresSafeArea())
+        .preferredColorScheme(.dark)
     }
 
     private func loadAsset() {

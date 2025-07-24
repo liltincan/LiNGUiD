@@ -53,8 +53,14 @@ struct ProfileView: View {
                         ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL, isShowingUploadView: $isShowingUploadView, onUploadComplete: {await refreshData()})
                             .padding(.bottom, 15)
                         
-                        VideoGridSection(videoThumbnails: vm.videoThumbnails, videoURLs: vm.videoURLs, uploadingVideos: uploadManager.uploadingVideos, noVideosMessage: "No videos uploaded yet.", videoArray: vm.uploadedVideoArray, selectedTab: $selectedTab )
-                            
+                        VideoGridSection(
+                            videoThumbnails: vm.videoThumbnails.reversed(),
+                            videoURLs: vm.videoURLs.reversed(),
+                            uploadingVideos: uploadManager.uploadingVideos,
+                            noVideosMessage: "No videos uploaded yet.",
+                            videoArray: vm.uploadedVideoArray.reversed(),
+                            selectedTab: $selectedTab
+                        )
                     }
                     .padding()
                 }
@@ -63,25 +69,35 @@ struct ProfileView: View {
                 await refreshData()
             }
             .onAppear {
+                uploadManager.onUploadFinished = {
+                    Task {
+                        await refreshData()
+                    }
+                }
                 Task {
                     await loadData()
                 }
             }
             .overlay(
                 ZStack {
-                    // 🔄 Upload Progress Bar
+                    // Upload Progress Bar
                     VStack {
-                        if uploadManager.totalCount > 0 && uploadManager.currentIndex < uploadManager.totalCount {
-                            Text("Uploading \(uploadManager.currentIndex + 1)/\(uploadManager.totalCount)")
-                                .font(.caption)
-                                .padding(8)
-                                .frame(maxWidth: .infinity)
-                                .background(Color.black.opacity(0.8))
-                                .foregroundColor(.white)
+                        if uploadManager.totalToUpload > 0 {
+                            Text(
+                                uploadManager.completedCount == uploadManager.totalToUpload
+                                ? "Upload complete!"
+                                : "Uploading \(uploadManager.completedCount + 1)/\(uploadManager.totalToUpload)"
+                            )
+                            .font(.caption)
+                            .padding(8)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.black.opacity(0.8))
+                            .foregroundColor(.white)
                         }
                         Spacer()
                     }
-                    .animation(.easeInOut, value: uploadManager.currentIndex)
+                    .transition(.opacity)
+                    .animation(.easeInOut, value: uploadManager.completedCount)
 
                     // 🖼 Fullscreen Profile Picture
                     if showingFullScreenProfilePicture,
@@ -339,19 +355,7 @@ struct VideoGridSection: View {
             }
         } else {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
-                ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
-                    Videos(
-                        thumbnailURL: thumbnailURL,
-                        videoURL: videoURLs[index],
-                        index: index,
-                        videoArray: videoArray,
-                        allVideoURLs: videoURLs,  // Pass the full array of URLs
-                        selectedTab: $selectedTab
-                    )
-                    .environmentObject(userSession)
-                }
-
-                ForEach(uploadingVideos) { video in
+                ForEach(uploadingVideos.reversed()) { video in
                     ZStack {
                         Image(uiImage: video.thumbnail)
                             .resizable()
@@ -361,7 +365,7 @@ struct VideoGridSection: View {
 
                         if video.isUploading {
                             Color.black.opacity(0.4)
-                            ProgressView().scaleEffect(1.5)
+                            ProgressView().scaleEffect(1.5).progressViewStyle(CircularProgressViewStyle(tint: .white))
                             VStack {
                                 HStack {
                                     Spacer()
@@ -379,6 +383,17 @@ struct VideoGridSection: View {
                         }
                     }
                 }
+                ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
+                    Videos(
+                        thumbnailURL: thumbnailURL,
+                        videoURL: videoURLs[index],
+                        index: index,
+                        videoArray: videoArray,
+                        allVideoURLs: videoURLs,  // Pass the full array of URLs
+                        selectedTab: $selectedTab
+                    )
+                    .environmentObject(userSession)
+                }                
             }
         }
     }
@@ -406,17 +421,17 @@ struct Videos: View {
     let videoURL: String
     let index: Int
     let videoArray: [Video]
-    let allVideoURLs: [String]  // Add this parameter
+    let allVideoURLs: [String]
     @EnvironmentObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
-    
+
+    @State private var reloadID = UUID() //force reload by changing this
+
     private var selectedVideo: Video? {
-        // Find the video that matches this thumbnail's URL
         videoArray.first { $0.url.absoluteString == videoURL }
     }
-    
+
     private var orderedVideos: [Video] {
-        // Reorder videos to match the order of thumbnails/URLs
         var ordered: [Video] = []
         for url in allVideoURLs {
             if let video = videoArray.first(where: { $0.url.absoluteString == url }) {
@@ -425,7 +440,7 @@ struct Videos: View {
         }
         return ordered
     }
-    
+
     var body: some View {
         if let video = selectedVideo {
             NavigationLink {
@@ -435,30 +450,43 @@ struct Videos: View {
                     startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
                     selectedTab: $selectedTab
                 )
-                .onAppear {
-                    print("Opening video: \(video.title)")
-                    print("Video index in ordered array: \(orderedVideos.firstIndex(where: { $0.id == video.id }) ?? -1)")
-                }
             } label: {
-                AsyncImage(url: URL(string: thumbnailURL)) { phase in
-                    if let image = phase.image {
+                AsyncImage(url: URL(string: thumbnailURL), transaction: Transaction(animation: .easeInOut)) { phase in
+                    switch phase {
+                    case .success(let image):
                         image
                             .resizable()
                             .scaledToFill()
                             .frame(height: 180)
                             .clipped()
-                    } else if phase.error != nil {
-                        Color.red.frame(height: 180)
-                    } else {
+
+                    case .failure(_):
+                        VStack {
+                            Color.gray.frame(height: 180)
+                            Button(action: {
+                                reloadID = UUID() // force AsyncImage to reload
+                            }) {
+                                Image(systemName: "arrow.clockwise.circle")
+                                    .foregroundColor(.white)
+                                    .font(.title2)
+                            }
+                            .padding(.top, -160)
+                        }
+
+                    case .empty:
+                        Color.gray.frame(height: 180)
+                    @unknown default:
                         Color.gray.frame(height: 180)
                     }
                 }
+                .id(reloadID) //forces reload when ID changes
             }
         } else {
             Color.gray.frame(height: 180)
         }
     }
 }
+
 
 struct Buttons: View{
     let text: String
