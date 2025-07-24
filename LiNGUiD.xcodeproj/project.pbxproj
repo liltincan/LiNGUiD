@@ -844,6 +844,7 @@
 				INFOPLIST_FILE = "";
 				"INFOPLIST_FILE[sdk=*]" = Resources/Info.plist;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app uses your location to improve personalization.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app uses your microphone to record audio for messages.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to your photo library to upload videos.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -893,6 +894,7 @@
 				INFOPLIST_FILE = "";
 				"INFOPLIST_FILE[sdk=*]" = Resources/Info.plist;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app uses your location to improve personalization.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app uses your microphone to record audio for messages.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to your photo library to upload videos.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
