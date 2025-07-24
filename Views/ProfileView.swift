@@ -242,7 +242,7 @@ struct ProfileHeaderView: View {
                             .scaledToFill()
                             .foregroundColor(.secondary)
                         Rectangle()
-                            .fill(Color.black.opacity(0.4))
+                            .fill(Color.black.opacity(0.3))
                             .overlay(
                                 Text("edit")
                                     .font(.headline)
