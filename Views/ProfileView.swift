@@ -430,6 +430,8 @@ struct Videos: View {
     @Binding var selectedTab: Int
 
     @State private var reloadID = UUID() //force reload by changing this
+    @State private var retryCount = 0
+    private let maxRetryCount = 3
 
     private var selectedVideo: Video? {
         videoArray.first { $0.url.absoluteString == videoURL }
@@ -463,18 +465,21 @@ struct Videos: View {
                             .scaledToFill()
                             .frame(height: 180)
                             .clipped()
+                            .onAppear {
+                                retryCount = 0
+                            }
 
                     case .failure(_):
                         VStack {
                             Color.gray.frame(height: 180)
-                            Button(action: {
-                                reloadID = UUID() // force AsyncImage to reload
-                            }) {
-                                Image(systemName: "arrow.clockwise.circle")
-                                    .foregroundColor(.white)
-                                    .font(.title2)
-                            }
-                            .padding(.top, -160)
+                                .onAppear {
+                                    if retryCount < maxRetryCount {
+                                        retryCount += 1
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                            reloadID = UUID()
+                                        }
+                                    }
+                                }
                         }
 
                     case .empty:
