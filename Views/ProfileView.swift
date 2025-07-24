@@ -152,9 +152,11 @@ struct ProfileView: View {
         if let currentUser = Auth.auth().currentUser {
             print("Loading data for user: \(currentUser.uid)")
             await vm.fetchUserData(uid: currentUser.uid)
+            userSession.getCurrentUser()
         } else {
             print("Error: No current user on appear.")
             await vm.fetchUserData()
+            userSession.getCurrentUser()
         }
     }
     
@@ -162,10 +164,12 @@ struct ProfileView: View {
     private func refreshData() async {
         if let currentUser = Auth.auth().currentUser {
             await vm.fetchUserData(uid: currentUser.uid)
+            userSession.getCurrentUser()
             print("Loading data for user: \(currentUser.uid)")
         } else {
             print("Error: No current user for refresh.")
             await vm.fetchUserData()
+            userSession.getCurrentUser()
         }
     }
 }
