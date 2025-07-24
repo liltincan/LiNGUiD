@@ -220,27 +220,43 @@ struct ProfileHeaderView: View {
                 }
             }
             Button {
-                showingFullScreenProfilePicture = true
-                fullScreenProfilePictureURL = profilePictureURL
-            } label: {
                 if profilePictureURL != "" {
-                    AsyncImage(url: URL(string: profilePictureURL)) { result in
-                        result.image?
+                    showingFullScreenProfilePicture = true
+                    fullScreenProfilePictureURL = profilePictureURL
+                } else {
+                    // Trigger image picker or edit action here
+                    print("Edit profile picture tapped")
+                }
+            } label: {
+                ZStack {
+                    // Profile image or default
+                    if profilePictureURL != "" {
+                        AsyncImage(url: URL(string: profilePictureURL)) { result in
+                            result.image?
+                                .resizable()
+                                .scaledToFill()
+                        }
+                    } else {
+                        Image(systemName: "person.crop.circle.fill")
                             .resizable()
                             .scaledToFill()
-                            .clipShape(Circle())
-                            .contentShape(Circle())
+                            .foregroundColor(.secondary)
+                        Rectangle()
+                            .fill(Color.black.opacity(0.4))
+                            .overlay(
+                                Text("edit")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                            )
                     }
-                    .frame(width: 100, height: 100)
-                    .padding(.bottom, 10)
-                } else {
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .frame(width: 100, height: 100)
-                        .foregroundColor(.secondary)
-                        .padding(.bottom, 10)
                 }
+                .frame(width: 100, height: 100)
+                .clipShape(Circle())
+                .contentShape(Circle())
             }
+            .padding(.bottom, 10)
+
+
             
             // Use the country name to flag converter
             Text(CountryFlagConverter.getFlag(for: country.lowercased()))
