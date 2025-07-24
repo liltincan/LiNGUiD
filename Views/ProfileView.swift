@@ -62,7 +62,7 @@ struct ProfileView: View {
                             selectedTab: $selectedTab
                         )
                     }
-                    .padding()
+                    .padding(.vertical)
                 }
             }
             .refreshable {
@@ -382,7 +382,7 @@ struct VideoGridSection: View {
                         Image(uiImage: video.thumbnail)
                             .resizable()
                             .scaledToFill()
-                            .frame(height: 180)
+                            .frame(width: UIScreen.main.bounds.width / 3, height: UIScreen.main.bounds.width * 16 / 27)
                             .clipped()
 
                         if video.isUploading {
@@ -404,6 +404,7 @@ struct VideoGridSection: View {
                             }
                         }
                     }
+                    .frame(width: UIScreen.main.bounds.width / 3, height: UIScreen.main.bounds.width * 16 / 27)
                 }
                 ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
                     Videos(
@@ -411,7 +412,7 @@ struct VideoGridSection: View {
                         videoURL: videoURLs[index],
                         index: index,
                         videoArray: videoArray,
-                        allVideoURLs: videoURLs,  // Pass the full array of URLs
+                        allVideoURLs: videoURLs,
                         selectedTab: $selectedTab
                     )
                     .environmentObject(userSession)
@@ -482,7 +483,7 @@ struct Videos: View {
                         image
                             .resizable()
                             .scaledToFill()
-                            .frame(height: 180)
+                            .frame(height: UIScreen.main.bounds.width * 16 / 27)
                             .clipped()
                             .onAppear {
                                 retryCount = 0
@@ -502,15 +503,17 @@ struct Videos: View {
                         }
 
                     case .empty:
-                        Color.gray.frame(height: 180)
+                        Color.gray.frame(width: UIScreen.main.bounds.width / 3, height: UIScreen.main.bounds.width * 16 / 27)
                     @unknown default:
-                        Color.gray.frame(height: 180)
+                        Color.gray.frame(width: UIScreen.main.bounds.width / 3, height: UIScreen.main.bounds.width * 16 / 27)
                     }
                 }
+                .frame(width: UIScreen.main.bounds.width / 3, height: UIScreen.main.bounds.width * 16 / 27)
+                .clipped()
                 .id(reloadID) //forces reload when ID changes
             }
         } else {
-            Color.gray.frame(height: 180)
+            Color.gray.frame(height: UIScreen.main.bounds.width * 16 / 27)
         }
     }
 }

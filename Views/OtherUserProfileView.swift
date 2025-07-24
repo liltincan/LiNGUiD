@@ -71,8 +71,8 @@ struct OtherUserProfileView: View {
                     )
                         
                 }
-                
             }
+            .scrollIndicators(.hidden)
         }
         .safeAreaInset(edge: .top) {
             Color.clear.frame(height: 60) // Allows pull-to-refresh spinner to show
