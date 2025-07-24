@@ -120,7 +120,9 @@ struct RootCoordinatorView: View {
         UserDefaults.standard.set(true, forKey: "didCompleteOnboarding")
         appState.needsOnboarding = false
         
-        Task {
+        Task { @MainActor in
+            selectedTab = 0
+
             do {
                 try await FirestoreService.shared.updateOnboardingStatus(completed: true)
             } catch {
