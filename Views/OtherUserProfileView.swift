@@ -62,11 +62,11 @@ struct OtherUserProfileView: View {
                     .padding(.bottom, 15)
                     
                     VideoGridSection(
-                        videoThumbnails: vm.videoThumbnails,
-                        videoURLs: vm.videoURLs,
+                        videoThumbnails: vm.videoThumbnails.reversed(),
+                        videoURLs: vm.videoURLs.reversed(),
                         uploadingVideos: [],
                         noVideosMessage: "The user hasn't uploaded any videos yet.",
-                        videoArray: vm.uploadedVideoArray,
+                        videoArray: vm.uploadedVideoArray.reversed(),
                         selectedTab: $selectedTab
                     )
                         
