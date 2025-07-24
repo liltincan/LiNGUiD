@@ -557,7 +557,7 @@ struct AddThumbnailView: View {
                 Text("Error: Compressed video not found.")
             }
         }
-        .fullScreenCover(item: $croppingImage) { cropping in
+        .sheet(item: $croppingImage) { cropping in
             TOCropView(
                 image: cropping.image,
                 onCropped: { croppedImage in
@@ -886,12 +886,14 @@ struct TOCropView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> TOCropViewController {
         let cropController = TOCropViewController(image: image)
         cropController.delegate = context.coordinator
-
+        cropController.toolbar.tintColor = UIColor(Color.appPrimaryColor)
+        
         // Optional: Lock aspect ratio to 9:16
         cropController.aspectRatioPreset = .presetCustom
         cropController.customAspectRatio = CGSize(width: 9, height: 16)
         cropController.aspectRatioLockEnabled = true
         cropController.resetAspectRatioEnabled = false
+        cropController.cropView.cropRegionInsets = UIEdgeInsets(top: 0, left: 0, bottom: 100, right: 0)
 
         return cropController
     }
