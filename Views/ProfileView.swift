@@ -254,7 +254,7 @@ struct ProfileHeaderView: View {
                 .clipShape(Circle())
                 .contentShape(Circle())
             }
-            .padding(.bottom, 10)
+            .padding(.top, 10)
 
 
             
@@ -283,7 +283,7 @@ struct ProfileHeaderView: View {
                 }
                 
                 LevelDotsView(level: userSession.currentUser?.languagesData?[userSession.currentUser?.targetLanguage ?? ""]?.comprehensionLevel ?? 0)
-                    .padding(.top, -5)
+                    .padding(.top, 5)
             }
         }
     }
