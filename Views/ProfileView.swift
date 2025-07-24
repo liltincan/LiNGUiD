@@ -64,6 +64,7 @@ struct ProfileView: View {
                     }
                     .padding(.vertical)
                 }
+                .scrollIndicators(.hidden)
             }
             .refreshable {
                 await refreshData()
