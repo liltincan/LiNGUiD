@@ -304,7 +304,7 @@ struct LevelDotsView: View {
                     .frame(width: 8, height: 8)
                     .overlay(
                         Circle()
-                            .stroke(Color.black, lineWidth: 0.75)
+                            .stroke(Color.primary, lineWidth: 0.75)
                     )
             }
         }
@@ -360,6 +360,7 @@ struct VideoGridSection: View {
     let videoURLs: [String]
     let uploadingVideos: [UploadManager.UploadingVideo]
     let noVideosMessage: String?  // Optional custom message
+    let gridItemWidth = (UIScreen.main.bounds.width - 5) / 3
     var videoArray: [Video]
     @Binding var selectedTab: Int
     @EnvironmentObject var uploadManager: UploadManager
@@ -378,13 +379,14 @@ struct VideoGridSection: View {
             }
             .frame(maxWidth: .infinity, alignment: .center)
         } else {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 3), spacing: 0) {
+            LazyVGrid(columns: Array(repeating: GridItem(.fixed(gridItemWidth), spacing: 0), count: 3),
+                      spacing: 0) {
                 ForEach(uploadingVideos.reversed()) { video in
                     ZStack {
                         Image(uiImage: video.thumbnail)
                             .resizable()
                             .scaledToFill()
-                            .frame(width: UIScreen.main.bounds.width / 3, height: UIScreen.main.bounds.width * 16 / 27)
+                            .aspectRatio(9/16, contentMode: .fit)
                             .clipped()
 
                         if video.isUploading {
@@ -406,7 +408,10 @@ struct VideoGridSection: View {
                             }
                         }
                     }
-                    .frame(width: UIScreen.main.bounds.width / 3, height: UIScreen.main.bounds.width * 16 / 27)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.primary.opacity(1.0), lineWidth: 2)
+                    )
                 }
                 ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
                     Videos(
@@ -418,8 +423,13 @@ struct VideoGridSection: View {
                         selectedTab: $selectedTab
                     )
                     .environmentObject(userSession)
-                }                
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
+                    )
+                }
             }
+            .padding(.horizontal, 5)
             .frame(maxWidth: .infinity, alignment: .center)
         }
     }
@@ -485,7 +495,7 @@ struct Videos: View {
                         image
                             .resizable()
                             .scaledToFill()
-                            .frame(height: UIScreen.main.bounds.width * 16 / 27)
+                            .aspectRatio(9/16, contentMode: .fit)
                             .clipped()
                             .onAppear {
                                 retryCount = 0
@@ -505,17 +515,17 @@ struct Videos: View {
                         }
 
                     case .empty:
-                        Color.gray.frame(width: UIScreen.main.bounds.width / 3, height: UIScreen.main.bounds.width * 16 / 27)
+                        Color.gray.aspectRatio(9/16, contentMode: .fit)
                     @unknown default:
-                        Color.gray.frame(width: UIScreen.main.bounds.width / 3, height: UIScreen.main.bounds.width * 16 / 27)
+                        Color.gray.aspectRatio(9/16, contentMode: .fit)
                     }
                 }
-                .frame(width: UIScreen.main.bounds.width / 3, height: UIScreen.main.bounds.width * 16 / 27)
+                .aspectRatio(9/16, contentMode: .fit)
                 .clipped()
                 .id(reloadID) //forces reload when ID changes
             }
         } else {
-            Color.gray.frame(height: UIScreen.main.bounds.width * 16 / 27)
+            Color.gray.aspectRatio(9/16, contentMode: .fit)
         }
     }
 }
