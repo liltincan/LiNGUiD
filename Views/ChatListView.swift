@@ -72,20 +72,20 @@ struct ChatListView: View {
                         Spacer()
                     }
                     else {
-                        List(viewModel.conversations) { conversation in
-                            Button(action: {
-                                path.append(.chatDetail(conversation.friend.id))
-                            }) {
-                                ChatRowView(chat: conversation.friend, hasUnreadMessages: conversation.hasUnreadMessages, statusText: conversation.lastMessageStatus)
+                        List {
+                            ForEach(viewModel.conversations) { conversation in
+                                Button(action: {
+                                    path.append(.chatDetail(conversation.friend.id))
+                                }) {
+                                    ChatRowView(chat: conversation.friend, hasUnreadMessages: conversation.hasUnreadMessages,statusText: conversation.lastMessageStatus)
+                                }
+                                .listRowBackground(Color.black)
+                                .listRowSeparatorTint(.gray)
                             }
-                            .listRowBackground(Color.black)
-                            .listRowSeparatorTint(.gray)
+                            .onDelete(perform: deleteChat)
                         }
                         .listStyle(PlainListStyle())
                         .background(Color.black)
-                        //.refreshable {
-                        //  viewModel.fetchChats()
-                        //}
                     }
                 }
                 .background(Color.black)
@@ -113,53 +113,41 @@ struct ChatListView: View {
         .onChange(of: viewModel.conversations) { conversations in
             unreadChatCount = conversations.filter { $0.hasUnreadMessages }.count
             
-            //Check if we need to open a specific chat after conversations are loaded
+            //check if we need to open a specific chat after conversations are loaded
             if let userId = pendingChatUserId,
                let conversation = conversations.first(where: { $0.friend.id == userId }) {
                 path.append(.chatDetail(userId))
                 pendingChatUserId = nil
             }
         }
-        //add this at the end of zstack
-        //        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StartChatWithUser"))) { notification in
-        //            if let userInfo = notification.userInfo,
-        //               let userId = userInfo["userId"] as? String,
-        //               let username = userInfo["username"] as? String {
-        //                let conversation = viewModel.conversations[0]
-        //                if(conversation.friend.participantIDs.contains(userId)){
-        //                    selectedChat = conversation
-        //                } else{
-        //                    print("\(conversation.friend.id) - \(userId) NOT SAME")
-        //                    handleStartChat(userId: userId, username: username)
-        //                    DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(700)) {
-        //                        viewModel.fetchChats()
-        //                        let conversation = viewModel.conversations[0]
-        //                        selectedChat = conversation
-        //                    }
-        //
-        //                }
-        //
-        //            }
-        //        }
+        //this will now let the app know that a conversationg is being checked
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StartChatWithUser"))) { notification in
+            if let userInfo = notification.userInfo,
+               let userId = userInfo["userId"] as? String,
+               let username = userInfo["username"] as? String {
+                handleStartChat(userId: userId, username: username)
+            }
+        }
     }
-//    private func handleStartChat(userId: String, username: String) {
-//        // First check if conversation already exists
-//        if let existingConversation = viewModel.conversations.first(where: { $0.friend.id == userId }) {
-//            selectedChat = existingConversation
-//        } else {
-//            // Start a new chat
-//            viewModel.startChat(with: userId)
-//            // Store the userId to open the chat once conversations are updated
-//            pendingChatUserId = userId
-//        }
-//    }
-//    //function will delete the chat based on the index
-//    private func deleteChat(at offsets: IndexSet) {
-//        for index in offsets {
-//            let conversation = viewModel.conversations[index]
-//            viewModel.softDeleteChatForCurrentUser(chatID: conversation.friend.id)
-//        }
-//    }
+    //function will check if the chat exists if it does then no need to create chat just call the chat to view it
+    private func handleStartChat(userId: String, username: String) {
+        // Check if a conversation with the user already exists
+        if let existingConversation = viewModel.conversations.first(where: { $0.friend.participantIDs.contains(userId) }) {
+            path.append(.chatDetail(existingConversation.friend.id))
+        } else {
+            //this will start a new chat and set a pending flag to navigate once data updates
+            print("No existing chat with \(userId), starting new one.")
+            viewModel.startChat(with: userId)
+            pendingChatUserId = userId
+        }
+    }
+    //function will delete the chat based on the index
+    private func deleteChat(at offsets: IndexSet) {
+        for index in offsets {
+            let conversation = viewModel.conversations[index]
+            viewModel.softDeleteChatForCurrentUser(chatID: conversation.friend.id)
+        }
+    }
 }
 //MARK: - Chat Row View
 //precondition: pass in the model
@@ -168,7 +156,6 @@ struct ChatRowView: View {
     let chat: Chat
     var hasUnreadMessages: Bool
     let statusText: String
-    
     
     var body: some View {
         HStack(spacing: 12) {
@@ -252,6 +239,7 @@ struct DiscoveryView: View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
             VStack {
+                //horizontal where the it shows back , discover , then the searching option
                 HStack {
                     Button(action: onBack) {
                         Image(systemName: "chevron.left")
@@ -265,9 +253,9 @@ struct DiscoveryView: View {
                     SearchByUsernameView(searchUsername: $searchText, onSearchChanged: applyFilters)
                 }
                 .padding()
+                //call the filter option so user can now filter what they want
                 NativeLanguageFilterView(selectedLanguages: $selectedLanguages, onFilterChanged: applyFilters)
                 Divider().background(Color.gray)
-                
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(viewModel.discoverableUsers, id: \.id) { user in
@@ -301,8 +289,18 @@ struct DiscoveryView: View {
                                     
                                     Spacer()
                                     Button(action: {
-                                        //now get thier id and put the info with their id
-                                        viewModel.startChat(with: user.id)
+                                        //checking if they already messaged user if yes open the chat
+                                        if(hasMessaged) {
+                                            //will have to directly open the chat screen
+                                            NotificationCenter.default.post(name: NSNotification.Name("StartChatWithUser"), object: nil, userInfo: [
+                                                "userId": user.id,
+                                                "username": user.username
+                                            ])
+                                        }
+                                        else {
+                                            //star new chat with thier id and put the info with their id
+                                            viewModel.startChat(with: user.id)
+                                        }
                                     }) {
                                         Text(hasMessaged ? "Messaged" : "Say Hi!")
                                             .padding(.horizontal, 10)
@@ -311,7 +309,6 @@ struct DiscoveryView: View {
                                             .foregroundColor(.white)
                                             .cornerRadius(10)
                                     }
-                                    .disabled(hasMessaged)
                                 }
                                 .padding(.vertical, 20)
                                 Divider().background(Color.gray)
@@ -327,7 +324,7 @@ struct DiscoveryView: View {
                 //hide the scrollable on the side
                 .scrollIndicators(.hidden)
             }
-            .padding(.top, 10)
+            .padding(.top, 7)
         }
         .navigationBarBackButtonHidden(true)
     }
@@ -344,10 +341,6 @@ struct DiscoveryView: View {
         }
     }
 }
-//MARK: - Extra to keep track of the users id
-//struct SelectedUser: Identifiable, Equatable {
-//    let id: String
-//}
 //MARK: - Search Language to filter
 struct NativeLanguageFilterView: View {
     @Binding var selectedLanguages: [String]
@@ -364,7 +357,6 @@ struct NativeLanguageFilterView: View {
         "so", "sq", "sr", "st", "su", "sv", "sw", "ta", "te", "tg", "th", "tk",
         "tl", "tr", "tt", "ug", "uk", "ur", "uz", "vi", "xh", "yi", "yo", "zh", "zu"
     ]
-    
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
