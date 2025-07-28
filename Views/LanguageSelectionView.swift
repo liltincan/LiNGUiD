@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct LanguageSelectionView: View {
     var onContinue: (([String]) -> Void)?
@@ -12,6 +13,8 @@ struct LanguageSelectionView: View {
     @State private var showCustomAlert = false
     var excludeLanguages: [String] = []
     var onDeselect: ((String) -> Void)? = nil
+    
+    @ObservedObject private var keyboard = KeyboardResponder()
 
     
     var filteredLanguages: [String] {
@@ -119,11 +122,15 @@ struct LanguageSelectionView: View {
                         .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: selectedLanguages)
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    Color.clear.frame(height: keyboard.currentHeight * 1.7)
+                }
             }
-            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.appPrimaryColor)
             .cornerRadius(8)
             .padding(.bottom, 20)
+            
 
             // Continue Button
             if !selectedLanguages.isEmpty {
@@ -210,6 +217,32 @@ struct LanguageSelectionView: View {
                 selectedLanguages.insert(language)
             }
         }
+    }
+}
+
+class KeyboardResponder: ObservableObject {
+    @Published var currentHeight: CGFloat = 0
+    private var cancellables: Set<AnyCancellable> = []
+
+    init() {
+        NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)
+            .merge(with: NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification))
+            .compactMap { $0.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect }
+            .map { $0.height }
+            .sink { [weak self] height in
+                DispatchQueue.main.async {
+                    self?.currentHeight = height
+                }
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)
+            .sink { [weak self] _ in
+                DispatchQueue.main.async {
+                    self?.currentHeight = 0
+                }
+            }
+            .store(in: &cancellables)
     }
 }
 

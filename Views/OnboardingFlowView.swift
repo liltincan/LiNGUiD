@@ -18,6 +18,7 @@ struct OnboardingFlowView: View {
     @State private var locationManager = CLLocationManager()
     @State private var isUsernameAvailable: Bool? = nil
     @State private var isCheckingUsername = false
+    @State private var usernameTooLong: Bool = false
     
     
     private let total = 0  // number of pages
@@ -187,12 +188,40 @@ struct OnboardingFlowView: View {
                         TextField("Enter your username", text: $username)
                             .padding()
                             .background(Color.white)
-                            .foregroundColor(.black)
+                            .foregroundColor(Color.black)
+                            .accentColor(Color.appPrimaryColor)
                             .multilineTextAlignment(.center)
-                            .onChange(of: username) {
-                                checkUsernameAvailability(username)
+                            .onChange(of: username) { newValue in
+                                // Allow only letters, numbers, and underscore
+                                let allowedCharacterSet = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
+                                let filtered = newValue
+                                    .unicodeScalars
+                                    .filter { allowedCharacterSet.contains($0) }
+                                    .map { String($0) }
+                                    .joined()
+                                
+                                if filtered.count > 9 {
+                                    usernameTooLong = true
+                                } else {
+                                    usernameTooLong = false
+                                }
+                                
+                                // Limit to max 9 characters
+                                let final = String(filtered)
+
+                                if final != username {
+                                    username = final
+                                }
+
+                                checkUsernameAvailability(final)
                             }
-                        if let available = isUsernameAvailable, !available {
+                        if usernameTooLong{
+                            Text("Username can't be longer than 9 characters!")
+                                .foregroundColor(.red)
+                                .font(.system(size: 12, weight: .bold))
+                                .padding(.top, 5)
+                        }
+                        else if let available = isUsernameAvailable, !available {
                             Text("Username is already taken !")
                                 .foregroundColor(.red)
                                 .font(.system(size: 12, weight: .bold))
@@ -221,7 +250,7 @@ struct OnboardingFlowView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(
-                                (isUsernameAvailable == true && !username.isEmpty) ?
+                                (isUsernameAvailable == true && !username.isEmpty && !usernameTooLong) ?
                                 Color(red: 124/255, green: 58/255, blue: 237/255) :
                                 Color(red: 62/255, green: 29/255, blue: 119/255)
                             )
@@ -229,7 +258,7 @@ struct OnboardingFlowView: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.bottom, 40)
-                    .disabled(username.isEmpty || isUsernameAvailable != true || isCheckingUsername)
+                    .disabled(username.isEmpty || isUsernameAvailable != true || isCheckingUsername || usernameTooLong)
                 
                     
                 
@@ -400,10 +429,10 @@ struct CustomProgressBar: View {
     }
 }
 
-//struct OnboardingFlowView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        OnboardingFlowView {
-//            print("Onboarding Complete")
-//        }
-//    }
-//}
+struct OnboardingFlowView_Previews: PreviewProvider {
+    static var previews: some View {
+        OnboardingFlowView {
+            print("Onboarding Complete")
+        }
+    }
+}

@@ -19,7 +19,7 @@ struct OnboardingPageView: View {
                                 .padding(.bottom, 5)
                                 .drawingGroup()
                             
-                            Text("Select your first language(s)")
+                            Text("Select your native language(s)")
                                 .font(.system(size: 17))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
@@ -50,13 +50,13 @@ struct OnboardingPageView: View {
 
                     case 2:
                         VStack{
-                            Text("Select your")
+                            Text("What language would")
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
                                 .drawingGroup()
                             
-                            Text("target language")
+                            Text("you like to learn?")
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)

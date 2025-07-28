@@ -41,17 +41,17 @@ struct ProfileView: View {
                             fullScreenProfilePictureURL: $fullScreenProfilePictureURL,
                             selectedTab: $selectedTab
                         )
-                        .padding(.bottom, 10)
+                        .padding(.top, -15)
                         
                         ProfileStatsView(
                             videoCount: vm.videoCount,
                             inputAmount: vm.inputAmount,
                             followerCount: vm.followerCount
                         )
-                        .padding(.bottom, 10)
+                        .padding(.top, -10)
                         
                         ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL, isShowingUploadView: $isShowingUploadView, onUploadComplete: {await refreshData()})
-                            .padding(.bottom, 15)
+                            .padding(.bottom, 0)
                         
                         VideoGridSection(
                             videoThumbnails: vm.videoThumbnails.reversed(),
@@ -255,15 +255,15 @@ struct ProfileHeaderView: View {
                 .clipShape(Circle())
                 .contentShape(Circle())
             }
-            .padding(.top, 10)
+            .padding(.top, -15)
 
 
             
             // Use the country name to flag converter
             Text(CountryFlagConverter.getFlag(for: country.lowercased()))
                 .font(.largeTitle)
-                .padding(.top, -65)
-                .padding(.leading, -55)
+                .padding(.top, -50)
+                .padding(.leading, -50)
 //            Text(languageDisplay)
 //                .lineLimit(1)
 //                .padding(.bottom, 10)
@@ -272,7 +272,7 @@ struct ProfileHeaderView: View {
             VStack(spacing: 0){
                 HStack(spacing: 10) {
                     Text(userSession.currentUser?.nativeLanguage?.uppercased() ?? "")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 20, weight: .semibold))
                     
                     Image(systemName: "chevron.right.2")
                         .resizable()
@@ -280,12 +280,13 @@ struct ProfileHeaderView: View {
                         .frame(width: 15, height: 15)
                     
                     Text(userSession.currentUser?.targetLanguage.uppercased() ?? "")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 20, weight: .semibold))
                 }
                 
                 LevelDotsView(level: userSession.currentUser?.languagesData?[userSession.currentUser?.targetLanguage ?? ""]?.comprehensionLevel ?? 0)
-                    .padding(.top, 5)
+                    .padding(.top, -10)
             }
+            .padding(.top, -25)
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }
@@ -299,16 +300,16 @@ struct LevelDotsView: View {
         HStack(spacing: 5) {
             ForEach(0..<maxLevel, id: \.self) { index in
                 Circle()
-                    .fill(index < level ? Color.purple : Color.clear)
+                    .fill(index < level ? Color.appPrimaryColor : Color.clear)
                     .frame(width: 8, height: 8)
                     .overlay(
                         Circle()
-                            .stroke(Color.white, lineWidth: 1.5)
+                            .stroke(Color.black, lineWidth: 0.75)
                     )
             }
         }
         .padding()
-        .background(Color.black)
+        .background(Color.clear)
     }
 }
 

@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct CountrySelectionView: View {
     // MARK: – Inputs
@@ -63,6 +64,8 @@ struct CountrySelectionView: View {
         reordered.insert(sel, at: 0)
         return reordered
     }
+    
+    @ObservedObject private var keyboard = KeyboardResponder()
 
     // MARK: – Body
     var body: some View {
@@ -170,6 +173,9 @@ struct CountrySelectionView: View {
                     }
                     .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: filteredCountries)
                 }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    Color.clear.frame(height: keyboard.currentHeight * 1.7)
+                }
                 .padding(.top, 8.5)
             }
             .background(Color(red: 124/255, green: 58/255, blue: 237/255))
@@ -194,6 +200,8 @@ struct CountrySelectionView: View {
         .frame(maxHeight: .infinity, alignment: .top)
     }
 }
+
+
 
 //// MARK: – Preview
 //struct CountrySelectionView_Previews: PreviewProvider {
