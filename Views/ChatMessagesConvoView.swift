@@ -454,7 +454,7 @@ struct ChatMessagesConvoView: View {
         .padding(.horizontal)
     }
     //function will start the recording when user is holding aka long press
-    func startRecording() {
+    private func startRecording() {
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playAndRecord, mode: .default)
