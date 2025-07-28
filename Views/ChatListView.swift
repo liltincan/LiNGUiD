@@ -9,12 +9,6 @@ import SwiftUI
 import Combine
 import Kingfisher
 
-enum ChatRoute: Hashable {
-    case chatDetail(String)
-    case discovery
-    case profile(String)
-}
-
 //MARK: - View (Main View)
 struct ChatListView: View {
     @StateObject private var viewModel = ChatListViewModel()

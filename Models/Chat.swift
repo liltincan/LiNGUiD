@@ -298,5 +298,9 @@ extension Chat {
         participantIDs.first(where: { $0 != currentUserID })
     }
 }
-
-
+//MARK: - This will be the path to user when we are navigating to different destination (used in the main view chatlistview)
+enum ChatRoute: Hashable {
+    case chatDetail(String)
+    case discovery
+    case profile(String)
+}
