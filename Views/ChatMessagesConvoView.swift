@@ -32,7 +32,6 @@ struct ChatMessagesConvoView: View {
     @State private var audioURL: URL?
     @State private var isRecording = false
     
-    
     @Binding var path: [ChatRoute]
     @FocusState private var focusfield: FocusField?
     

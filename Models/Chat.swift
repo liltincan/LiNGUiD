@@ -300,7 +300,5 @@ extension Chat {
 }
 //MARK: - This will be the path to user when we are navigating to different destination (used in the main view chatlistview)
 enum ChatRoute: Hashable {
-    case chatDetail(String)
-    case discovery
-    case profile(String)
+    case chatDetail(String), discovery, profile(String)
 }
