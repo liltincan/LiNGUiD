@@ -20,7 +20,6 @@ struct OnboardingFlowView: View {
     @State private var isCheckingUsername = false
     @State private var usernameTooLong: Bool = false
     
-    
     private let total = 0  // number of pages
 
     var body: some View {
@@ -46,23 +45,25 @@ struct OnboardingFlowView: View {
                     .layoutPriority(1)
                 
                 case 1:
-                    HStack {
-                        Button(action: {
-                            page -= 1
-                        }) {
-                            Image("Return_Button")
-                                .frame(width: 25, height: 25)
-                                .padding(.leading, 10)
-                        }
-                        Spacer()
-                    }
-                    
-                
                     CustomProgressBar(progress: 0.4, height: 10)
-                    .padding(.bottom, 25)
-                
-                    OnboardingPageView(index: 1)
-                    .padding(.bottom, 6)
+                    .padding(.bottom, 35)
+                    
+                    ZStack{
+                        HStack {
+                            Button(action: {
+                                page -= 1
+                            }) {
+                                Image("Return_Button")
+                                    .frame(width: 25, height: 25)
+                                    .padding(.leading, 10)
+                            }
+                            Spacer()
+                        }
+                        
+                        OnboardingPageView(index: 1)
+                        //.padding(.bottom, 6)
+                    }
+                    .padding(.bottom, 31.5)
                 
                     CountrySelectionView(
                         selectedCountry: $selectedCountry,
@@ -77,23 +78,25 @@ struct OnboardingFlowView: View {
                     
                     
                 case 2:
-                    HStack {
-                        Button(action: {
-                            page -= 1
-                        }) {
-                            Image("Return_Button")
-                                .frame(width: 25, height: 25)
-                                .padding(.leading, 10)
-                        }
-                        Spacer()
-                    }
-                    
                     CustomProgressBar(progress: 0.6, height: 10)
-                    .padding(.bottom, 25)
-                    
-                    OnboardingPageView(index: 2)
-                    .padding(.bottom, 7.5)
-
+                    .padding(.bottom, 35)
+                
+                    ZStack{
+                        HStack {
+                            Button(action: {
+                                page -= 1
+                            }) {
+                                Image("Return_Button")
+                                    .frame(width: 25, height: 25)
+                                    .padding(.leading, 10)
+                            }
+                            Spacer()
+                        }
+                        
+                        OnboardingPageView(index: 2)
+                            //.padding(.bottom, 7.5)
+                    }
+                    .padding(.bottom, 30)
                 
                     LanguageSelectionView(onContinue:{ selected in
                         targetLanguages = selected
@@ -236,7 +239,7 @@ struct OnboardingFlowView: View {
                             .cornerRadius(8)
                     )
                     .padding(.horizontal, 10)
-
+                    
                     Spacer(minLength: 275)
 
                     // ── Continue Button ──
