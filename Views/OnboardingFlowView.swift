@@ -19,6 +19,7 @@ struct OnboardingFlowView: View {
     @State private var isUsernameAvailable: Bool? = nil
     @State private var isCheckingUsername = false
     @State private var usernameTooLong: Bool = false
+    @FocusState private var isUsernameFocused: Bool
     
     private let total = 0  // number of pages
 
@@ -171,23 +172,27 @@ struct OnboardingFlowView: View {
                     }
                 
                 case 4:
-                    HStack {
-                        Button(action: {
-                            page -= 1
-                            selectPage = max(targetLanguages.count - 1, 0)
-                        }) {
-                            Image("Return_Button")
-                                .frame(width: 25, height: 25)
-                                .padding(.leading, 10)
+                    CustomProgressBar(progress: 1.0, height: 10)
+                    .padding(.bottom, 35)
+                    
+                    ZStack{
+                        HStack {
+                            Button(action: {
+                                page -= 1
+                                selectPage = max(targetLanguages.count - 1, 0)
+                            }) {
+                                Image("Return_Button")
+                                    .frame(width: 25, height: 25)
+                                    .padding(.leading, 10)
+                            }
+                            Spacer()
                         }
-                        Spacer()
+                        
+                        OnboardingPageView(index: 3)
+                        //.padding(.bottom, 10)
                     }
                 
-                    CustomProgressBar(progress: 1.0, height: 10)
-                    .padding(.bottom, 25)
-                    
-                    OnboardingPageView(index: 3)
-                    //.padding(.bottom, 10)
+                    Spacer(minLength: 75)
                 
                     VStack(alignment: .center, spacing: 10) {
                         Text("Username")
@@ -202,6 +207,12 @@ struct OnboardingFlowView: View {
                             .foregroundColor(Color.black)
                             .accentColor(Color.appPrimaryColor)
                             .multilineTextAlignment(.center)
+                            .focused($isUsernameFocused) // ← Add this line
+                            .onAppear {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    self.isUsernameFocused = true
+                                }
+                            }
                             .onChange(of: username) { newValue in
                                 // Allow only letters, numbers, and underscore
                                 let allowedCharacterSet = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_")
@@ -248,7 +259,11 @@ struct OnboardingFlowView: View {
                     )
                     .padding(.horizontal, 10)
                     
-                    Spacer(minLength: 275)
+                    if isUsernameFocused{
+                        Spacer(minLength: 0)
+                    } else{
+                        Spacer(minLength: 275)
+                    }
 
                     // ── Continue Button ──
                     Button(action: {
