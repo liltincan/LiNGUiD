@@ -410,7 +410,7 @@ struct VideoGridSection: View {
                     }
                     .overlay(
                         Rectangle()
-                            .stroke(Color.primary.opacity(1.0), lineWidth: 2)
+                            .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
                     )
                 }
                 ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
