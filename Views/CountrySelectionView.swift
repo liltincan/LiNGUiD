@@ -157,6 +157,9 @@ struct CountrySelectionView: View {
                                         selectedCountry = nil    // unselect if tapping the same one
                                     } else {
                                         selectedCountry = country
+                                        isSearchFieldFocused = false
+                                        searchText = ""
+                                        isSearching = false
                                     }
                                 }
                             }
@@ -174,7 +177,7 @@ struct CountrySelectionView: View {
                     .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: filteredCountries)
                 }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
-                    Color.clear.frame(height: keyboard.currentHeight * 1.6)
+                    Color.clear.frame(height: keyboard.currentHeight * 1.5)
                 }
                 .padding(.top, 8.5)
             }

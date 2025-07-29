@@ -30,7 +30,7 @@ struct LanguageSelectionView: View {
         }
         
         // Sort languages: selected ones first, then unselected ones
-        let selectedFiltered = searchFilteredLanguages.filter { selectedLanguages.contains($0) }
+        let selectedFiltered = Array(selectedLanguages)
         let unselectedFiltered = searchFilteredLanguages.filter { !selectedLanguages.contains($0) }
         
         return selectedFiltered + unselectedFiltered
@@ -125,7 +125,7 @@ struct LanguageSelectionView: View {
                     }
                 }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
-                    Color.clear.frame(height: keyboard.currentHeight * 1.7)
+                    Color.clear.frame(height: keyboard.currentHeight * 1.5)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -156,6 +156,8 @@ struct LanguageSelectionView: View {
         .padding()
         .background(Color.black.ignoresSafeArea().onTapGesture {
             isSearchFieldFocused = false
+            searchText = ""
+            isSearching = false
         })
         
         .animation(.easeInOut, value: isSearching)
@@ -170,6 +172,8 @@ struct LanguageSelectionView: View {
         } else {
             if selectedLanguages.count >= selectionLimit {
                 isSearchFieldFocused = false
+                searchText = ""
+                isSearching = false
                 if selectionLimit == 3 {
                     onSelectionLimitReached_Native?()
                 } else {

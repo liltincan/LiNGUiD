@@ -403,7 +403,7 @@ struct OnboardingFlowView: View {
 
                         Spacer()
                     }
-                    .transition(.scale)
+                    .transition(.slideUpFromBottom)
                 }
             }
             .animation(.easeInOut, value: showGetProPopup)
@@ -449,7 +449,7 @@ struct OnboardingFlowView: View {
                     .cornerRadius(12)
                     .shadow(radius: 10)
                     .padding(.horizontal, 40)
-                    .transition(.scale)
+                    .transition(.slideUpFromBottom)
                 }
             }
             .animation(.easeInOut, value: showCustomAlert)
@@ -497,6 +497,22 @@ struct OnboardingFlowView: View {
 
 }
 
+extension AnyTransition {
+    static var slideUpFromBottom: AnyTransition {
+        .modifier(
+            active: SlideModifier(y: UIScreen.main.bounds.height),
+            identity: SlideModifier(y: 0)
+        )
+    }
+
+    private struct SlideModifier: ViewModifier {
+        let y: CGFloat
+
+        func body(content: Content) -> some View {
+            content.offset(y: y)
+        }
+    }
+}
 
 struct CustomProgressBar: View {
     var progress: Double // from 0.0 to 1.0
