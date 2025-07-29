@@ -321,6 +321,7 @@ struct ProfileStatsView: View {
     var body: some View {
         HStack(spacing: 35) {
             Stats(text1: videoCount, text2: "videos")
+                .padding(.leading, 15)
             Stats(text1: "\(inputAmount)m", text2: "input")
             Stats(text1: followerCount, text2: "followers")
         }
