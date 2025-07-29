@@ -46,7 +46,10 @@ struct ProfileView: View {
                         ProfileStatsView(
                             videoCount: vm.videoCount,
                             inputAmount: vm.inputAmount,
-                            followerCount: vm.followerCount
+                            followerCount: vm.followerCount,
+                            onFollowersTapped: {
+                                print("Followers tapped")
+                            }
                         )
                         .padding(.top, -10)
                         
@@ -317,13 +320,20 @@ struct ProfileStatsView: View {
     let videoCount: String
     let inputAmount: String
     let followerCount: String
+    var onFollowersTapped: (() -> Void)? = nil
     
     var body: some View {
         HStack(spacing: 35) {
             Stats(text1: videoCount, text2: "videos")
                 .padding(.leading, 15)
             Stats(text1: "\(inputAmount)m", text2: "input")
-            Stats(text1: followerCount, text2: "followers")
+            Button {
+                onFollowersTapped?()
+            } label: {
+                Stats(text1: followerCount, text2: "followers")
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(PlainButtonStyle())
         }
     }
 }
