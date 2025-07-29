@@ -10,9 +10,11 @@ struct LanguageSelectionView: View {
     @Binding var selectedLanguages: Set<String>
     @State private var searchText = ""
     @State private var isSearching = false
-    @State private var showCustomAlert = false
     var excludeLanguages: [String] = []
     var onDeselect: ((String) -> Void)? = nil
+    var onSelectionLimitReached_Foreign: (() -> Void)? = nil
+    var onSelectionLimitReached_Native: (() -> Void)? = nil
+    
     
     @ObservedObject private var keyboard = KeyboardResponder()
 
@@ -155,50 +157,7 @@ struct LanguageSelectionView: View {
         .background(Color.black.ignoresSafeArea().onTapGesture {
             isSearchFieldFocused = false
         })
-        .overlay(
-            Group {
-                if showCustomAlert {
-                    ZStack {
-                        // Dimmed blurred background
-                        Color.black.opacity(0.8)
-                            .ignoresSafeArea()
-                            .transition(.opacity)
-                        
-                        // Alert box
-                        VStack(spacing: 20) {
-                            Text("Selection Limit Reached")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundColor(.white)
-                            
-                            Text("You can only select up to \(selectionLimit) languages")
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(.white)
-                            
-                            Button(action: {
-                                withAnimation {
-                                    showCustomAlert = false
-                                }
-                            }) {
-                                Text("OK")
-                                    .frame(minWidth: 250)
-                                    .padding()
-                                    .background(Color.white)
-                                    .foregroundColor(Color.appPrimaryColor)
-                                    .cornerRadius(8)
-                            }
-                        }
-                        .padding()
-                        .background(Color.appPrimaryColor)
-                        .cornerRadius(12)
-                        .shadow(radius: 10)
-                        .padding(.horizontal, 40)
-                        .transition(.scale)
-                        .offset(y: -100)
-                    }
-                    .animation(.easeInOut, value: showCustomAlert)
-                }
-            }
-        )
+        
         .animation(.easeInOut, value: isSearching)
         .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: selectedLanguages)
     }
@@ -210,8 +169,11 @@ struct LanguageSelectionView: View {
             onDeselect?(language)
         } else {
             if selectedLanguages.count >= selectionLimit {
-                withAnimation {
-                    showCustomAlert = true
+                isSearchFieldFocused = false
+                if selectionLimit == 3 {
+                    onSelectionLimitReached_Native?()
+                } else {
+                    onSelectionLimitReached_Foreign?()
                 }
             } else {
                 selectedLanguages.insert(language)

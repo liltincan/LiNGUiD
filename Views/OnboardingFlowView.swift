@@ -20,6 +20,9 @@ struct OnboardingFlowView: View {
     @State private var isCheckingUsername = false
     @State private var usernameTooLong: Bool = false
     @FocusState private var isUsernameFocused: Bool
+    @State private var showGetProPopup = false
+    @State private var showCustomAlert = false
+
     
     private let total = 0  // number of pages
 
@@ -42,7 +45,12 @@ struct OnboardingFlowView: View {
                         overlap.forEach { languageLevels.removeValue(forKey: $0) }
                         locationManager.requestWhenInUseAuthorization()
                         page += 1
-                    }, selectionLimit: 3, selectedLanguages: $selectedNativeLanguages, excludeLanguages: [])
+                    }, selectionLimit: 3, selectedLanguages: $selectedNativeLanguages, excludeLanguages: [],
+                        onSelectionLimitReached_Native: {
+                        withAnimation {
+                            showCustomAlert = true
+                        }
+                    })
                     .layoutPriority(1)
                 
                 case 1:
@@ -80,9 +88,9 @@ struct OnboardingFlowView: View {
                     
                 case 2:
                     CustomProgressBar(progress: 0.6, height: 10)
-                    .padding(.bottom, 35)
-                
-                    ZStack{
+                        .padding(.bottom, 35)
+
+                    ZStack {
                         HStack {
                             Button(action: {
                                 page -= 1
@@ -93,47 +101,32 @@ struct OnboardingFlowView: View {
                             }
                             Spacer()
                         }
-                        
+
                         OnboardingPageView(index: 2)
-                            //.padding(.bottom, 7.5)
                     }
                     .padding(.bottom, 30)
-                
-                    LanguageSelectionView(onContinue:{ selected in
-                        targetLanguages = selected
-                        page += 1
-                    }, selectionLimit: 50, selectedLanguages: $selectedTargetLanguages, excludeLanguages: nativeLanguages, onDeselect: { language in
-                        languageLevels.removeValue(forKey: language)
-                    })
+
+                    LanguageSelectionView(
+                        onContinue: { selected in
+                            targetLanguages = selected
+                            page += 1
+                        },
+                        selectionLimit: 1,
+                        selectedLanguages: $selectedTargetLanguages,
+                        excludeLanguages: nativeLanguages,
+                        onDeselect: { language in
+                            languageLevels.removeValue(forKey: language)
+                        },
+                        onSelectionLimitReached_Foreign: {
+                            withAnimation {
+                                showGetProPopup = true
+                            }
+                        }
+                    )
                     .layoutPriority(1)
+
                 
                 case 3:
-//                    if selectPage > 0 {
-//                        HStack {
-//                            Button(action: {
-//                                selectPage -= 1
-//                            }) {
-//                                Image("Return_Button")
-//                                    .frame(width: 25, height: 25)
-//                                    .padding(.leading, 10)
-//                            }
-//                            Spacer()
-//                        }
-//                    }
-//                    else{
-//                        HStack {
-//                            Button(action: {
-//                                selectPage = 0
-//                                page -= 1
-//                            }) {
-//                                Image("Return_Button")
-//                                    .frame(width: 25, height: 25)
-//                                    .padding(.leading, 10)
-//                            }
-//                            Spacer()
-//                        }
-//                    }
-                        
                     let baseProgress = 0.6
                     let step = 0.2 / Double(targetLanguages.count)
                     let progress = baseProgress + (Double(selectPage + 1) * step)
@@ -385,6 +378,82 @@ struct OnboardingFlowView: View {
             
         }
         .background(Color.black.ignoresSafeArea())
+        .overlay(
+            ZStack {
+                if showGetProPopup {
+                    Color.black.opacity(0.9)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation {
+                                showGetProPopup = false
+                            }
+                        }
+
+                    VStack {
+                        Spacer()
+
+                        GetProView()
+                            .frame(width: UIScreen.main.bounds.width * 0.5, height: UIScreen.main.bounds.height * 0.5)
+                            .padding(.horizontal, 20)
+                            .background(
+                                Color(red: 22/255, green: 0/255, blue: 46/255)
+                                    .cornerRadius(24)
+                            )
+
+                        Spacer()
+                    }
+                    .transition(.scale)
+                }
+            }
+            .animation(.easeInOut, value: showGetProPopup)
+        )
+        .overlay(
+            ZStack {
+                if showCustomAlert {
+                    // Dimmed blurred background
+                    Color.black.opacity(0.9)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation {
+                                showCustomAlert = false
+                            }
+                        }
+                    
+                    // Alert box
+                    VStack(spacing: 20) {
+                        Text("Selection Limit Reached")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        Text("You can only select up to 3 languages")
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                        
+                        Button(action: {
+                            withAnimation {
+                                showCustomAlert = false
+                            }
+                        }) {
+                            Text("OK")
+                                .frame(minWidth: 250)
+                                .padding()
+                                .background(Color.white)
+                                .foregroundColor(Color.appPrimaryColor)
+                                .cornerRadius(8)
+                        }
+                    }
+                    .padding()
+                    .background(Color.appPrimaryColor)
+                    .cornerRadius(12)
+                    .shadow(radius: 10)
+                    .padding(.horizontal, 40)
+                    .transition(.scale)
+                }
+            }
+            .animation(.easeInOut, value: showCustomAlert)
+        )
     }
     
     func checkUsernameAvailability(_ name: String) {
