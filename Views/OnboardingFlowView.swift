@@ -235,7 +235,7 @@ struct OnboardingFlowView: View {
                     .padding(.bottom, 15)
                     .padding(.top, 10)
                     .background(
-                        Color(red: 124/255, green: 58/255, blue: 237/255)
+                        Color.appPrimaryColor
                             .cornerRadius(8)
                     )
                     .padding(.horizontal, 10)
@@ -254,8 +254,7 @@ struct OnboardingFlowView: View {
                             .padding()
                             .background(
                                 (isUsernameAvailable == true && !username.isEmpty && !usernameTooLong) ?
-                                Color(red: 124/255, green: 58/255, blue: 237/255) :
-                                Color(red: 62/255, green: 29/255, blue: 119/255)
+                                Color.appPrimaryColor : Color.appSecondaryColor
                             )
                             .cornerRadius(8)
                     }
@@ -346,7 +345,7 @@ struct OnboardingFlowView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                            .background(Color.appPrimaryColor)
                             .cornerRadius(8)
                             .padding(.horizontal)
                             .drawingGroup()
@@ -421,7 +420,7 @@ struct CustomProgressBar: View {
 
                 // Fill
                 RoundedRectangle(cornerRadius: height / 2)
-                    .fill(Color(red: 124/255, green: 58/255, blue: 237/255))
+                    .fill(Color.appPrimaryColor)
                     .frame(width: geometry.size.width * progress, height: height - 2)
                     .padding(2)
             }
@@ -432,10 +431,10 @@ struct CustomProgressBar: View {
     }
 }
 
-struct OnboardingFlowView_Previews: PreviewProvider {
-    static var previews: some View {
-        OnboardingFlowView {
-            print("Onboarding Complete")
-        }
-    }
-}
+//struct OnboardingFlowView_Previews: PreviewProvider {
+//    static var previews: some View {
+//        OnboardingFlowView {
+//            print("Onboarding Complete")
+//        }
+//    }
+//}

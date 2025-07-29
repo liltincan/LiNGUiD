@@ -104,7 +104,7 @@ struct LanguageSelectionView: View {
                             .padding(.horizontal)
                             .padding(.vertical, 18.5)
                             .font(.system(size: 17))
-                            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                            .background(Color.appPrimaryColor)
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 withAnimation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0)) {
@@ -116,7 +116,7 @@ struct LanguageSelectionView: View {
                                 removal: .scale(scale: 0.8).combined(with: .opacity).combined(with: .move(edge: .bottom))
                             ))
                             Divider()
-                                .background(Color.white.opacity(1.0))
+                                .background(Color.white)
 
                         }
                         .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: selectedLanguages)
@@ -142,7 +142,7 @@ struct LanguageSelectionView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                        .background(Color.appPrimaryColor)
                         .cornerRadius(8)
                 }
                 //.padding(.horizontal)
@@ -183,12 +183,12 @@ struct LanguageSelectionView: View {
                                     .frame(minWidth: 250)
                                     .padding()
                                     .background(Color.white)
-                                    .foregroundColor(Color(red: 124/255, green: 58/255, blue: 237/255))
+                                    .foregroundColor(Color.appPrimaryColor)
                                     .cornerRadius(8)
                             }
                         }
                         .padding()
-                        .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                        .background(Color.appPrimaryColor)
                         .cornerRadius(12)
                         .shadow(radius: 10)
                         .padding(.horizontal, 40)

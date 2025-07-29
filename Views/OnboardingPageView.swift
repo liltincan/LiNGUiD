@@ -39,7 +39,7 @@ struct OnboardingPageView: View {
                                 .drawingGroup()
                             
                             Text("This step helps clarify dialectal differences")
-                                .font(.system(size: 17))
+                                .font(.system(size: 15))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
                                 .drawingGroup()

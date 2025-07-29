@@ -149,7 +149,7 @@ struct CountrySelectionView: View {
                             .padding(.vertical, 11.5)
                             .padding(.horizontal)
                             .font(.system(size: 17))
-                            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                            .background(Color.appPrimaryColor)
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 withAnimation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0)) {
@@ -167,18 +167,18 @@ struct CountrySelectionView: View {
                             
                             // ── Divider under every row ─────────────
                             Divider()
-                                .background(Color.white.opacity(1))
+                                .background(Color.white)
                                 
                         }
                     }
                     .animation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0), value: filteredCountries)
                 }
                 .safeAreaInset(edge: .bottom, spacing: 0) {
-                    Color.clear.frame(height: keyboard.currentHeight * 1.7)
+                    Color.clear.frame(height: keyboard.currentHeight * 1.6)
                 }
                 .padding(.top, 8.5)
             }
-            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+            .background(Color.appPrimaryColor)
             .cornerRadius(8)
             .padding(.bottom, 36)
             
@@ -191,7 +191,7 @@ struct CountrySelectionView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                        .background(Color.appPrimaryColor)
                         .cornerRadius(8)
                 }
                 .transition(.opacity)

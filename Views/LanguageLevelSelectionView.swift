@@ -28,7 +28,7 @@ struct LanguageLevelSelectionView: View {
                     .background(Color.white.opacity(0.2))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+            .background(Color.appPrimaryColor)
             .cornerRadius(8)
             .padding(.top, 30)
             
@@ -45,7 +45,7 @@ struct LanguageLevelSelectionView: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                    .background(Color.appPrimaryColor)
                     .cornerRadius(8)
 //                    .onTapGesture {
 //                        selectedLevel = level
@@ -69,7 +69,7 @@ struct LanguageLevelSelectionView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                        .background(Color.appPrimaryColor)
                         .cornerRadius(8)
                 }
                 .padding(.top, 45)
