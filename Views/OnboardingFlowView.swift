@@ -107,31 +107,31 @@ struct OnboardingFlowView: View {
                     .layoutPriority(1)
                 
                 case 3:
-                    if selectPage > 0 {
-                        HStack {
-                            Button(action: {
-                                selectPage -= 1
-                            }) {
-                                Image("Return_Button")
-                                    .frame(width: 25, height: 25)
-                                    .padding(.leading, 10)
-                            }
-                            Spacer()
-                        }
-                    }
-                    else{
-                        HStack {
-                            Button(action: {
-                                selectPage = 0
-                                page -= 1
-                            }) {
-                                Image("Return_Button")
-                                    .frame(width: 25, height: 25)
-                                    .padding(.leading, 10)
-                            }
-                            Spacer()
-                        }
-                    }
+//                    if selectPage > 0 {
+//                        HStack {
+//                            Button(action: {
+//                                selectPage -= 1
+//                            }) {
+//                                Image("Return_Button")
+//                                    .frame(width: 25, height: 25)
+//                                    .padding(.leading, 10)
+//                            }
+//                            Spacer()
+//                        }
+//                    }
+//                    else{
+//                        HStack {
+//                            Button(action: {
+//                                selectPage = 0
+//                                page -= 1
+//                            }) {
+//                                Image("Return_Button")
+//                                    .frame(width: 25, height: 25)
+//                                    .padding(.leading, 10)
+//                            }
+//                            Spacer()
+//                        }
+//                    }
                         
                     let baseProgress = 0.6
                     let step = 0.2 / Double(targetLanguages.count)
@@ -156,6 +156,14 @@ struct OnboardingFlowView: View {
                                 if selectPage >= targetLanguages.count {
                                     page += 1
                                     selectPage = 0
+                                }
+                            },
+                            onBack: {
+                                if selectPage > 0 {
+                                    selectPage -= 1
+                                } else {
+                                    selectPage = 0
+                                    page -= 1
                                 }
                             }
                         )

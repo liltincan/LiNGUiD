@@ -6,15 +6,26 @@ struct LanguageLevelSelectionView: View {
     let levels = ["Just Starting", "Beginner", "Intermediate", "Advanced", "Expert"]
     let languageName: String
     var onContinue: (() -> Void)?
+    var onBack: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading) {
-            VStack {
+            ZStack{
+                HStack(alignment: .center) {
+                    Button(action: {
+                        onBack?()
+                    }) {
+                        Image("Return_Button")
+                            //.resizable()
+                            .frame(width: 25, height: 25)
+                    }
+                    
+                    Spacer()
+                }
                 Text("Select your \n level in \(languageName)")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
-                    .padding(.vertical, 10)
             }
             .frame(maxWidth: .infinity)
             
@@ -30,7 +41,8 @@ struct LanguageLevelSelectionView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.appPrimaryColor)
             .cornerRadius(8)
-            .padding(.top, 30)
+            .padding(.top, 40)
+            .padding(.horizontal, 5)
             
             VStack(alignment: .leading){
                 ForEach(levels, id: \.self) { level in
@@ -72,14 +84,16 @@ struct LanguageLevelSelectionView: View {
                         .background(Color.appPrimaryColor)
                         .cornerRadius(8)
                 }
-                .padding(.top, 45)
+                .padding(.top, 85)
                 .opacity(selectedLevel != nil ? 1 : 0) // Hide/show without layout shift
                 .disabled(selectedLevel == nil)        // Prevent interaction when not ready
                 
                 Spacer()
             }
+            .padding(.horizontal, 5)
         }
-        .padding()
+        .padding(.horizontal, 10)
+        .padding(.top, 15)
         .background(Color.black.ignoresSafeArea())
 
     }

@@ -66,7 +66,12 @@ struct OnboardingPageView: View {
                         
                     case 3:
                         VStack{
-                            Text("What should we call you?")
+                            Text("What should")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .drawingGroup()
+                            Text("we call you?")
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.center)
