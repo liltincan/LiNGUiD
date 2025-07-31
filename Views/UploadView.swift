@@ -474,7 +474,7 @@ struct AddThumbnailView: View {
                 .padding(.horizontal, 10)
             }
 
-            Button("Upload") {
+            Button(action: {
                 onComplete?()
                 isUploading = true
                 uploadManager.addUploadingVideos(assets, thumbnails: thumbnailOverrides)
@@ -517,15 +517,18 @@ struct AddThumbnailView: View {
                     isUploading = false
                     dismiss()
                 }
+            }) {
+                Text("Upload")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, maxHeight: 60)
+                    .background(Color.appPrimaryColor)
+                    .cornerRadius(8)
             }
-            .font(.headline)
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity, maxHeight: 60)
-            .background(Color(red: 124/255, green: 58/255, blue: 237/255))
             .disabled(isUploading)
-            .cornerRadius(8)
-            .padding(.vertical, 20)
+            .padding(.bottom, 10)
             .padding(.horizontal, 10)
+
         }
         .onAppear {
             preloadDefaultThumbnails()
