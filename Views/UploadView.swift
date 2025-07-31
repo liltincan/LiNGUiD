@@ -127,21 +127,12 @@ struct UploadView: View {
                                     navigateToThumbnail = true
                                 }
                             }) {
-                                if isCompressing {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .padding(.horizontal, 20)
-                                        .padding(.vertical, 10)
-                                        .background(Color.gray)
-                                        .cornerRadius(8)
-                                } else {
-                                    Text("Next")
-                                        .padding(.horizontal, 20)
-                                        .padding(.vertical, 10)
-                                        .background(Color.appPrimaryColor)
-                                        .foregroundColor(.white)
-                                        .cornerRadius(8)
-                                }
+                                Text("Next")
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 10)
+                                    .background(Color.appPrimaryColor)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
                             }
                         }
                         .disabled(selectedAssets.isEmpty)
@@ -162,23 +153,23 @@ struct UploadView: View {
                     ZStack {
                         Color.black.opacity(0.9)
                             .ignoresSafeArea()
-                        GeometryReader { geo in
-                            VStack{
-                                Spacer()
-                                    .frame(height: min(geo.size.height * 0.5, 275))
-                                
-                                ProgressView("Processing Video\(selectedAssets.count == 1 ? "" : "s")")
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .foregroundColor(.white)
-                                    .font(.headline)
-                                Text("This may take a few moments")
-                                    .foregroundColor(.white)
-                                    .font(.subheadline)
-                                
-                                Spacer()
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        }
+//                        GeometryReader { geo in
+//                            VStack{
+//                                Spacer()
+//                                    .frame(height: min(geo.size.height * 0.5, 275))
+//                                
+//                                ProgressView("Processing Video\(selectedAssets.count == 1 ? "" : "s")")
+//                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+//                                    .foregroundColor(.white)
+//                                    .font(.headline)
+//                                Text("This may take a few moments")
+//                                    .foregroundColor(.white)
+//                                    .font(.subheadline)
+//                                
+//                                Spacer()
+//                            }
+//                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+//                        }
                     }
                 }
             }
@@ -188,7 +179,7 @@ struct UploadView: View {
     private func compressVideo(from asset: PHAsset) async -> URL? {
         await withCheckedContinuation { continuation in
             let options = PHVideoRequestOptions()
-            options.deliveryMode = .highQualityFormat
+            options.deliveryMode = .automatic // original quality
             options.isNetworkAccessAllowed = true
 
             PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
@@ -197,21 +188,7 @@ struct UploadView: View {
                     return
                 }
 
-                let exportSession = AVAssetExportSession(asset: avURLAsset, presetName: AVAssetExportPreset1280x720)!
-
-                let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).mp4")
-                exportSession.outputURL = outputURL
-                exportSession.outputFileType = .mp4
-                exportSession.shouldOptimizeForNetworkUse = true
-
-                exportSession.exportAsynchronously {
-                    if exportSession.status == .completed {
-                        continuation.resume(returning: outputURL)
-                    } else {
-                        print("Compression failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
-                        continuation.resume(returning: nil)
-                    }
-                }
+                continuation.resume(returning: avURLAsset.url)
             }
         }
     }
@@ -457,7 +434,7 @@ struct AddThumbnailView: View {
                                     .foregroundColor(.white)
                                     .padding(.horizontal)
                                     .padding(.vertical, 8)
-                                    .background(Color(red: 124/255, green: 58/255, blue: 237/255))
+                                    .background(Color.appPrimaryColor)
                                     .cornerRadius(8)
                             }
 

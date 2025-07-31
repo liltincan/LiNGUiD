@@ -372,6 +372,7 @@ struct VideoGridSection: View {
     let uploadingVideos: [UploadManager.UploadingVideo]
     let noVideosMessage: String?  // Optional custom message
     let gridItemWidth = (UIScreen.main.bounds.width - 5) / 3
+    let thumbnailHeight = (UIScreen.main.bounds.width - 5) * 16 / 27
     var videoArray: [Video]
     @Binding var selectedTab: Int
     @EnvironmentObject var uploadManager: UploadManager
@@ -397,7 +398,7 @@ struct VideoGridSection: View {
                         Image(uiImage: video.thumbnail)
                             .resizable()
                             .scaledToFill()
-                            .aspectRatio(9/16, contentMode: .fit)
+                            .frame(width: gridItemWidth, height: thumbnailHeight)
                             .clipped()
 
                         if video.isUploading {
@@ -469,6 +470,9 @@ struct Videos: View {
     let index: Int
     let videoArray: [Video]
     let allVideoURLs: [String]
+    let gridItemWidth = (UIScreen.main.bounds.width - 5) / 3
+    let thumbnailHeight = (UIScreen.main.bounds.width - 5) * 16 / 27
+    
     @EnvironmentObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
 
@@ -506,7 +510,7 @@ struct Videos: View {
                         image
                             .resizable()
                             .scaledToFill()
-                            .aspectRatio(9/16, contentMode: .fit)
+                            .frame(width: gridItemWidth, height: thumbnailHeight)
                             .clipped()
                             .onAppear {
                                 retryCount = 0
@@ -514,7 +518,7 @@ struct Videos: View {
 
                     case .failure(_):
                         VStack {
-                            Color.gray.frame(height: 180)
+                            Color.gray.frame(width: gridItemWidth, height: thumbnailHeight)
                                 .onAppear {
                                     if retryCount < maxRetryCount {
                                         retryCount += 1
@@ -526,17 +530,17 @@ struct Videos: View {
                         }
 
                     case .empty:
-                        Color.gray.aspectRatio(9/16, contentMode: .fit)
+                        Color.gray.frame(width: gridItemWidth, height: thumbnailHeight)
                     @unknown default:
-                        Color.gray.aspectRatio(9/16, contentMode: .fit)
+                        Color.gray.frame(width: gridItemWidth, height: thumbnailHeight)
                     }
                 }
-                .aspectRatio(9/16, contentMode: .fit)
+                .frame(width: gridItemWidth, height: thumbnailHeight)
                 .clipped()
                 .id(reloadID) //forces reload when ID changes
             }
         } else {
-            Color.gray.aspectRatio(9/16, contentMode: .fit)
+            Color.gray.frame(width: gridItemWidth, height: thumbnailHeight)
         }
     }
 }
