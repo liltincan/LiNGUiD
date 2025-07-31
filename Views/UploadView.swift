@@ -8,6 +8,10 @@ import AVKit
 import TOCropViewController
 import FirebaseAuth
 
+// Fix 1: PHAsset Identifiable conformance
+extension PHAsset: Identifiable {
+    public var id: String { localIdentifier }
+}
 
 struct UploadView: View {
     var onComplete: (() -> Void)? = nil
@@ -24,206 +28,125 @@ struct UploadView: View {
     let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 3)
 
     var body: some View {
-        ZStack(alignment: .top) {
-            Color.black.ignoresSafeArea()
+        NavigationStack {
+            ZStack(alignment: .top) {
+                Color.black.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // 🟣 Header
-                Text("Upload")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 10)
-                    .padding(.bottom, 30)
+                VStack(spacing: 0) {
+                    // Header
+                    Text("Upload")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 10)
+                        .padding(.bottom, 30)
 
-                // 🟣 Selection Menu
-//                HStack {
-//                    Menu {
-//                        Button("Select One") {
-//                            isMultiSelect = false
-//                            selectedAssets.removeAll()
-//                        }
-//                        Button("Select Multiple") {
-//                            isMultiSelect = true
-//                            selectedAssets.removeAll()
-//                        }
-//                    } label: {
-//                        HStack {
-//                            Text("Select \(isMultiSelect ? "Multiple" : "One")")
-//                            Image(systemName: "chevron.down")
-//                        }
-//                        .foregroundColor(.white)
-//                        .padding(.horizontal)
-//                    }
-//
-//                    Spacer()
-//                }
-//                .padding(.bottom, 20)
-
-                // 🟣 Video Grid
-                GeometryReader { geometry in
-                    ScrollView {
-                        LazyVGrid(columns: columns, spacing: 0) {
-                            ForEach(videoAssets, id: \.localIdentifier) { asset in
-                                VideoThumbnailSelectableView(
-                                    asset: asset,
-                                    index: selectedAssets.firstIndex(of: asset).map { $0 + 1 },
-                                    isSelected: selectedAssets.contains(asset)
-                                )
-                                .onTapGesture {
-                                    handleSelection(for: asset)
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 2.5)
-                    .frame(maxHeight: geometry.size.height) // 🔧 adjust 180 based on header & buttons
-                }
-
-                Spacer()
-
-                // 🟣 Continue Button
-                if(!selectedAssets.isEmpty){
-                    HStack(spacing: 0) {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 0) {
-                                ForEach(selectedAssets.reversed(), id: \.localIdentifier) { asset in
-                                    VideoThumbnailMiniView(asset: asset)
-                                        .frame(width: 24, height: 42.5) // keeps 9:16 aspect
-                                }
-                            }
-                            .padding(.leading, 2.5)
-                        }
-                        .padding(.vertical, 2.5)
-                        
-                        Spacer()
-                        
-                        NavigationLink(
-                            destination: AddThumbnailView(
-                                assets: selectedAssets,
-                                compressedVideoURLs: compressedVideoURLs,
-                                onComplete: {
-                                    onComplete?()  // tells ProfileView to pop UploadView
-                                },
-                                thumbnailOverrides: $thumbnailOverrides
-                            ),
-                            isActive: $navigateToThumbnail
-                        ) {
-                            Button(action: {
-                                isCompressing = true
-
-                                Task {
-                                    isCompressing = true
-
-                                    for asset in selectedAssets {
-                                        if compressedVideoURLs[asset.localIdentifier] == nil {
-                                            if let url = await compressVideo(from: asset) {
-                                                compressedVideoURLs[asset.localIdentifier] = url
-                                            }
-                                        }
+                    // Video Grid
+                    GeometryReader { geometry in
+                        ScrollView {
+                            LazyVGrid(columns: columns, spacing: 0) {
+                                ForEach(videoAssets, id: \.localIdentifier) { asset in
+                                    VideoThumbnailSelectableView(
+                                        asset: asset,
+                                        index: selectedAssets.firstIndex(of: asset).map { $0 + 1 },
+                                        isSelected: selectedAssets.contains(asset)
+                                    )
+                                    .onTapGesture {
+                                        handleSelection(for: asset)
                                     }
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 2.5)
+                        .frame(maxHeight: geometry.size.height)
+                    }
 
-                                    isCompressing = false
-                                    navigateToThumbnail = true
+                    Spacer()
+
+                    // Continue Button
+                    if !selectedAssets.isEmpty {
+                        HStack(spacing: 0) {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 0) {
+                                    ForEach(selectedAssets.reversed(), id: \.localIdentifier) { asset in
+                                        VideoThumbnailMiniView(asset: asset)
+                                            .frame(width: 24, height: 42.5)
+                                    }
                                 }
+                                .padding(.leading, 2.5)
+                            }
+                            .padding(.vertical, 2.5)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                navigateToThumbnail = true
                             }) {
-                                if isCompressing {
-                                    ProgressView()
+                                Text("Next")
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 10)
+                                    .background(Color.appPrimaryColor)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                            .disabled(selectedAssets.isEmpty)
+                            .padding(.trailing, 2.5)
+                        }
+                        .padding(.bottom, 5)
+                    }
+                }
+            }
+            .navigationDestination(isPresented: $navigateToThumbnail) {
+                AddThumbnailView(
+                    assets: selectedAssets,
+                    compressedVideoURLs: compressedVideoURLs,
+                    onComplete: {
+                        onComplete?()
+                    },
+                    thumbnailOverrides: $thumbnailOverrides
+                )
+            }
+            .animation(.easeInOut, value: isCompressing)
+            .onAppear {
+                loadVideos()
+            }
+            .allowsHitTesting(!isCompressing)
+            .overlay(
+                Group {
+                    if isCompressing {
+                        ZStack {
+                            Color.black.opacity(0.9)
+                                .ignoresSafeArea()
+                            GeometryReader { geo in
+                                VStack {
+                                    Spacer()
+                                        .frame(height: min(geo.size.height * 0.5, 275))
+                                    
+                                    ProgressView("Processing Video\(selectedAssets.count == 1 ? "" : "s")")
                                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .padding(.horizontal, 20)
-                                        .padding(.vertical, 10)
-                                        .background(Color.gray)
-                                        .cornerRadius(8)
-                                } else {
-                                    Text("Next")
-                                        .padding(.horizontal, 20)
-                                        .padding(.vertical, 10)
-                                        .background(Color.appPrimaryColor)
                                         .foregroundColor(.white)
-                                        .cornerRadius(8)
+                                        .font(.headline)
+                                    Text("This may take a few moments")
+                                        .foregroundColor(.white)
+                                        .font(.subheadline)
+                                    
+                                    Spacer()
                                 }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
-                        }
-                        .disabled(selectedAssets.isEmpty)
-                        .padding(.trailing, 2.5)
-                    }
-                    .padding(.bottom, 5)
-                }
-            }
-        }
-        .animation(.easeInOut, value: isCompressing)
-        .onAppear {
-            loadVideos()
-        }
-        .allowsHitTesting(!isCompressing)
-        .overlay(
-            Group {
-                if isCompressing {
-                    ZStack {
-                        Color.black.opacity(0.9)
-                            .ignoresSafeArea()
-                        GeometryReader { geo in
-                            VStack{
-                                Spacer()
-                                    .frame(height: min(geo.size.height * 0.5, 275))
-                                
-                                ProgressView("Processing Video\(selectedAssets.count == 1 ? "" : "s")")
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .foregroundColor(.white)
-                                    .font(.headline)
-                                Text("This may take a few moments")
-                                    .foregroundColor(.white)
-                                    .font(.subheadline)
-                                
-                                Spacer()
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                     }
                 }
-            }
-        )
+            )
+        }
     }
     
-    private func compressVideo(from asset: PHAsset) async -> URL? {
-        await withCheckedContinuation { continuation in
-            let options = PHVideoRequestOptions()
-            options.deliveryMode = .highQualityFormat
-            options.isNetworkAccessAllowed = true
-
-            PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
-                guard let avURLAsset = avAsset as? AVURLAsset else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-
-                let exportSession = AVAssetExportSession(asset: avURLAsset, presetName: AVAssetExportPreset1280x720)!
-
-                let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).mp4")
-                exportSession.outputURL = outputURL
-                exportSession.outputFileType = .mp4
-                exportSession.shouldOptimizeForNetworkUse = true
-
-                exportSession.exportAsynchronously {
-                    if exportSession.status == .completed {
-                        continuation.resume(returning: outputURL)
-                    } else {
-                        print("Compression failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
-                        continuation.resume(returning: nil)
-                    }
-                }
-            }
-        }
-    }
-
-
     private func testAPIConnection() {
         Task {
             await uploadService.testConnection()
         }
     }
 
-    // Helped function to convert PHAsset to Data
     private func convertAssetToData(asset: PHAsset) async throws -> Data {
         return try await withCheckedThrowingContinuation { continuation in
             let options = PHVideoRequestOptions()
@@ -253,8 +176,8 @@ struct UploadView: View {
             }
         }
     }
+
     private func testVideoUpload() {
-        // Check if we have a selected video
         guard let firstAsset = selectedAssets.first else {
             print("No video selected. Please select a video first")
             return
@@ -264,28 +187,25 @@ struct UploadView: View {
 
         Task {
             do {
-                // Step 1: Convert PHAsset to Data
-            let videoData = try await convertAssetToData(asset: firstAsset)
-            print("Converted video to data: \(videoData.count) bytes")
-            
-            // Step 2: Upload to your Python API
-            let response = try await uploadService.uploadVideo(
-                videoData: videoData,
-                filename: "test_video_\(Date().timeIntervalSince1970).mp4",
-                category: "conversation", // Required by your API
-                language: "auto",
-                uploaderId: "test_user_123"
-            )
-            
-            // Step 3: Success!
-            print("UPLOAD SUCCESS!")
-            print("Video ID: \(response.documentId)")
-            print("Difficulty Level: \(response.level)")
-            print("Language: \(response.language)")
-            print("Keywords: \(response.keywords)")
-            print("Transcript preview: \(response.transcript.prefix(100))...")
-            print("Video URL: \(response.videoUrl)")
-            
+                let videoData = try await convertAssetToData(asset: firstAsset)
+                print("Converted video to data: \(videoData.count) bytes")
+                
+                let response = try await uploadService.uploadVideo(
+                    videoData: videoData,
+                    filename: "test_video_\(Date().timeIntervalSince1970).mp4",
+                    category: "conversation",
+                    language: "auto",
+                    uploaderId: "test_user_123"
+                )
+                
+                print("UPLOAD SUCCESS!")
+                print("Video ID: \(response.documentId)")
+                print("Difficulty Level: \(response.level)")
+                print("Language: \(response.language)")
+                print("Keywords: \(response.keywords)")
+                print("Transcript preview: \(response.transcript.prefix(100))...")
+                print("Video URL: \(response.videoUrl)")
+                
             } catch {
                 print("UPLOAD FAILED:")
                 print("   Error: \(error)")
@@ -298,11 +218,9 @@ struct UploadView: View {
         }
     }
 
-    // Alternative: Test with a mock video
     private func testWithMockVideo() {
         print("Testing with mock video data...")
         
-        // Create small mock video data (just for testing API communication)
         let mockVideoData = "mock video content".data(using: .utf8) ?? Data()
         
         Task {
@@ -356,7 +274,7 @@ struct UploadView: View {
 
 struct VideoThumbnailMiniView: View {
     let asset: PHAsset
-    var overrideImage: UIImage? = nil // ← allow override image
+    var overrideImage: UIImage? = nil
     @State private var thumbnail: UIImage?
 
     var body: some View {
@@ -365,8 +283,8 @@ struct VideoThumbnailMiniView: View {
                 Image(uiImage: override)
                     .resizable()
                     .aspectRatio(9/16, contentMode: .fill)
-                    .padding(1)               // Inner padding for border
-                    .background(Color.white)  // Acts as the uniform border
+                    .padding(1)
+                    .background(Color.white)
                     .clipped()
             } else if let thumbnail = thumbnail {
                 Image(uiImage: thumbnail)
@@ -403,14 +321,10 @@ struct VideoThumbnailMiniView: View {
     }
 }
 
-extension PHAsset: Identifiable {
-    public var id: String { localIdentifier }
-}
 struct CroppingImage: Identifiable {
     let id = UUID()
     let image: UIImage
 }
-
 
 struct AddThumbnailView: View {
     let assets: [PHAsset]
@@ -429,7 +343,6 @@ struct AddThumbnailView: View {
     
     @EnvironmentObject var uploadManager: UploadManager
     @Environment(\.dismiss) var dismiss
-
 
     var body: some View {
         VStack {
@@ -482,7 +395,7 @@ struct AddThumbnailView: View {
                 Task {
                     for asset in assets {
                         let id = asset.localIdentifier
-                        uploadManager.startUpload(for: asset) {
+                        uploadManager.startUpload(for: asset) {uploadId in 
                             do {
                                 let data = try await loadVideoData(asset: asset)
                                 let thumbData = thumbnailOverrides[id]?.jpegData(compressionQuality: 0.9)
@@ -532,7 +445,6 @@ struct AddThumbnailView: View {
         }
         .fullScreenCover(item: $showingPickerFor) { asset in
             ImagePickerView { image in
-                // Crop this image before assigning
                 croppingImage = CroppingImage(image: image)
                 croppingSourceAsset = asset
                 showingPickerFor = nil
@@ -568,13 +480,13 @@ struct AddThumbnailView: View {
                     croppingSourceAsset = nil
                 },
                 onCancel: {
-                    //User tapped cancel in crop — go back to picker
                     if let asset = croppingSourceAsset {
                         showingPickerFor = asset
                     }
                     croppingImage = nil
                 }
             )
+            .background(Color.black.ignoresSafeArea())
         }
         .background(Color.black.ignoresSafeArea())
     }
@@ -597,9 +509,7 @@ struct AddThumbnailView: View {
 
         Task {
             do {
-                // Convert PSAsset to Data
                 let videoData: Data
-                
                 if let compressedURL = compressedVideoURLs[firstAsset.localIdentifier] {
                     print("✅ Using compressed video at: \(compressedURL)")
                     videoData = try Data(contentsOf: compressedURL)
@@ -608,11 +518,9 @@ struct AddThumbnailView: View {
                     videoData = try await convertAssetToData(asset: firstAsset)
                 }
                 
-                // ✅ STEP: Get selected thumbnail
                 let thumbnailImage = thumbnailOverrides[firstAsset.localIdentifier]
                 let thumbnailData = thumbnailImage?.jpegData(compressionQuality: 0.9)
 
-                // Upload to Python API
                 let response = try await uploadService.uploadVideo(
                     videoData: videoData,
                     filename: getVideoFilename(from: firstAsset),
@@ -641,7 +549,6 @@ struct AddThumbnailView: View {
         if let resource = resources.first {
             return resource.originalFilename
         }
-        // Fallback if we can't get the original filename
         return "video_\(Date().timeIntervalSince1970).mp4"
     }
     
@@ -703,8 +610,6 @@ struct AddThumbnailView: View {
             }
         }
     }
-
-
 }
 
 struct ImagePickerView: UIViewControllerRepresentable {
@@ -756,11 +661,11 @@ struct VideoScrubberSelector: View {
     let onFrameSelected: (UIImage) -> Void
     let onPickFromLibrary: () -> Void
 
-
     @State private var playerItem: AVPlayerItem?
     @State private var videoAsset: AVAsset?
     @State private var currentFrame: UIImage?
     @State private var currentTime: CMTime = .zero
+    @State private var durationSeconds: Double?
 
     var body: some View {
         VStack {
@@ -795,9 +700,8 @@ struct VideoScrubberSelector: View {
                     .padding(.vertical, 20)
             }
 
-            if let duration = videoAsset?.duration.seconds {
+            if let durationSeconds = durationSeconds {
                 VStack(spacing: 16) {
-                    // Keep the slider
                     Slider(value: Binding(
                         get: { currentTime.seconds },
                         set: { newValue in
@@ -805,11 +709,10 @@ struct VideoScrubberSelector: View {
                             currentTime = newTime
                             generateThumbnail(at: newTime)
                         }
-                    ), in: 0...duration)
+                    ), in: 0...durationSeconds)
                     .tint(Color.appPrimaryColor)
                     .padding(.horizontal, 30)
 
-                    // Replace the old HStack with this one
                     HStack(spacing: 12) {
                         Button(action: onPickFromLibrary) {
                             Text("Pick from Photos")
@@ -848,8 +751,18 @@ struct VideoScrubberSelector: View {
 
     private func loadAsset() {
         let asset = AVAsset(url: videoURL)
-        self.videoAsset = asset
-        generateThumbnail(at: .zero)
+        Task {
+            do {
+                let loadedDuration = try await asset.load(.duration)
+                await MainActor.run {
+                    self.durationSeconds = loadedDuration.seconds
+                    self.videoAsset = asset
+                    generateThumbnail(at: .zero)
+                }
+            } catch {
+                print("Failed to load duration: \(error)")
+            }
+        }
     }
 
     private func generateThumbnail(at time: CMTime) {
@@ -888,7 +801,6 @@ struct TOCropView: UIViewControllerRepresentable {
         cropController.delegate = context.coordinator
         cropController.toolbar.tintColor = UIColor(Color.appPrimaryColor)
         
-        // Optional: Lock aspect ratio to 9:16
         cropController.aspectRatioPreset = .presetCustom
         cropController.customAspectRatio = CGSize(width: 9, height: 16)
         cropController.aspectRatioLockEnabled = true
@@ -918,11 +830,3 @@ struct TOCropView: UIViewControllerRepresentable {
         }
     }
 }
-
-
-
-//struct UploadView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        UploadView()
-//    }
-//}

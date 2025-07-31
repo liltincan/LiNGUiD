@@ -401,19 +401,37 @@ struct VideoGridSection: View {
                             .clipped()
 
                         if video.isUploading {
-                            Color.black.opacity(0.4)
-                            ProgressView().scaleEffect(1.5).progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            Color.appPrimaryColor.opacity(0.7)
                             VStack {
-                                HStack {
-                                    Spacer()
-                                    Button {
-                                        uploadManager.cancelUpload(for: video.localIdentifier)
-                                    } label: {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .font(.title2)
-                                            .foregroundColor(.white)
-                                            .padding(8)
-                                    }
+                                Spacer()
+                                ZStack {
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 6)
+                                        .frame(width: 70, height: 70)
+                                    Circle()
+                                        .trim(from: 0, to: CGFloat(video.progress))
+                                        .stroke(Color.white, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                        .rotationEffect(.degrees(-90))
+                                        .frame(width: 70, height: 70)
+                                    Text("\(Int(video.progress * 100))%")
+                                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                                        .foregroundColor(.white)
+                                }
+                                .padding(.bottom, 10)
+                                Button(action: {
+                                    uploadManager.cancelUpload(for: video.localIdentifier)
+                                }) {
+                                    Text("cancel")
+                                        .font(.system(size: 15, weight: .medium))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 18)
+                                        .padding(.vertical, 6)
+                                        .background(Color.white.opacity(0.18))
+                                        .cornerRadius(8)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                                        )
                                 }
                                 Spacer()
                             }

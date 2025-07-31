@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 // MARK: - API Response Models
 
@@ -155,5 +156,22 @@ extension VideoUploadResponse {
             "videoUrl": videoUrl,
             "thumbnailUrl": thumbnailUrl ?? ""
         ]
+    }
+}
+
+// MARK: - Uploading Video Model
+
+/// Represents a video currently being uploaded, with progress tracking
+struct UploadingVideo: Identifiable, Equatable {
+    let id: String // local identifier or uploadId
+    let thumbnail: UIImage
+    let uploadId: String // Used to poll backend progress
+    var progress: Double // 0.0 to 1.0 (or 0 to 100 if you prefer)
+    var isUploading: Bool
+    var filename: String
+    // Optionally, add more fields as needed (e.g., local file URL)
+    
+    static func == (lhs: UploadingVideo, rhs: UploadingVideo) -> Bool {
+        lhs.id == rhs.id
     }
 }

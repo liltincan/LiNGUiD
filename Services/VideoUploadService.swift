@@ -125,19 +125,31 @@ struct VideoUploadRequest {
 }
 
 // MARK: - Upload Progress Model
-struct UploadProgress {
-    let bytesUploaded: Int64
-    let totalBytes: Int64
-    let phase: UploadPhase
-    let message: String
-    
-    var progress: Double {
-        guard totalBytes > 0 else { return 0.0 }
-        return Double(bytesUploaded) / Double(totalBytes)
+struct UploadProgress: Codable { // Now Codable for backend polling
+    let bytesUploaded: Int64?
+    let totalBytes: Int64?
+    let phase: UploadPhase?
+    let message: String?
+    let progress: Double? // 0.0 - 1.0, provided by backend
+    let percent: Double? // Optional, for convenience
+    let status: String? // e.g. "uploading", "processing", "completed", "failed"
+    let error: String?
+
+    // Computed property for UI
+    var displayProgress: Double {
+        if let progress = progress {
+            return progress
+        } else if let percent = percent {
+            return percent / 100.0
+        } else if let bytesUploaded = bytesUploaded, let totalBytes = totalBytes, totalBytes > 0 {
+            return Double(bytesUploaded) / Double(totalBytes)
+        } else {
+            return 0.0
+        }
     }
 }
 
-enum UploadPhase: String, CaseIterable {
+enum UploadPhase: String, CaseIterable, Codable {
     case preparing = "Preparing upload..."
     case uploading = "Uploading video..."
     case processing = "Processing video..."
