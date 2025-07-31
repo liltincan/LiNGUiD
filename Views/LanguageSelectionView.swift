@@ -64,7 +64,7 @@ struct LanguageSelectionView: View {
                                     isSearchFieldFocused = false
                                 }
                             }
-                            .transition(.move(edge: .trailing))
+                            .transition(.opacity.combined(with: .offset(x: 40)))
                     }
 
                     Button(action: {
