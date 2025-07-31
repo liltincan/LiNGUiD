@@ -55,7 +55,6 @@
 		81F436452DF2831D00DA9BDA /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */; };
 		81F436472DF2835100DA9BDA /* OnboardingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436462DF2835100DA9BDA /* OnboardingPageView.swift */; };
 		81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F731932E0A1C8C0057786F /* CountrySelectionView.swift */; };
-		8F1214C02E3991AA00A790A0 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F1214BE2E398BA700A790A0 /* StoreKit.framework */; };
 		8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F1FE2DE0183300397726 /* LiNGUiDApp.swift */; };
 		8F51F2052DE0183300397726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F1F62DE0183300397726 /* Assets.xcassets */; };
 		8F51F2122DE01A1C00397726 /* .README in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F2112DE01A1800397726 /* .README */; };
@@ -163,7 +162,6 @@
 		81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
 		81F436462DF2835100DA9BDA /* OnboardingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageView.swift; sourceTree = "<group>"; };
 		81F731932E0A1C8C0057786F /* CountrySelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountrySelectionView.swift; sourceTree = "<group>"; };
-		8F1214BE2E398BA700A790A0 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		8F51F1F62DE0183300397726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F51F1FC2DE0183300397726 /* LiNGUiD.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiNGUiD.entitlements; sourceTree = "<group>"; };
 		8F51F1FD2DE0183300397726 /* LiNGUiD.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = LiNGUiD.xcodeproj; sourceTree = "<group>"; };
@@ -236,7 +234,6 @@
 				8FB9295D2DE10B860020AFCD /* FirebaseAuth in Frameworks */,
 				8F51F22C2DE022D200397726 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				D613085B2E1E0B970089F942 /* FirebaseMessaging in Frameworks */,
-				8F1214C02E3991AA00A790A0 /* StoreKit.framework in Frameworks */,
 				609F7A442E0763110031682A /* SwiftUIFlow in Frameworks */,
 				60C7E5BD2DE2C0C500C1AAF2 /* GoogleSignInSwift in Frameworks */,
 			);
@@ -432,7 +429,6 @@
 		8FB929592DE10B7B0020AFCD /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				8F1214BE2E398BA700A790A0 /* StoreKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
