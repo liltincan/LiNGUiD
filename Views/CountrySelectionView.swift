@@ -87,6 +87,14 @@ struct CountrySelectionView: View {
                             .cornerRadius(8)
                             .foregroundColor(.black)
                             .focused($isSearchFieldFocused)
+                            .onSubmit {
+                                // Dismiss keyboard and clear search
+                                withAnimation {
+                                    searchText = ""
+                                    isSearching = false
+                                    isSearchFieldFocused = false
+                                }
+                            }
                             .transition(.move(edge: .trailing))
                     }
                     
