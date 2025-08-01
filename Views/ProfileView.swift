@@ -104,47 +104,45 @@ struct ProfileView: View {
                     .transition(.opacity)
                     .animation(.easeInOut, value: uploadManager.completedCount)
 
-                    // 🖼 Fullscreen Profile Picture
+                    //Fullscreen Profile Picture
                     if showingFullScreenProfilePicture,
                        let urlString = fullScreenProfilePictureURL,
                        let url = URL(string: urlString) {
 
-                        Rectangle()
-                            .fill(Material.ultraThinMaterial)
-                            .ignoresSafeArea()
-
                         ZStack {
-                            ZStack(alignment: .topTrailing) {
-                                AsyncImage(url: url) { phase in
-                                    if let image = phase.image {
-                                        image
-                                            .resizable()
-                                            .scaledToFit()
-                                    } else if phase.error != nil {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .foregroundColor(.red)
-                                            .frame(width: 100, height: 100)
-                                    } else {
-                                        ProgressView()
-                                    }
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                                Button {
+                            // Dimmed/tappable background
+                            Rectangle()
+                                .fill(Material.ultraThinMaterial)
+                                .ignoresSafeArea()
+                                .onTapGesture {
                                     showingFullScreenProfilePicture = false
                                     fullScreenProfilePictureURL = nil
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.largeTitle)
-                                        .foregroundColor(.white)
-                                        .padding(15)
+                                }
+
+                            VStack {
+                                ZStack(alignment: .topTrailing) {
+                                    AsyncImage(url: url) { phase in
+                                        if let image = phase.image {
+                                            image
+                                                .resizable()
+                                                .scaledToFit()
+                                        } else if phase.error != nil {
+                                            Image(systemName: "exclamationmark.triangle.fill")
+                                                .resizable()
+                                                .scaledToFit()
+                                                .foregroundColor(.red)
+                                                .frame(width: 100, height: 100)
+                                        } else {
+                                            ProgressView()
+                                        }
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .background(Color.clear) // Ensures the tap registers outside image only
                                 }
                             }
+                            .padding(20)
+                            .transition(.opacity)
                         }
-                        .padding(20)
-                        .transition(.opacity)
                     }
                 }
             )
