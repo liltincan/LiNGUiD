@@ -71,7 +71,8 @@ struct OtherUserProfileView: View {
                             uploadingVideos: [],
                             noVideosMessage: "The user hasn't uploaded any videos yet.",
                             videoArray: vm.uploadedVideoArray.reversed(),
-                            selectedTab: $selectedTab
+                            selectedTab: $selectedTab,
+                            fromOtherUserProfile: true
                         )
                     }
                     .scrollIndicators(.hidden)

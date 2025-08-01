@@ -15,6 +15,7 @@ struct ProfileView: View {
     @State private var isShowingUploadView = false
     @Binding var selectedTab: Int
     let onLogout: () -> Void
+    
 
     init(userSession: UserSessionViewModel, onLogout: @escaping () -> Void = {}, selectedTab: Binding<Int>) {
         self.onLogout = onLogout
@@ -62,7 +63,8 @@ struct ProfileView: View {
                                 uploadingVideos: uploadManager.uploadingVideos,
                                 noVideosMessage: "No videos uploaded yet.",
                                 videoArray: vm.uploadedVideoArray.reversed(),
-                                selectedTab: $selectedTab
+                                selectedTab: $selectedTab,
+                                fromOtherUserProfile: false
                             )
                         }
                     }
@@ -450,6 +452,7 @@ struct VideoGridSection: View {
     @Binding var selectedTab: Int
     @EnvironmentObject var uploadManager: UploadManager
     @EnvironmentObject var userSession: UserSessionViewModel
+    let fromOtherUserProfile: Bool
 
     var body: some View {
         if videoThumbnails.isEmpty && uploadingVideos.isEmpty {
@@ -500,19 +503,37 @@ struct VideoGridSection: View {
                     )
                 }
                 ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
-                    Videos(
-                        thumbnailURL: thumbnailURL,
-                        videoURL: videoURLs[index],
-                        index: index,
-                        videoArray: videoArray,
-                        allVideoURLs: videoURLs,
-                        selectedTab: $selectedTab
-                    )
-                    .environmentObject(userSession)
-                    .overlay(
-                        Rectangle()
-                            .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
-                    )
+                    if(fromOtherUserProfile){
+                        Videos(
+                            thumbnailURL: thumbnailURL,
+                            videoURL: videoURLs[index],
+                            index: index,
+                            videoArray: videoArray,
+                            allVideoURLs: videoURLs,
+                            selectedTab: $selectedTab,
+                            fromOtherUserProfile: true
+                        )
+                        .environmentObject(userSession)
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
+                        )
+                    } else {
+                        Videos(
+                            thumbnailURL: thumbnailURL,
+                            videoURL: videoURLs[index],
+                            index: index,
+                            videoArray: videoArray,
+                            allVideoURLs: videoURLs,
+                            selectedTab: $selectedTab,
+                            fromOtherUserProfile: false
+                        )
+                        .environmentObject(userSession)
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
+                        )
+                    }
                 }
             }
             .padding(.horizontal, 5)
@@ -547,6 +568,7 @@ struct Videos: View {
     let gridItemWidth = (UIScreen.main.bounds.width - 5) / 3
     let thumbnailHeight = (UIScreen.main.bounds.width - 5) * 16 / 27
     
+    
     @EnvironmentObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
 
@@ -570,10 +592,28 @@ struct Videos: View {
         return ordered
     }
 
+    let fromOtherUserProfile: Bool
+    
     var body: some View {
         if let video = selectedVideo {
-            Button {
-                isShowingVideoSheet = true
+            NavigationLink {
+                if(fromOtherUserProfile){
+                    VideoView(
+                        videos: orderedVideos,
+                        userSession: userSession,
+                        startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
+                        selectedTab: $selectedTab,
+                        fromProfile: true
+                    )
+                }else{
+                    VideoView(
+                        videos: orderedVideos,
+                        userSession: userSession,
+                        startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
+                        selectedTab: $selectedTab,
+                        fromProfile: false
+                    )
+                }
             } label: {
                 AsyncImage(url: URL(string: thumbnailURL), transaction: Transaction(animation: .easeInOut)) { phase in
                     switch phase {

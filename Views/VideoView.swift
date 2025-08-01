@@ -2,16 +2,18 @@ import SwiftUI
 import AVKit
 
 struct VideoView: View {
+    let fromProfile: Bool
     let videos: [Video]
     @State private var currentIndex: Int
     @ObservedObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
-    init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int, selectedTab: Binding<Int>) {
+    init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int, selectedTab: Binding<Int>, fromProfile: Bool) {
         self.videos = videos
         print(videos)
         self.userSession = userSession
         _currentIndex = State(initialValue: startIndex)
         self._selectedTab = selectedTab
+        self.fromProfile = fromProfile
     }
 
     var body: some View {
@@ -24,12 +26,23 @@ struct VideoView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(.gray)
             } else {
-                VerticalVideoScrollView(
-                    videos: videos,
-                    currentIndex: $currentIndex,
-                    userSession: userSession,
-                    selectedTab: $selectedTab
-                )
+                if(fromProfile){
+                    VerticalVideoScrollView(
+                        videos: videos,
+                        currentIndex: $currentIndex,
+                        userSession: userSession,
+                        selectedTab: $selectedTab,
+                        fromProfile: true
+                    )
+                }else{
+                    VerticalVideoScrollView(
+                        videos: videos,
+                        currentIndex: $currentIndex,
+                        userSession: userSession,
+                        selectedTab: $selectedTab,
+                        fromProfile: false
+                    )
+                }
             }
         }
         .ignoresSafeArea()
@@ -42,6 +55,7 @@ struct VerticalVideoScrollView: View {
     @ObservedObject var userSession: UserSessionViewModel
     @State private var hasInitialized = false
     @Binding var selectedTab: Int
+    let fromProfile: Bool
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
@@ -52,16 +66,31 @@ struct VerticalVideoScrollView: View {
                     LazyVStack(spacing: 0) {
                         ForEach(videos, id: \.id) { video in
                             let index = videos.firstIndex(where: { $0.id == video.id }) ?? 0
-                            VideoPageView(
-                                video: video,
-                                isActive: index == currentIndex,
-                                userSession: userSession,
-                                containerWidth: screenWidth,
-                                containerHeight: screenHeight,
-                                selectedTab: $selectedTab
-                            )
-                            .frame(width: screenWidth, height: screenHeight)
-                            .id(video.id)  // Using stable video ID
+                            if(fromProfile){
+                                VideoPageView(
+                                    video: video,
+                                    isActive: index == currentIndex,
+                                    userSession: userSession,
+                                    containerWidth: screenWidth,
+                                    containerHeight: screenHeight,
+                                    selectedTab: $selectedTab,
+                                    fromProfile: true
+                                )
+                                .frame(width: screenWidth, height: screenHeight)
+                                .id(video.id)  // Using stable video ID
+                            } else{
+                                VideoPageView(
+                                    video: video,
+                                    isActive: index == currentIndex,
+                                    userSession: userSession,
+                                    containerWidth: screenWidth,
+                                    containerHeight: screenHeight,
+                                    selectedTab: $selectedTab,
+                                    fromProfile: false
+                                )
+                                .frame(width: screenWidth, height: screenHeight)
+                                .id(video.id)  // Using stable video ID
+                            }
                         }
                     }
                     .background(
@@ -123,28 +152,50 @@ struct VideoPageView: View {
     let containerHeight: CGFloat
     @Binding var selectedTab: Int
     @State private var uploaderPfp: String?
+    let fromProfile: Bool
     
     var body: some View {
         ZStack {
             Color.black
-            
-            VideoPlayerView(
-                url: video.url,
-                videoId: video.id,
-                language: video.language,
-                uploaderId: video.uploaderId,
-                uploaderPfp: uploaderPfp,
-                containerWidth: containerWidth,
-                containerHeight: containerHeight,
-                isActive: isActive,
-                captions: video.captions,
-                videoLikes: video.likes,
-                videoSaves: video.saves,
-                commentCount: video.commentCount,
-                selectedTab: $selectedTab
-            )
-            .environmentObject(userSession)
-            .id(video.id)
+            if(fromProfile){
+                VideoPlayerView(
+                    url: video.url,
+                    videoId: video.id,
+                    language: video.language,
+                    uploaderId: video.uploaderId,
+                    uploaderPfp: uploaderPfp,
+                    containerWidth: containerWidth,
+                    containerHeight: containerHeight,
+                    isActive: isActive,
+                    captions: video.captions,
+                    videoLikes: video.likes,
+                    videoSaves: video.saves,
+                    commentCount: video.commentCount,
+                    selectedTab: $selectedTab,
+                    showingInFullScreen: true,
+                )
+                .environmentObject(userSession)
+                .id(video.id)
+            } else{
+                VideoPlayerView(
+                    url: video.url,
+                    videoId: video.id,
+                    language: video.language,
+                    uploaderId: video.uploaderId,
+                    uploaderPfp: uploaderPfp,
+                    containerWidth: containerWidth,
+                    containerHeight: containerHeight,
+                    isActive: isActive,
+                    captions: video.captions,
+                    videoLikes: video.likes,
+                    videoSaves: video.saves,
+                    commentCount: video.commentCount,
+                    selectedTab: $selectedTab,
+                    showingInFullScreen: false,
+                )
+                .environmentObject(userSession)
+                .id(video.id)
+            }
         }
         .frame(width: containerWidth, height: containerHeight)
         .onAppear {

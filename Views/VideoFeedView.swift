@@ -208,7 +208,8 @@ struct FeedVideoPage: View {
                 videoLikes: video.likes,
                 videoSaves: video.saves,
                 commentCount: video.commentCount,
-                selectedTab: $selectedTab
+                selectedTab: $selectedTab,
+                showingInFullScreen: false
             )
             .environmentObject(userSession)
             .id(video.id)

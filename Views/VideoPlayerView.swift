@@ -17,6 +17,9 @@ struct VideoPlayerView: View {
     @State private var videoLikes = 0
     @State private var videoSaves = 0
     @State private var commentCount = 0
+    @State private var showProfile = false
+    let showingInFullScreen: Bool
+    
     @Binding var selectedTab: Int
     init(
         url: URL,
@@ -31,7 +34,8 @@ struct VideoPlayerView: View {
         videoLikes: Int,
         videoSaves: Int,
         commentCount: Int,
-        selectedTab: Binding<Int>
+        selectedTab: Binding<Int>,
+        showingInFullScreen: Bool
     ) {
         self.url = url
         self.videoId = videoId
@@ -46,6 +50,7 @@ struct VideoPlayerView: View {
         _videoSaves = State(initialValue: videoSaves)
         _commentCount = State(initialValue: commentCount)
         self._selectedTab = selectedTab
+        self.showingInFullScreen = showingInFullScreen
     }
 
     @State private var isPlaying = false
@@ -86,6 +91,8 @@ struct VideoPlayerView: View {
     @State private var uploaderUsername: String? = nil
     @Environment(\.dismiss) private var dismiss
     
+    
+    
     var body: some View {
         NavigationStack {
             GeometryReader { proxy in
@@ -94,13 +101,13 @@ struct VideoPlayerView: View {
                 let safeAreaBottom = proxy.safeAreaInsets.bottom
                 
                 // Calculate available height for video (excluding tab bar)
-                let tabBarHeight: CGFloat = 83
-                let availableHeight = max(screenHeight - tabBarHeight, 100) // Minimum height
+                let tabBarHeight: CGFloat = showingInFullScreen ? 0 : 83
+                let availableHeight = max(proxy.size.height - tabBarHeight, 100) // Minimum height
                 
                 // Calculate video dimensions to maintain 1:2 aspect ratio with safety checks
                 let videoWidth = max(containerWidth ?? screenWidth, 1)
-                let idealVideoHeight = videoWidth * 2 // 1:2 aspect ratio (width:height)
-                let videoHeight = max(min(idealVideoHeight, availableHeight), 100) // Ensure minimum height
+                let idealVideoHeight = videoWidth * 2
+                let videoHeight: CGFloat = showingInFullScreen ? proxy.size.height : max(min(idealVideoHeight, availableHeight), 100)
                 
                 ZStack {
                     // Video Player - positioned at the very top
@@ -135,11 +142,21 @@ struct VideoPlayerView: View {
                                     }
                                 }
                                 
-                                NavigationLink(destination: OtherUserProfileView(userId: uploaderId, selectedTab: $selectedTab)) {
-                                    ProfilePictureView(
-                                        uploaderPfp: uploaderPfp,
-                                        size: 40
-                                    )
+                                Button{
+                                    if isPlaying {
+                                        player.pause()
+                                        isPlaying = false
+                                        stopWatchTimer()
+                                    }
+                                    showProfile = true
+                                } label: {
+                                    ProfilePictureView(uploaderPfp: uploaderPfp, size: 40)
+                                }
+                                .fullScreenCover(isPresented: $showProfile) {
+                                    NavigationStack {
+                                        OtherUserProfileView(userId: uploaderId, selectedTab: $selectedTab)
+                                            .padding(.top, -62.5)
+                                    }
                                 }
                                 .simultaneousGesture(
                                     TapGesture()
@@ -334,7 +351,7 @@ struct VideoPlayerView: View {
                                 }
                             }
                             .padding(.trailing, 20)
-                            .padding(.bottom, max(tabBarHeight + safeAreaBottom + 20, 20))
+                            .padding(.bottom, showingInFullScreen ? 60 : max(tabBarHeight + safeAreaBottom + 20, 20))
                         }
                         
                     }
@@ -466,6 +483,7 @@ struct VideoPlayerView: View {
         } message: {
             Text("Thank you for your report. We'll review this content.")
         }
+        .modifier(TransparentNavigationBar(opacity: 0.0))
 
         //        .overlay(
         //            Group {
@@ -1002,3 +1020,21 @@ func fetchUsername(for uid: String, completion: @escaping (String?) -> Void) {
     }
 }
 
+struct TransparentNavigationBar: ViewModifier {
+    var opacity: CGFloat
+
+    init(opacity: CGFloat = 0.0) {
+        self.opacity = opacity
+
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundColor = UIColor.systemBackground.withAlphaComponent(opacity)
+
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+    }
+
+    func body(content: Content) -> some View {
+        content
+    }
+}
