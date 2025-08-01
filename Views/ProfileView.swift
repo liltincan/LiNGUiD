@@ -654,16 +654,36 @@ struct Videos: View {
                 GeometryReader { geometry in
                     ZStack {
                         Color.black.edgesIgnoringSafeArea(.all)
-                        
+                        if(fromOtherUserProfile){
+                            VideoView(
+                                videos: orderedVideos,
+                                userSession: userSession,
+                                startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
+                                selectedTab: $selectedTab,
+                                fromProfile: true
+                            )
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .padding(.top, 60)
+                        }else{
+                            VideoView(
+                                videos: orderedVideos,
+                                userSession: userSession,
+                                startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
+                                selectedTab: $selectedTab,
+                                fromProfile: false
+                            )
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .padding(.top, 60)
+                        }
                         // Use VerticalVideoScrollView for consistent video player experience
-                        VideoView(
-                            videos: orderedVideos,
-                            userSession: userSession,
-                            startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
-                            selectedTab: $selectedTab
-                        )
-                        .frame(width: geometry.size.width, height: geometry.size.height)
-                        .padding(.top, 60)
+//                        VideoView(
+//                            videos: orderedVideos,
+//                            userSession: userSession,
+//                            startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
+//                            selectedTab: $selectedTab,
+//                            fromProfile: <#T##Bool#>
+//                        )
+                        
                         
                         // Custom back button with chevron and text
                         VStack {
