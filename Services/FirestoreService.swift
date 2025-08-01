@@ -367,6 +367,9 @@ class FirestoreService {  //talks to Firebase so users are not doing it directly
         let nativeLanguageList = nativeLanguages.compactMap {
             languageCodes[$0]
         }
+        let targetLanguageList = targetLanguages.compactMap {
+            languageCodes[$0]
+        }
 
         let userRef = db.collection("users").document(uid)
 
@@ -432,6 +435,7 @@ class FirestoreService {  //talks to Firebase so users are not doing it directly
                     "nativeLanguage": firstNative,
                     "targetLanguage": firstTarget,
                     "nativeLanguageList": nativeLanguageList,
+                    "targetLanguageList": targetLanguageList,
                     "languagesData": encodedLanguagesData,
                 ]
 

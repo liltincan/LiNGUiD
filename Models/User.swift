@@ -18,6 +18,7 @@ struct User: Codable, Identifiable {
     var globalWatchTime: Double?
     var interests: [String]?
     var targetLanguage: String = ""
+    var targetLanguageList: [String]?
     var nativeLanguage: String?
     var nativeLanguageList: [String]?
     var languagesData: [String: LanguagesData]?
@@ -35,7 +36,7 @@ struct User: Codable, Identifiable {
 
     enum CodingKeys: CodingKey {
         case id, email, userName, createdAt, flameDate, flameStatus,
-            globalWatchTime, interests, targetLanguage, languagesData,
+            globalWatchTime, interests, targetLanguage, targetLanguageList, languagesData,
             likedVideos, savedVideos, watchedVideos, uploadedVideos,
             nativeLanguage, nativeLanguageList,
             followers, following, chats, country, streak, profilePhotoUrl, didCompleteOnboarding
