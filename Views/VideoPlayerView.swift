@@ -19,6 +19,7 @@ struct VideoPlayerView: View {
     @State private var commentCount = 0
     @State private var showProfile = false
     let showingInFullScreen: Bool
+    let ownProfile: Bool
     
     @Binding var selectedTab: Int
     init(
@@ -35,7 +36,8 @@ struct VideoPlayerView: View {
         videoSaves: Int,
         commentCount: Int,
         selectedTab: Binding<Int>,
-        showingInFullScreen: Bool
+        showingInFullScreen: Bool,
+        ownProfile: Bool
     ) {
         self.url = url
         self.videoId = videoId
@@ -51,6 +53,7 @@ struct VideoPlayerView: View {
         _commentCount = State(initialValue: commentCount)
         self._selectedTab = selectedTab
         self.showingInFullScreen = showingInFullScreen
+        self.ownProfile = ownProfile
     }
 
     @State private var isPlaying = false
@@ -425,6 +428,22 @@ struct VideoPlayerView: View {
                         }
                     }
                 }
+                .toolbar {
+                    if (showingInFullScreen || ownProfile) && isActive{
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button(action: { dismiss() }) {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .frame(width: 12, height: 18)
+                                    .foregroundColor(.white)
+                                    .padding(.leading, 20)
+                                    .padding(.vertical, 4)
+                                    .background(Color.clear)
+                            }
+                        }
+                    }
+                }
+                .navigationBarBackButtonHidden(true)
             }
         }
         .onAppear {
@@ -1030,11 +1049,25 @@ struct TransparentNavigationBar: ViewModifier {
         appearance.configureWithTransparentBackground()
         appearance.backgroundColor = UIColor.systemBackground.withAlphaComponent(opacity)
 
+        // Hide back button text
+        appearance.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
+        appearance.backButtonAppearance.highlighted.titleTextAttributes = [.foregroundColor: UIColor.clear]
+        appearance.backButtonAppearance.normal.titlePositionAdjustment = UIOffset(horizontal: -1000, vertical: 0)
+
+        // ✅ Make the chevron (back indicator) white
+        appearance.setBackIndicatorImage(
+            UIImage(systemName: "chevron.left")?.withTintColor(.white, renderingMode: .alwaysOriginal),
+            transitionMaskImage: UIImage(systemName: "chevron.left")?.withTintColor(.white, renderingMode: .alwaysOriginal)
+        )
+
+        // Apply appearance
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
     }
 
     func body(content: Content) -> some View {
         content
     }
 }
+

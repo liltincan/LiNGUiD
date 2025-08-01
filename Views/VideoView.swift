@@ -3,17 +3,19 @@ import AVKit
 
 struct VideoView: View {
     let fromProfile: Bool
+    let ownProfile: Bool
     let videos: [Video]
     @State private var currentIndex: Int
     @ObservedObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
-    init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int, selectedTab: Binding<Int>, fromProfile: Bool) {
+    init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int, selectedTab: Binding<Int>, fromProfile: Bool, ownProfile: Bool) {
         self.videos = videos
         print(videos)
         self.userSession = userSession
         _currentIndex = State(initialValue: startIndex)
         self._selectedTab = selectedTab
         self.fromProfile = fromProfile
+        self.ownProfile = ownProfile
     }
 
     var body: some View {
@@ -32,7 +34,8 @@ struct VideoView: View {
                         currentIndex: $currentIndex,
                         userSession: userSession,
                         selectedTab: $selectedTab,
-                        fromProfile: true
+                        fromProfile: true,
+                        ownProfile: false
                     )
                 }else{
                     VerticalVideoScrollView(
@@ -40,7 +43,8 @@ struct VideoView: View {
                         currentIndex: $currentIndex,
                         userSession: userSession,
                         selectedTab: $selectedTab,
-                        fromProfile: false
+                        fromProfile: false,
+                        ownProfile: true
                     )
                 }
             }
@@ -56,6 +60,7 @@ struct VerticalVideoScrollView: View {
     @State private var hasInitialized = false
     @Binding var selectedTab: Int
     let fromProfile: Bool
+    let ownProfile: Bool
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
@@ -74,7 +79,8 @@ struct VerticalVideoScrollView: View {
                                     containerWidth: screenWidth,
                                     containerHeight: screenHeight,
                                     selectedTab: $selectedTab,
-                                    fromProfile: true
+                                    fromProfile: true,
+                                    ownProfile: false
                                 )
                                 .frame(width: screenWidth, height: screenHeight)
                                 .id(video.id)  // Using stable video ID
@@ -86,7 +92,8 @@ struct VerticalVideoScrollView: View {
                                     containerWidth: screenWidth,
                                     containerHeight: screenHeight,
                                     selectedTab: $selectedTab,
-                                    fromProfile: false
+                                    fromProfile: false,
+                                    ownProfile: true
                                 )
                                 .frame(width: screenWidth, height: screenHeight)
                                 .id(video.id)  // Using stable video ID
@@ -153,6 +160,7 @@ struct VideoPageView: View {
     @Binding var selectedTab: Int
     @State private var uploaderPfp: String?
     let fromProfile: Bool
+    let ownProfile: Bool
     
     var body: some View {
         ZStack {
@@ -173,6 +181,7 @@ struct VideoPageView: View {
                     commentCount: video.commentCount,
                     selectedTab: $selectedTab,
                     showingInFullScreen: true,
+                    ownProfile: false
                 )
                 .environmentObject(userSession)
                 .id(video.id)
@@ -192,6 +201,7 @@ struct VideoPageView: View {
                     commentCount: video.commentCount,
                     selectedTab: $selectedTab,
                     showingInFullScreen: false,
+                    ownProfile: true
                 )
                 .environmentObject(userSession)
                 .id(video.id)

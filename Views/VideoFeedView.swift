@@ -209,7 +209,8 @@ struct FeedVideoPage: View {
                 videoSaves: video.saves,
                 commentCount: video.commentCount,
                 selectedTab: $selectedTab,
-                showingInFullScreen: false
+                showingInFullScreen: false,
+                ownProfile: false
             )
             .environmentObject(userSession)
             .id(video.id)

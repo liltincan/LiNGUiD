@@ -603,7 +603,8 @@ struct Videos: View {
                         userSession: userSession,
                         startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
                         selectedTab: $selectedTab,
-                        fromProfile: true
+                        fromProfile: true,
+                        ownProfile: false
                     )
                 }else{
                     VideoView(
@@ -611,7 +612,8 @@ struct Videos: View {
                         userSession: userSession,
                         startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
                         selectedTab: $selectedTab,
-                        fromProfile: false
+                        fromProfile: false,
+                        ownProfile: true
                     )
                 }
             } label: {
@@ -660,7 +662,8 @@ struct Videos: View {
                                 userSession: userSession,
                                 startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
                                 selectedTab: $selectedTab,
-                                fromProfile: true
+                                fromProfile: true,
+                                ownProfile: false
                             )
                             .frame(width: geometry.size.width, height: geometry.size.height)
                             .padding(.top, 60)
@@ -670,7 +673,8 @@ struct Videos: View {
                                 userSession: userSession,
                                 startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
                                 selectedTab: $selectedTab,
-                                fromProfile: false
+                                fromProfile: false,
+                                ownProfile: true
                             )
                             .frame(width: geometry.size.width, height: geometry.size.height)
                             .padding(.top, 60)
