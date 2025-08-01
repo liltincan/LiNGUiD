@@ -198,8 +198,7 @@ struct ProfileHeaderView: View {
             ZStack {
                 HStack(spacing: 0) {
                     Text(userName)
-                        .font(.system(size: 16))
-                        .bold()
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.primary)
 
                     if proVM.isPro {
@@ -209,6 +208,7 @@ struct ProfileHeaderView: View {
                             .font(.system(size: 16))
                     }
                 }
+                .padding(.leading, 0)
 
                 Spacer()
                 

@@ -99,7 +99,7 @@ struct ChatListView: View {
                         
                     case .profile(let id):
                         OtherUserProfileView(userId: id, selectedTab: $selectedTab)
-                            .padding(.top, -35)
+                            .padding(.top, -60)
                     }
                 }
             }
