@@ -230,8 +230,9 @@ struct LikedView: View {
     @Binding var selectedTab: Int
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't liked any videos yet.", videoArray: likedVideoArray, selectedTab: $selectedTab, fromOtherUserProfile: false)
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't liked any videos yet.", videoArray: likedVideoArray, selectedTab: $selectedTab, fromOtherUserProfile: true)
         }
+        .padding(.top, 20)
         .navigationTitle("Liked Videos")
     }
 }
@@ -243,8 +244,9 @@ struct SavedView: View {
     @Binding var selectedTab: Int
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't saved any videos yet.", videoArray: savedVideoArray, selectedTab: $selectedTab, fromOtherUserProfile: false)
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't saved any videos yet.", videoArray: savedVideoArray, selectedTab: $selectedTab, fromOtherUserProfile: true)
         }
+        .padding(.top, 20)
         .navigationTitle("Saved Videos")
     }
 }
