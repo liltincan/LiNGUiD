@@ -27,7 +27,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                ScrollView {
+                VStack {
                     VStack {
                         ProfileHeaderView(
                             userSession: userSession,
@@ -54,16 +54,17 @@ struct ProfileView: View {
                         .padding(.top, -10)
                         
                         ProfileActionButtons(username: vm.userName, pfp: vm.profilePictureURL, isShowingUploadView: $isShowingUploadView, onUploadComplete: {await refreshData()})
-                            .padding(.bottom, 0)
-                        
-                        VideoGridSection(
-                            videoThumbnails: vm.videoThumbnails.reversed(),
-                            videoURLs: vm.videoURLs.reversed(),
-                            uploadingVideos: uploadManager.uploadingVideos,
-                            noVideosMessage: "No videos uploaded yet.",
-                            videoArray: vm.uploadedVideoArray.reversed(),
-                            selectedTab: $selectedTab
-                        )
+                            .padding(.bottom, 10)
+                        ScrollView{
+                            VideoGridSection(
+                                videoThumbnails: vm.videoThumbnails.reversed(),
+                                videoURLs: vm.videoURLs.reversed(),
+                                uploadingVideos: uploadManager.uploadingVideos,
+                                noVideosMessage: "No videos uploaded yet.",
+                                videoArray: vm.uploadedVideoArray.reversed(),
+                                selectedTab: $selectedTab
+                            )
+                        }
                     }
                     .padding(.vertical)
                 }
@@ -196,13 +197,26 @@ struct ProfileHeaderView: View {
     
     var body: some View {
         VStack {
-            ZStack{
-                Text(userName)
-                    .font(.system(size: 27))
-                    .bold()
-                    .foregroundColor(.primary)
+            ZStack {
+                HStack(spacing: 0) {
+                    Text(userName)
+                        .font(.system(size: 16))
+                        .bold()
+                        .foregroundColor(.primary)
+
+                    if proVM.isPro {
+                        Image(systemName: "checkmark.seal.fill")
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, Color.appPrimaryColor)
+                            .font(.system(size: 16))
+                    }
+                }
+
+                Spacer()
+                
                 HStack{
                     Spacer()
+                    
                     NavigationLink {
                         SettingsView(
                             likedVideos: vm.likedVideoThumbnails,
@@ -218,13 +232,15 @@ struct ProfileHeaderView: View {
                             onLogout: onLogout
                         )
                     } label: {
-                        Image(systemName: "gearshape.fill")
-                            .font(.title2)
-                            .padding(10)
+                        Image(systemName: "gear")
+                            .font(.system(size: 26, weight: .bold))
+                            .padding(.trailing, 20)
                             .foregroundColor(.primary)
                     }
                 }
             }
+            .padding(.bottom, 10)
+
             Button {
                 if profilePictureURL != "" {
                     showingFullScreenProfilePicture = true
@@ -256,50 +272,55 @@ struct ProfileHeaderView: View {
                             )
                     }
                 }
-                .frame(width: 100, height: 100)
+                .frame(width: 70, height: 70)
                 .clipShape(Circle())
                 .contentShape(Circle())
             }
-            .padding(.top, -15)
+            .padding(.top, -20)
 
 
             
             // Use the country name to flag converter
             Text(CountryFlagConverter.getFlag(for: country.lowercased()))
-                .font(.largeTitle)
-                .padding(.top, -45)
-                .padding(.leading, -55)
-            if proVM.isPro{
-                Image(systemName: "checkmark.seal.fill")
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, Color.appPrimaryColor)
-                    .font(.title2)
-                    .padding(.top, -65)
-                    .padding(.leading, 65)
-            }
+                .font(.system(size: 20))
+                .padding(.top, -25)
+                .padding(.leading, -35)
+        
 //            Text(languageDisplay)
 //                .lineLimit(1)
 //                .padding(.bottom, 10)
 //                .foregroundColor(.primary)
             
             VStack(spacing: 0){
-                HStack(spacing: 10) {
-                    Text(userSession.currentUser?.nativeLanguage?.uppercased() ?? "")
-                        .font(.system(size: 20, weight: .semibold))
+                HStack(spacing: -10) {
+                    VStack(spacing: -10) {
+                        Text(userSession.currentUser?.nativeLanguage?.uppercased() ?? "")
+                            .font(.system(size: 14, weight: .medium))
+                        LevelDotsView(level: 5)
+                            .padding(.top, -7.5)
+                    }
                     
                     Image(systemName: "chevron.right.2")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 15, height: 15)
+                        .frame(width: 10, height: 10)
+                        .padding(.top, -15)
+                        .fontWeight(.semibold)
                     
-                    Text(userSession.currentUser?.targetLanguage.uppercased() ?? "")
-                        .font(.system(size: 20, weight: .semibold))
+                    HStack(spacing: -20) {
+                        ForEach(userSession.currentUser?.targetLanguageList?.sorted() ?? [], id: \.self) { language in
+                            VStack(spacing: -10) {
+                                Text(language.uppercased())
+                                    .font(.system(size: 14, weight: .medium))
+
+                                LevelDotsView(level: userSession.currentUser?.languagesData?[language]?.comprehensionLevel ?? 0)
+                                    .padding(.top, -7.5)
+                            }
+                        }
+                    }
                 }
-                
-                LevelDotsView(level: userSession.currentUser?.languagesData?[userSession.currentUser?.targetLanguage ?? ""]?.comprehensionLevel ?? 0)
-                    .padding(.top, -10)
             }
-            .padding(.top, -25)
+            .padding(.top, -5)
         }
         .onAppear {
             if let uid = Auth.auth().currentUser?.uid {
@@ -330,14 +351,14 @@ struct LevelDotsView: View {
     let maxLevel: Int = 5 // total dots
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 1.5) {
             ForEach(0..<maxLevel, id: \.self) { index in
                 Circle()
                     .fill(index < level ? Color.appPrimaryColor : Color.clear)
-                    .frame(width: 8, height: 8)
+                    .frame(width: 4, height: 4 )
                     .overlay(
                         Circle()
-                            .stroke(colorScheme == .dark ? Color.white : Color.black, lineWidth: 0.75)
+                            .stroke(colorScheme == .dark ? Color.white : Color.black, lineWidth: 0.50)
                     )
             }
         }
@@ -354,7 +375,7 @@ struct ProfileStatsView: View {
     var onFollowersTapped: (() -> Void)? = nil
     
     var body: some View {
-        HStack(spacing: 35) {
+        HStack(spacing: 30) {
             Stats(text1: videoCount, text2: "videos")
                 .padding(.leading, 15)
             Stats(text1: "\(inputAmount)m", text2: "input")
@@ -376,7 +397,7 @@ struct ProfileActionButtons: View {
     let onUploadComplete: () async -> Void  // Add this parameter
     
     var body: some View {
-        HStack {
+        HStack(spacing: 12.5) {
             NavigationLink {
                 EditProfileView(currentUsername: username, currentProfilePictureURL: URL(string: pfp))
             } label: {
@@ -485,12 +506,12 @@ struct Stats: View {
     var body: some View {
         VStack{
             Text(text1)
-                .font(.system(size: 20))
+                .font(.system(size: 16))
                 .bold()
                 .foregroundColor(.primary)
             Text(text2)
-                .font(.system(size: 15))
-                .foregroundColor(.secondary)
+                .font(.system(size: 12))
+                .foregroundColor(.primary)
         }
     }
 }
@@ -583,12 +604,11 @@ struct Buttons: View{
     var body: some View{
         Text(text)
             .foregroundColor(.white)
-            .fontWeight(.medium)
-            .font(.system(size: 16))
-            .padding(15)
-            .frame(maxWidth: 100, maxHeight: 45)
+            .font(.system(size: 16, weight: .medium))
+            //.padding(15)
+            .frame(width: 74, height: 32, alignment: .center)
             .background(Color.appPrimaryColor)
-            .cornerRadius(10)
+            .cornerRadius(8)
     }
 }
 
