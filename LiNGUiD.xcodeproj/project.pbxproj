@@ -43,6 +43,7 @@
 		7EF02A452E3494AC00148DBB /* AudioObserverViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EF02A442E3494A200148DBB /* AudioObserverViewModel.swift */; };
 		7EFDD81C2E0C8DB400154192 /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81B2E0C8DB200154192 /* Chat.swift */; };
 		7EFDD81E2E0C8DD600154192 /* ChatListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */; };
+		810707522E41247E00F9E709 /* ProStatusViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810707512E41247200F9E709 /* ProStatusViewModel.swift */; };
 		8177D3E62DF8D4B100FA6800 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E52DF8D4AC00FA6800 /* UploadView.swift */; };
 		8177D3E82DF8D69A00FA6800 /* VideoThumbnailSelectableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */; };
 		81CC3AEF2E15B4000010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AEE2E15B4000010512B /* CropViewController */; };
@@ -154,6 +155,7 @@
 		7EF02A442E3494A200148DBB /* AudioObserverViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioObserverViewModel.swift; sourceTree = "<group>"; };
 		7EFDD81B2E0C8DB200154192 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
 		7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListViewModel.swift; sourceTree = "<group>"; };
+		810707512E41247200F9E709 /* ProStatusViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProStatusViewModel.swift; sourceTree = "<group>"; };
 		8177D3E52DF8D4AC00FA6800 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
 		8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoThumbnailSelectableView.swift; sourceTree = "<group>"; };
 		81E960712E20350500EEE22D /* UploadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadManager.swift; sourceTree = "<group>"; };
@@ -302,6 +304,7 @@
 		8F51F21C2DE01C6900397726 /* View Models */ = {
 			isa = PBXGroup;
 			children = (
+				810707512E41247200F9E709 /* ProStatusViewModel.swift */,
 				7EF02A442E3494A200148DBB /* AudioObserverViewModel.swift */,
 				132D56572E20509800B6D237 /* OtherUserProfileViewModel.swift */,
 				D62604682E2082FB00BA36FB /* DMVideoPreviewViewModel.swift */,
@@ -679,6 +682,7 @@
 				8FB929532DE02A650020AFCD /* AuthCoordinatorView.swift in Sources */,
 				7EF02A452E3494AC00148DBB /* AudioObserverViewModel.swift in Sources */,
 				60C7E5B82DE2B52600C1AAF2 /* AppSocialLoginButton.swift in Sources */,
+				810707522E41247E00F9E709 /* ProStatusViewModel.swift in Sources */,
 				60F930802DE98E3100E37156 /* User.swift in Sources */,
 				138018E52DF0AD01003FC3D6 /* ChangePasswordView.swift in Sources */,
 				60C7E5B62DE1B0BD00C1AAF2 /* AppTextField.swift in Sources */,

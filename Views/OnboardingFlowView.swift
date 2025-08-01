@@ -22,7 +22,7 @@ struct OnboardingFlowView: View {
     @FocusState private var isUsernameFocused: Bool
     @State private var showGetProPopup = false
     @State private var showCustomAlert = false
-
+    @StateObject private var proVM = ProStatusViewModel()
     
     private let total = 0  // number of pages
 
@@ -106,25 +106,41 @@ struct OnboardingFlowView: View {
                         OnboardingPageView(index: 2)
                     }
                     .padding(.bottom, 30)
-
-                    LanguageSelectionView(
-                        onContinue: { selected in
-                            targetLanguages = selected
-                            page += 1
-                        },
-                        selectionLimit: 1,
-                        selectedLanguages: $selectedTargetLanguages,
-                        excludeLanguages: nativeLanguages,
-                        onDeselect: { language in
-                            languageLevels.removeValue(forKey: language)
-                        },
-                        onSelectionLimitReached_Foreign: {
-                            withAnimation {
-                                showGetProPopup = true
+                    
+                    if proVM.isPro{
+                        LanguageSelectionView(
+                            onContinue: { selected in
+                                targetLanguages = selected
+                                page += 1
+                            },
+                            selectionLimit: 49,
+                            selectedLanguages: $selectedTargetLanguages,
+                            excludeLanguages: nativeLanguages,
+                            onDeselect: { language in
+                                languageLevels.removeValue(forKey: language)
                             }
-                        }
-                    )
-                    .layoutPriority(1)
+                        )
+                        .layoutPriority(1)
+                    } else{
+                        LanguageSelectionView(
+                            onContinue: { selected in
+                                targetLanguages = selected
+                                page += 1
+                            },
+                            selectionLimit: 1,
+                            selectedLanguages: $selectedTargetLanguages,
+                            excludeLanguages: nativeLanguages,
+                            onDeselect: { language in
+                                languageLevels.removeValue(forKey: language)
+                            },
+                            onSelectionLimitReached_Foreign: {
+                                withAnimation {
+                                    showGetProPopup = true
+                                }
+                            }
+                        )
+                        .layoutPriority(1)
+                    }
 
                 
                 case 3:
@@ -377,6 +393,14 @@ struct OnboardingFlowView: View {
             //Spacer()
             
             
+        }
+        .onAppear {
+            if let uid = Auth.auth().currentUser?.uid {
+                proVM.startListening(uid: uid)
+            }
+        }
+        .onDisappear {
+            proVM.stopListening()
         }
         .background(Color.black.ignoresSafeArea())
         .overlay(

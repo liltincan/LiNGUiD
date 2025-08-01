@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseFirestore
+import FirebaseAuth
 
 struct ChangeLanguageFlowView: View {
     var uid: String
@@ -14,6 +15,8 @@ struct ChangeLanguageFlowView: View {
     @State private var selectPage = 0 // For level selection pagination
     @State private var nativeLanguageNamesToExclude: Set<String> = []
     @State private var existingLanguages: Set<String> = []
+    @State private var showGetProPopup = false
+    @StateObject private var proVM = ProStatusViewModel()
 
     let languageCodes: [String: String] = [
           "Arabic": "ar", "Chinese": "zh", "English": "en", "French": "fr", "German": "de",
@@ -52,33 +55,68 @@ struct ChangeLanguageFlowView: View {
                 OnboardingPageView(index: 2)
                     .padding(.bottom, 7.5)
                 
-                LanguageSelectionView(
-                    onContinue: { selected in
-                        let selectedSet = Set(selected)
-                        let newLanguages = selectedSet.filter { !existingLanguages.contains($0) }
-                        
-                        selectedLanguages = selectedSet
-                        selectedLanguagesArray = Array(newLanguages)
-                        
-                        if newLanguages.isEmpty {
-                            // No new languages, just save current selection and dismiss
-                            Task {
-                                await saveLanguages()
+                if proVM.isPro{
+                    LanguageSelectionView(
+                        onContinue: { selected in
+                            let selectedSet = Set(selected)
+                            let newLanguages = selectedSet.filter { !existingLanguages.contains($0) }
+                            
+                            selectedLanguages = selectedSet
+                            selectedLanguagesArray = Array(newLanguages)
+                            
+                            if newLanguages.isEmpty {
+                                // No new languages, just save current selection and dismiss
+                                Task {
+                                    await saveLanguages()
+                                }
+                                dismiss()
+                            } else {
+                                // New languages detected, proceed to level selection
+                                page = 1
                             }
-                            dismiss()
-                        } else {
-                            // New languages detected, proceed to level selection
-                            page = 1
+                        },
+                        selectionLimit: 49,
+                        selectedLanguages: $selectedLanguages,
+                        excludeLanguages: Array(selectedNativeLanguages),
+                        onDeselect: { language in
+                            languageLevels.removeValue(forKey: language)
                         }
-                    },
-                    selectionLimit: 49,
-                    selectedLanguages: $selectedLanguages,
-                    excludeLanguages: Array(selectedNativeLanguages),
-                    onDeselect: { language in
-                        languageLevels.removeValue(forKey: language)
-                    }
-                )
-                .layoutPriority(1)
+                    )
+                    .layoutPriority(1)
+                } else{
+                    LanguageSelectionView(
+                        onContinue: { selected in
+                            let selectedSet = Set(selected)
+                            let newLanguages = selectedSet.filter { !existingLanguages.contains($0) }
+                            
+                            selectedLanguages = selectedSet
+                            selectedLanguagesArray = Array(newLanguages)
+                            
+                            if newLanguages.isEmpty {
+                                // No new languages, just save current selection and dismiss
+                                Task {
+                                    await saveLanguages()
+                                }
+                                dismiss()
+                            } else {
+                                // New languages detected, proceed to level selection
+                                page = 1
+                            }
+                        },
+                        selectionLimit: 1,
+                        selectedLanguages: $selectedLanguages,
+                        excludeLanguages: Array(selectedNativeLanguages),
+                        onDeselect: { language in
+                            languageLevels.removeValue(forKey: language)
+                        },
+                        onSelectionLimitReached_Foreign: {
+                            withAnimation {
+                                showGetProPopup = true
+                            }
+                        }
+                    )
+                    .layoutPriority(1)
+                }
                 
             case 1:
                 // Language Level Selection (mirrors onboarding case 3)
@@ -144,6 +182,14 @@ struct ChangeLanguageFlowView: View {
             }
         }
         .onAppear {
+            if let uid = Auth.auth().currentUser?.uid {
+                proVM.startListening(uid: uid)
+            }
+        }
+        .onDisappear {
+            proVM.stopListening()
+        }
+        .onAppear {
             fetchUserLanguageLists(for: uid) { nativeCodes, targetCodes in
                 let nativeNames = convertLanguageCodesToNames(nativeCodes)
                 let targetNames = convertLanguageCodesToNames(targetCodes)
@@ -157,7 +203,51 @@ struct ChangeLanguageFlowView: View {
                 existingLanguages = targetNames
             }
         }
+        .overlay(
+            ZStack {
+                if showGetProPopup {
+                    Color.black.opacity(0.9)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation {
+                                showGetProPopup = false
+                            }
+                        }
+
+                    VStack {
+                        Spacer()
+
+                        GetProView()
+                            .frame(width: UIScreen.main.bounds.width * 0.5, height: UIScreen.main.bounds.height * 0.5)
+                            .padding(.horizontal, 20)
+                            .background(
+                                Color(red: 22/255, green: 0/255, blue: 46/255)
+                                    .cornerRadius(24)
+                            )
+
+                        Spacer()
+                    }
+                    .transition(.slideUpFromBottom)
+                }
+            }
+            .animation(.easeInOut, value: showGetProPopup)
+        )
         .background(Color.black.ignoresSafeArea())
+    }
+    
+    func fetchIsProStatus(uid: String) async -> Bool {
+        let db = Firestore.firestore()
+        do {
+            let document = try await db.collection("users").document(uid).getDocument()
+            let data = document.data()
+            let isPro = data?["isPro"] as? Bool ?? false
+            print("✅ Fetched isPro status: \(isPro)")
+            return isPro
+        } catch {
+            print("Error fetching isPro status: \(error.localizedDescription)")
+            return false
+        }
     }
     
     private func fetchUserLanguageLists(for uid: String, completion: @escaping (Set<String>, Set<String>) -> Void) {
@@ -219,3 +309,30 @@ extension Dictionary where Value: Equatable {
         return first(where: { $1 == val })?.key
     }
 }
+
+//Just in case return button is needed in the future
+// Language Level Selection (mirrors onboarding case 3)
+//                if selectPage > 0 {
+//                    HStack {
+//                        Button(action: {
+//                            selectPage -= 1
+//                        }) {
+//                            Image("Return_Button")
+//                                .frame(width: 25, height: 25)
+//                                .padding(.leading, 10)
+//                        }
+//                        Spacer()
+//                    }
+//                } else {
+//                    HStack {
+//                        Button(action: {
+//                            selectPage = 0
+//                            page -= 1
+//                        }) {
+//                            Image("Return_Button")
+//                                .frame(width: 25, height: 25)
+//                                .padding(.leading, 10)
+//                        }
+//                        Spacer()
+//                    }
+//                }
