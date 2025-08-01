@@ -190,6 +190,7 @@ struct ProfileHeaderView: View {
     @Binding var showingFullScreenProfilePicture: Bool
     @Binding var fullScreenProfilePictureURL: String?
     @Binding var selectedTab: Int
+    @StateObject private var proVM = ProStatusViewModel()
     
     
     var body: some View {
@@ -267,6 +268,14 @@ struct ProfileHeaderView: View {
                 .font(.largeTitle)
                 .padding(.top, -50)
                 .padding(.leading, -50)
+            if proVM.isPro{
+                Image(systemName: "checkmark.seal.fill")
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, Color.appPrimaryColor)
+                    .font(.title2)
+                    .padding(.top, -65)
+                    .padding(.leading, 65)
+            }
 //            Text(languageDisplay)
 //                .lineLimit(1)
 //                .padding(.bottom, 10)
@@ -290,6 +299,14 @@ struct ProfileHeaderView: View {
                     .padding(.top, -10)
             }
             .padding(.top, -25)
+        }
+        .onAppear {
+            if let uid = Auth.auth().currentUser?.uid {
+                proVM.startListening(uid: uid)
+            }
+        }
+        .onDisappear {
+            proVM.stopListening()
         }
         .frame(maxWidth: .infinity, alignment: .center)
     }
