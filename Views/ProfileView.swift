@@ -627,7 +627,7 @@ struct Buttons: View{
             .foregroundColor(.white)
             .font(.system(size: 16, weight: .medium))
             //.padding(15)
-            .frame(width: 74, height: 32, alignment: .center)
+            .frame(width: 80, height: 32, alignment: .center)
             .background(Color.appPrimaryColor)
             .cornerRadius(8)
     }
