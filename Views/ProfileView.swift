@@ -403,7 +403,7 @@ struct VideoGridSection: View {
                             .clipped()
 
                         if video.isUploading {
-                            Color.black.opacity(0.4)
+                            Color.appSecondaryColor.opacity(0.3)
                             ProgressView().scaleEffect(1.5).progressViewStyle(CircularProgressViewStyle(tint: .white))
                             VStack {
                                 HStack {
