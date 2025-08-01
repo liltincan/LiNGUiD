@@ -81,3 +81,18 @@ class UploadManager: ObservableObject {
     }
 
 }
+extension UploadManager {
+    var progress: Double {
+        guard totalToUpload > 0 else { return 0 }
+
+        let totalSteps = totalToUpload + 1  // +1 for final "Upload complete" state
+        let currentStep = min(completedCount + 1, totalSteps)
+
+        return Double(currentStep) / Double(totalSteps)
+    }
+
+    var isUploadComplete: Bool {
+        completedCount == totalToUpload
+    }
+}
+

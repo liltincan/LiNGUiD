@@ -54,6 +54,7 @@
 		81CC3AF12E15B4000010512B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF02E15B4000010512B /* TOCropViewController */; };
 		81CC3AF32E15B44A0010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF22E15B44A0010512B /* CropViewController */; };
 		81CC3AF52E15B44A0010512B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF42E15B44A0010512B /* TOCropViewController */; };
+		81CCF3C62E453AB400FA495B /* CustomProgessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */; };
 		81E960722E20351600EEE22D /* UploadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E960712E20350500EEE22D /* UploadManager.swift */; };
 		81F436412DF2830600DA9BDA /* LanguageLevelSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */; };
 		81F436432DF2831300DA9BDA /* LanguageSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436422DF2831300DA9BDA /* LanguageSelectionView.swift */; };
@@ -166,6 +167,7 @@
 		810707512E41247200F9E709 /* ProStatusViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProStatusViewModel.swift; sourceTree = "<group>"; };
 		8177D3E52DF8D4AC00FA6800 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
 		8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoThumbnailSelectableView.swift; sourceTree = "<group>"; };
+		81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomProgessView.swift; sourceTree = "<group>"; };
 		81E960712E20350500EEE22D /* UploadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadManager.swift; sourceTree = "<group>"; };
 		81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageLevelSelectionView.swift; sourceTree = "<group>"; };
 		81F436422DF2831300DA9BDA /* LanguageSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageSelectionView.swift; sourceTree = "<group>"; };
@@ -332,6 +334,7 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */,
 				13D14A8B2E41A3F50012FDA0 /* RequestFeatureView.swift */,
 				13D14A892E4156F70012FDA0 /* PrivacyPolicyView.swift */,
 				13D14A872E4154C50012FDA0 /* TermsOfServiceView.swift */,
@@ -646,6 +649,7 @@
 				81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */,
 				13D14A8A2E4156F70012FDA0 /* PrivacyPolicyView.swift in Sources */,
 				132B93412E257D27003F6DA9 /* Comment.swift in Sources */,
+				81CCF3C62E453AB400FA495B /* CustomProgessView.swift in Sources */,
 				D62604692E2082FB00BA36FB /* DMVideoPreviewViewModel.swift in Sources */,
 				D626046B2E20831000BA36FB /* DMVideoPreview.swift in Sources */,
 				D69E53EC2DEA4B5000329D64 /* UserSessionViewModel.swift in Sources */,

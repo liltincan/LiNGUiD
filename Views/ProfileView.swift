@@ -16,6 +16,7 @@ struct ProfileView: View {
     @Binding var selectedTab: Int
     let onLogout: () -> Void
     
+    @Environment(\.colorScheme) var colorScheme
 
     init(userSession: UserSessionViewModel, onLogout: @escaping () -> Void = {}, selectedTab: Binding<Int>) {
         self.onLogout = onLogout
@@ -68,7 +69,7 @@ struct ProfileView: View {
                             )
                         }
                     }
-                    .padding(.vertical)
+                    .padding(.top)
                 }
                 .scrollIndicators(.hidden)
             }
@@ -86,26 +87,58 @@ struct ProfileView: View {
                 }
             }
             .overlay(
+                // Upload Progress Bar
                 ZStack {
-                    // Upload Progress Bar
-                    VStack {
+                    VStack(spacing: 0) {
                         if uploadManager.totalToUpload > 0 {
-                            Text(
-                                uploadManager.completedCount == uploadManager.totalToUpload
-                                ? "Upload complete!"
-                                : "Uploading \(uploadManager.completedCount + 1)/\(uploadManager.totalToUpload)"
-                            )
-                            .font(.caption)
-                            .padding(8)
-                            .frame(maxWidth: .infinity)
-                            .background(Color.black.opacity(0.8))
-                            .foregroundColor(.white)
+                            ZStack(alignment: .leading) {
+                                // Background bar
+                                Rectangle()
+                                    .fill(Color.appPrimaryColor.opacity(0.5))
+                                    .frame(height: 40)
+                                    .overlay(
+                                        Rectangle()
+                                            .stroke(colorScheme == .dark ? Color.clear : Color.clear, lineWidth: 1) // border color & thickness
+                                    )
+
+                                // Progress fill
+                                Rectangle()
+                                    .fill(Color.appPrimaryColor.opacity(0.75))
+                                    .frame(
+                                        width: UIScreen.main.bounds.width * CGFloat(uploadManager.progress),
+                                        height: 40
+                                    )
+                                    .clipShape(
+                                        uploadManager.progress < 1
+                                        ? RoundedCorner(radius: 0, corners: [.topRight, .bottomRight])
+                                        : RoundedCorner(radius: 0, corners: [.topRight, .bottomRight])
+                                    )
+                                    .animation(.easeInOut, value: uploadManager.progress)
+
+                                // Upload text (centered)
+                                HStack {
+                                    Text(
+                                        uploadManager.completedCount == uploadManager.totalToUpload
+                                        ? "Upload complete!"
+                                        : "Uploading \(uploadManager.completedCount + 1)/\(uploadManager.totalToUpload)...\(Int(uploadManager.progress * 100))%"
+                                    )
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white)
+                                    .padding(.leading, 20)
+                                    Spacer()
+                                    Spacer()
+                                }
+                            }
+                            .padding(.top, -10) // space from top
                         }
+
                         Spacer()
                     }
-                    .transition(.opacity)
-                    .animation(.easeInOut, value: uploadManager.completedCount)
-
+                }
+            )
+            .animation(.easeInOut, value: uploadManager.completedCount)
+            .overlay(
+                ZStack {
                     //Fullscreen Profile Picture
                     if showingFullScreenProfilePicture,
                        let urlString = fullScreenProfilePictureURL,
@@ -135,7 +168,7 @@ struct ProfileView: View {
                                                 .foregroundColor(.red)
                                                 .frame(width: 100, height: 100)
                                         } else {
-                                            ProgressView()
+                                            CustomProgressView(progress: 0.45)
                                         }
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -479,21 +512,28 @@ struct VideoGridSection: View {
 
                         if video.isUploading {
                             Color.appPrimaryColor.opacity(0.5)
-                            ProgressView().scaleEffect(1.5).progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            VStack {
-                                HStack {
+                            ZStack {
+                                Color.clear  // Ensures the ZStack takes up full space if needed
+                                CustomProgressView(progress: 0.45)
+                                
+                                VStack {
+                                    Spacer()
                                     Spacer()
                                     Button {
                                         uploadManager.cancelUpload(for: video.localIdentifier)
                                     } label: {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .font(.title2)
+                                        Text("cancel")
+                                            .font(.system(size: 8, weight: .medium))
                                             .foregroundColor(.white)
-                                            .padding(8)
-                                            .padding(.top, 5)
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 2)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .stroke(Color.white, lineWidth: 1.0)
+                                            )
                                     }
+                                    .padding(.bottom, 40)  // Space from the bottom
                                 }
-                                Spacer()
                             }
                         }
                     }
