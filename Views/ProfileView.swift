@@ -191,6 +191,7 @@ struct ProfileHeaderView: View {
     @Binding var fullScreenProfilePictureURL: String?
     @Binding var selectedTab: Int
     @StateObject private var proVM = ProStatusViewModel()
+    @State private var shouldNavigateToEdit = false
     
     
     var body: some View {
@@ -229,7 +230,7 @@ struct ProfileHeaderView: View {
                     showingFullScreenProfilePicture = true
                     fullScreenProfilePictureURL = profilePictureURL
                 } else {
-                    // Trigger image picker or edit action here
+                    shouldNavigateToEdit = true
                     print("Edit profile picture tapped")
                 }
             } label: {
@@ -266,8 +267,8 @@ struct ProfileHeaderView: View {
             // Use the country name to flag converter
             Text(CountryFlagConverter.getFlag(for: country.lowercased()))
                 .font(.largeTitle)
-                .padding(.top, -50)
-                .padding(.leading, -50)
+                .padding(.top, -45)
+                .padding(.leading, -55)
             if proVM.isPro{
                 Image(systemName: "checkmark.seal.fill")
                     .symbolRenderingMode(.palette)
@@ -309,6 +310,17 @@ struct ProfileHeaderView: View {
             proVM.stopListening()
         }
         .frame(maxWidth: .infinity, alignment: .center)
+        
+        NavigationLink(
+            destination: EditProfileView(
+                currentUsername: userName,
+                currentProfilePictureURL: URL(string: profilePictureURL)
+            ),
+            isActive: $shouldNavigateToEdit
+        ) {
+            EmptyView()
+        }
+        .hidden()
     }
 }
 

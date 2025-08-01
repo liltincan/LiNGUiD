@@ -98,7 +98,7 @@ struct EditProfileView: View {
             }) {
                 Text("Edit Photo")
                     .font(.headline)
-                    .foregroundColor(.blue)
+                    .foregroundColor(Color.appPrimaryColor)
             }
             .sheet(isPresented: $isShowingImagePicker, onDismiss: loadImage) {
                 ImagePicker(image: $inputImage)
@@ -149,7 +149,7 @@ struct EditProfileView: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue.opacity(0.7))
+                        .background(Color.appSecondaryColor)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                         .padding(.horizontal, 40)
@@ -158,7 +158,7 @@ struct EditProfileView: View {
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(canSave ? Color.blue : Color.blue.opacity(0.5))
+                        .background(canSave ? Color.appPrimaryColor : Color.appSecondaryColor)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                         .padding(.horizontal, 40)
