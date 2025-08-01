@@ -45,12 +45,13 @@ struct OnboardingFlowView: View {
                         overlap.forEach { languageLevels.removeValue(forKey: $0) }
                         locationManager.requestWhenInUseAuthorization()
                         page += 1
-                    }, selectionLimit: 3, selectedLanguages: $selectedNativeLanguages, excludeLanguages: [],
+                    }, selectionLimit: 1, selectedLanguages: $selectedNativeLanguages, excludeLanguages: [],
                         onSelectionLimitReached_Native: {
                         withAnimation {
                             showCustomAlert = true
                         }
-                    })
+                        }, isOnNative: true
+                    )
                     .layoutPriority(1)
                 
                 case 1:
@@ -427,7 +428,7 @@ struct OnboardingFlowView: View {
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.white)
                         
-                        Text("You can only select up to 3 languages")
+                        Text("You can only select 1 native language")
                             .multilineTextAlignment(.center)
                             .foregroundColor(.white)
                         

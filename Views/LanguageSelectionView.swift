@@ -14,6 +14,7 @@ struct LanguageSelectionView: View {
     var onDeselect: ((String) -> Void)? = nil
     var onSelectionLimitReached_Foreign: (() -> Void)? = nil
     var onSelectionLimitReached_Native: (() -> Void)? = nil
+    var isOnNative: Bool = false
     
     
     @ObservedObject private var keyboard = KeyboardResponder()
@@ -182,7 +183,7 @@ struct LanguageSelectionView: View {
                 isSearchFieldFocused = false
                 searchText = ""
                 isSearching = false
-                if selectionLimit == 3 {
+                if isOnNative {
                     onSelectionLimitReached_Native?()
                 } else {
                     onSelectionLimitReached_Foreign?()
