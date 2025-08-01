@@ -149,7 +149,9 @@ struct ChatMessagesConvoView: View {
                 viewModel.listenToMessages(for: chatID) { msg in
                     self.messages = msg
                 }
-                viewModel.markMessagesAsRead(for: chatID)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    viewModel.markMessagesAsRead(for: chatID)
+                }
             }
             .onTapGesture {
                 //dismiss the keyboard hwen users touches the chat
@@ -271,31 +273,40 @@ struct ChatMessagesConvoView: View {
                             }
                     }
                     else {
-                        Text(message.text)
-                            .padding(10)
-                            .background(Color.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 18))
-                            .overlay(
-                                Group {
-                                    if (message.isLiked) {
-                                        Image(systemName: "heart.fill")
-                                            .foregroundColor(.white)
-                                            //the heart will be this size
-                                            .font(.system(size: 12))
-                                            .padding(5)
-                                            .background(Circle().fill(Color.linguidPurple))
-                                            .offset(x: 5, y: -8)
-                                    }
-                                },
-                                alignment: .topTrailing
-                            )
-                            .foregroundColor(.black)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .frame(maxWidth: 280, alignment: .leading)
-                            .onTapGesture(count: 2) {
-                                toggleLike(for: message)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(message.text)
+                                .foregroundColor(.black)
+                            if let translated = message.translatedText {
+                                Divider().background(Color.gray.opacity(0.4)).padding(.vertical, 2)
+                                Text(translated)
+                                    .font(.caption)
+                                    .foregroundColor(.linguidPurple)
                             }
+                        }
+                        .padding(10)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        .overlay(
+                            Group {
+                                if (message.isLiked) {
+                                    Image(systemName: "heart.fill")
+                                        .foregroundColor(.white)
+                                        //the heart will be this size
+                                        .font(.system(size: 12))
+                                        .padding(5)
+                                        .background(Circle().fill(Color.linguidPurple))
+                                        .offset(x: 5, y: -8)
+                                }
+                            },
+                            alignment: .topTrailing
+                        )
+                        .foregroundColor(.black)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: 280, alignment: .leading)
+                        .onTapGesture(count: 2) {
+                            toggleLike(for: message)
+                        }
                     }
                 }
                 .offset(x: isDraggingMessage ? dragOffset : 0)

@@ -247,7 +247,6 @@ func countryCodeFromCountryName(_ name: String) -> String {
 
 //MARK: - Model for Chat Messages
 struct ChatMessages: Identifiable, Equatable {
-    //let id = UUID()
     var text: String
     //who is replying
     var isFromCurrentUser: Bool
@@ -256,6 +255,8 @@ struct ChatMessages: Identifiable, Equatable {
     var repliedToText: String?
     var isLiked: Bool = false
     var documentID: String
+    //this will be the translation to go back to users native language
+    var translatedText: String? = nil
     var id: String { documentID }
 }
 //MARK: - Model for which Conversation it is with their messages
@@ -301,4 +302,43 @@ extension Chat {
 //MARK: - This will be the path to user when we are navigating to different destination (used in the main view chatlistview)
 enum ChatRoute: Hashable {
     case chatDetail(String), discovery, profile(String)
+}
+//MARK: - Full name of languages
+struct LanguageUtils {
+    static let languageMap: [String: String] = [
+        "af": "Afrikaans", "am": "Amharic", "ar": "Arabic", "az": "Azerbaijani",
+        "be": "Belarusian", "bg": "Bulgarian", "bn": "Bengali", "bs": "Bosnian",
+        "ca": "Catalan", "ceb": "Cebuano", "cs": "Czech", "cy": "Welsh",
+        "da": "Danish", "de": "German", "el": "Greek", "en": "English",
+        "eo": "Esperanto", "es": "Spanish", "et": "Estonian", "eu": "Basque",
+        "fa": "Persian", "fi": "Finnish", "fil": "Filipino", "fj": "Fijian",
+        "fr": "French", "fy": "Frisian", "ga": "Irish", "gd": "Scots Gaelic",
+        "gl": "Galician", "gu": "Gujarati", "ha": "Hausa", "haw": "Hawaiian",
+        "he": "Hebrew", "hi": "Hindi", "hmn": "Hmong", "hr": "Croatian",
+        "ht": "Haitian Creole", "hu": "Hungarian", "hy": "Armenian",
+        "id": "Indonesian", "ig": "Igbo", "is": "Icelandic", "it": "Italian",
+        "iw": "Hebrew", "ja": "Japanese", "jw": "Javanese", "ka": "Georgian",
+        "kk": "Kazakh", "km": "Khmer", "kn": "Kannada", "ko": "Korean",
+        "ku": "Kurdish", "ky": "Kyrgyz", "la": "Latin", "lb": "Luxembourgish",
+        "lo": "Lao", "lt": "Lithuanian", "lv": "Latvian", "mg": "Malagasy",
+        "mi": "Maori", "mk": "Macedonian", "ml": "Malayalam", "mn": "Mongolian",
+        "mr": "Marathi", "ms": "Malay", "mt": "Maltese", "my": "Burmese",
+        "ne": "Nepali", "nl": "Dutch", "no": "Norwegian", "ny": "Nyanja",
+        "pa": "Punjabi", "pl": "Polish", "ps": "Pashto", "pt": "Portuguese",
+        "ro": "Romanian", "ru": "Russian", "rw": "Kinyarwanda", "sd": "Sindhi",
+        "si": "Sinhala", "sk": "Slovak", "sl": "Slovenian", "sm": "Samoan",
+        "sn": "Shona", "so": "Somali", "sq": "Albanian", "sr": "Serbian",
+        "st": "Sesotho", "su": "Sundanese", "sv": "Swedish", "sw": "Swahili",
+        "ta": "Tamil", "te": "Telugu", "tg": "Tajik", "th": "Thai", "tk": "Turkmen",
+        "tl": "Tagalog", "tr": "Turkish", "tt": "Tatar", "ug": "Uyghur",
+        "uk": "Ukrainian", "ur": "Urdu", "uz": "Uzbek", "vi": "Vietnamese",
+        "xh": "Xhosa", "yi": "Yiddish", "yo": "Yoruba", "zh": "Chinese", "zu": "Zulu"
+    ]
+    static func fullName(for code: String) -> String {
+        return languageMap[code.lowercased()] ?? code.capitalized
+    }
+    static var sortedLanguages: [(code: String, name: String)] {
+        languageMap.map { ($0.key, $0.value) }
+                   .sorted { $0.name < $1.name }
+    }
 }

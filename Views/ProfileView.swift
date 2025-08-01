@@ -307,12 +307,13 @@ struct LevelDotsView: View {
                     .frame(width: 8, height: 8)
                     .overlay(
                         Circle()
-                            .stroke(Color.primary, lineWidth: 0.75)
+                            .stroke(Color.white, lineWidth: 0.75)
                     )
             }
         }
         .padding()
         .background(Color.clear)
+        //.background(Color.black)
     }
 }
 

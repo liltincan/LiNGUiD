@@ -86,14 +86,12 @@ class ChatListViewModel: ObservableObject {
                     }
                     self.db.collection("users").document(otherUserID).getDocument { userSnapshot, _ in
                         let userData = userSnapshot?.data()
-
                         //this will extract users language info
                         let nativeLang = userData?["nativeLanguage"] as? String ?? ""
+                        let learningLangCode = userData?["targetLanguage"] as? String ?? ""
                         let languagesData = userData?["languagesData"] as? [String: [String: Any]] ?? [:]
-                        let firstLearning = languagesData.first
-                        let learningLangCode = firstLearning?.key ?? ""
-                        let comprehensionLevel = firstLearning?.value["comprehensionLevel"] as? Int ?? 0
-
+                        let comprehensionLevel = (languagesData[learningLangCode]?["comprehensionLevel"] as? Int) ?? 0
+                        
                         //will create chat instance with new fields
                         let chat = Chat(
                             id: doc.documentID,
@@ -267,7 +265,9 @@ class ChatListViewModel: ObservableObject {
                 guard let text = data["text"] as? String,
                       let senderID = data["senderID"] as? String else { return nil }
                 let isRead = data["isRead"] as? Bool ?? false
-                let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
+                let serverTimestamp = (data["timestamp"] as? Timestamp)?.dateValue()
+                let localFallback = (data["localTimestamp"] as? Timestamp)?.dateValue()
+                let timestamp = serverTimestamp ?? localFallback ?? Date()
                 let repliedToText = data["repliedToText"] as? String
                 let isLiked = data["isLiked"] as? Bool ?? false
                 return ChatMessages(
@@ -299,12 +299,13 @@ class ChatListViewModel: ObservableObject {
                   let recipientID = participantIDs.first(where: { $0 != currentUserID }) else {
                 return
             }
-
+            let now = Date()
             //data that the 'message' will have and the isRead is false only for the user to view it
             let message: [String: Any] = [
                 "text": text,
                 "senderID": currentUserID,
                 "timestamp": FieldValue.serverTimestamp(),
+                "localTimestamp": Timestamp(date: now),
                 "isRead": false,
                 "repliedToText": replyingTo?.text ?? NSNull()
             ]
@@ -321,7 +322,6 @@ class ChatListViewModel: ObservableObject {
                         "hiddenFor": FieldValue.arrayRemove([recipientID]),
                         //"messageResetTimestamps.\(recipientID)": FieldValue.delete()
                     ]) { _ in
-                        self.fetchChats()
                     }
                 }
             }
@@ -398,11 +398,9 @@ class ChatListViewModel: ObservableObject {
                 //going to now go in the field 'nativeLanguage' and 'languagesData' to retreive the users level
                 let data = doc.data()
                 let nativeLang = data["nativeLanguage"] as? String ?? ""
+                let learningLangCode = data["targetLanguage"] as? String ?? ""
                 let languagesData = data["languagesData"] as? [String: [String: Any]] ?? [:]
-                //this will get the 'languagesData' key which is the langauge users learning
-                let firstLearning = languagesData.first
-                let learningLangCode = firstLearning?.key ?? ""
-                let comprehensionLevel = firstLearning?.value["comprehensionLevel"] as? Int ?? 0
+                let comprehensionLevel = (languagesData[learningLangCode]?["comprehensionLevel"] as? Int) ?? 0
 
                 //returning the information of the Users so Chat will now carry what 'users' (collection) has
                 return Chat(
@@ -428,13 +426,11 @@ class ChatListViewModel: ObservableObject {
             }
         }
     }
-
     //MARK: Will get users by country only
     //precondition: none
     //postcondition: gets the users by thier native language and you can add more than one native language to search
     func fetchUsersByNativeLanguages(_ languages: [String]) {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-
         //this checks if languages are empty if empty just return
         if languages.isEmpty {
             discoverableUsers = []
@@ -453,10 +449,10 @@ class ChatListViewModel: ObservableObject {
                     let data = doc.data()
                     //in the nativeLangauge we still want to get access to the users level and what they are learning
                     let nativeLang = data["nativeLanguage"] as? String ?? ""
+                    let learningLangCode = data["targetLanguage"] as? String ?? ""
                     let languagesData = data["languagesData"] as? [String: [String: Any]] ?? [:]
-                    let firstLearning = languagesData.first
-                    let learningLangCode = firstLearning?.key ?? ""
-                    let comprehensionLevel = firstLearning?.value["comprehensionLevel"] as? Int ?? 0
+                    let comprehensionLevel = (languagesData[learningLangCode]?["comprehensionLevel"] as? Int) ?? 0
+                    
                     //data we want to return with the users information
                     return Chat(
                         id: doc.documentID,
@@ -481,7 +477,23 @@ class ChatListViewModel: ObservableObject {
                 }
             }
     }
-    //MARK: - Fetching users by their username
+    //MARK: Fetch users who speak my target langauge that are native speakers
+    //precondition: call the fetchUsersByNativeLanguages
+    //postcondition: going to compare the users and check if the users targetLanguage matches the nativeLanguages and if yes then call it in the function we are calling
+    func fetchNativeSpeakersOfMyTargetLanguage() {
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        db.collection("users").document(currentUserID).getDocument { [weak self] snapshot, error in
+            guard let self = self,
+                  let data = snapshot?.data(),
+                  let targetLang = data["targetLanguage"] as? String else {
+                print("Failed to get current user's targetLanguage")
+                return
+            }
+            //call the function that checks by native language
+            self.fetchUsersByNativeLanguages([targetLang])
+        }
+    }
+    //MARK: Fetching users by their username
     //precondition: none
     //postcondition: this will allow user to search by 'username'
     func searchUsers(by username: String) {
@@ -489,20 +501,17 @@ class ChatListViewModel: ObservableObject {
         //going to load all the users
         db.collection("users").getDocuments { [weak self] snapshot, error in
             guard let self = self, let documents = snapshot?.documents else { return }
-
             let filtered = documents.filter {
                 //have to search by username so go in the field 'userName' and allow lowercase
                 let name = ($0.data()["userName"] as? String ?? "").lowercased()
                 return $0.documentID != currentUserID && name.contains(username.lowercased())
             }
-
             let result = filtered.map { doc -> Chat in
                 let data = doc.data()
                 let nativeLang = data["nativeLanguage"] as? String ?? ""
+                let learningLangCode = data["targetLanguage"] as? String ?? ""
                 let languagesData = data["languagesData"] as? [String: [String: Any]] ?? [:]
-                let firstLearning = languagesData.first
-                let learningLangCode = firstLearning?.key ?? ""
-                let comprehensionLevel = firstLearning?.value["comprehensionLevel"] as? Int ?? 0
+                let comprehensionLevel = (languagesData[learningLangCode]?["comprehensionLevel"] as? Int) ?? 0
 
                 return Chat(
                     id: doc.documentID,
@@ -526,6 +535,28 @@ class ChatListViewModel: ObservableObject {
             }
         }
     }
+    //MARK: Decide which users to show in Discovery based on premium
+    func fetchUsersBasedOnIsPro() {
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        db.collection("users").document(currentUserID).getDocument { [weak self] snapshot, error in
+            guard let self = self,
+                  let data = snapshot?.data() else {
+                print("Failed to fetch current user's data.")
+                return
+            }
+            let isPro = data["isPro"] as? Bool ?? false
+            let targetLang = data["targetLanguage"] as? String ?? ""
+
+            if (isPro) {
+                self.fetchDiscoverableUsersFromUsers()
+            }
+            else {
+                print("User is NOT Pro. Filtering by native language: \(targetLang)")
+                self.fetchUsersByNativeLanguages([targetLang])
+            }
+        }
+    }
+    
     // MARK: - Toggle Like on Message
     //precondition: none
     //postcondition: will going to add the liking in the database
@@ -560,58 +591,92 @@ class ChatListViewModel: ObservableObject {
         }
     }
 
-
     //MARK: - Real time updates (will update right when the database changes)
     //precondition: none
     //postcodition: will allowed for messages to update right when you are sending and need to use @State since it is valid for Listener
-    func listenToMessages(for chatID: String, onUpdate: @escaping ([ChatMessages]) -> Void) {
-        guard let currentUserID = Auth.auth().currentUser?.uid else {
-            onUpdate([])
-            return
-        }
-        //go in the chat collection
-        let chatRef = db.collection("chat").document(chatID)
-        chatRef.getDocument { [weak self] snapshot, _ in
-            guard let self = self, let data = snapshot?.data() else {
-                onUpdate([])
+    func listenToMessages(for chatID: String, completion: @escaping ([ChatMessages]) -> Void) {
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        //this will go in the 'chat' collection and then go in the 'messages' collection
+        let messagesRef = db.collection("chat").document(chatID).collection("messages")
+            .order(by: "timestamp")
+        
+        messagesRef.addSnapshotListener { [weak self] snapshot, error in
+            guard let self = self,
+                  let documents = snapshot?.documents else {
+                completion([])
                 return
             }
-            let resetTimestamps = data["messageResetTimestamps"] as? [String: Timestamp]
-            let resetTime = resetTimestamps?[currentUserID]?.dateValue()
-            var query: Query = chatRef.collection("messages").order(by: "timestamp")
-            if let resetTime = resetTime {
-                query = query.whereField("timestamp", isGreaterThan: resetTime)
-            }
-            query.addSnapshotListener { snapshot, error in
-                guard let documents = snapshot?.documents else {
-                    print("Error fetching messages: \(error?.localizedDescription ?? "Unknown")")
-                    onUpdate([])
+            //getting the current and partner language
+            self.db.collection("chat").document(chatID).getDocument { chatSnapshot, _ in
+                guard let chatData = chatSnapshot?.data(),
+                      let participants = chatData["participantIDs"] as? [String],
+                      let otherUserID = participants.first(where: { $0 != currentUserID }) else {
+                    completion([])
                     return
                 }
+                //here we have to look into the users and then get their nativeLanguage
+                self.db.collection("users").document(currentUserID).getDocument { userSnapshot, _ in
+                    let currentLang = userSnapshot?.data()?["nativeLanguage"] as? String ?? "en"
+                    self.db.collection("users").document(otherUserID).getDocument { partnerSnapshot, _ in
+                        let partnerLang = partnerSnapshot?.data()?["nativeLanguage"] as? String ?? "en"
+                        
+                        let group = DispatchGroup()
+                        var messages: [ChatMessages] = []
+                        //now get the information that is in the messages (the fields)
+                        for doc in documents {
+                            let data = doc.data()
+                            let text = data["text"] as? String ?? ""
+                            let senderID = data["senderID"] as? String ?? ""
+                            let isFromCurrentUser = senderID == currentUserID
 
-                let messages = documents.compactMap { doc -> ChatMessages? in
-                    let data = doc.data()
-                    guard let text = data["text"] as? String,
-                          let senderID = data["senderID"] as? String else { return nil }
-
-                    let isRead = data["isRead"] as? Bool ?? false
-                    let isFromCurrentUser = senderID == currentUserID
-                    let timestamp = (data["timestamp"] as? Timestamp)?.dateValue() ?? Date()
-                    let repliedToText = data["repliedToText"] as? String
-                    let isLiked = data["isLiked"] as? Bool ?? false
-                    return ChatMessages(
-                        text: text,
-                        isFromCurrentUser: isFromCurrentUser,
-                        isRead: isRead,
-                        timestamp: timestamp,
-                        repliedToText: repliedToText,
-                        isLiked: isLiked,
-                        documentID: doc.documentID
-                    )
+                            let isRead = data["isRead"] as? Bool ?? false
+                            let serverTimestamp = (data["timestamp"] as? Timestamp)?.dateValue()
+                            let localFallback = (data["localTimestamp"] as? Timestamp)?.dateValue()
+                            let timestamp = serverTimestamp ?? localFallback ?? Date()
+                            let repliedToText = data["repliedToText"] as? String
+                            let isLiked = data["isLiked"] as? Bool ?? false
+                            let documentID = doc.documentID
+                            //this will then check if the user does not match the nativeLanguage of the other user
+                            if (!isFromCurrentUser && partnerLang != currentLang) {
+                                group.enter()
+                                translateTextV2(text: text, sourceLang: partnerLang, targetLang: currentLang) { translated in
+                                    let msg = ChatMessages(
+                                        text: text,
+                                        isFromCurrentUser: isFromCurrentUser,
+                                        isRead: isRead,
+                                        timestamp: timestamp,
+                                        repliedToText: repliedToText,
+                                        isLiked: isLiked,
+                                        documentID: documentID,
+                                        translatedText: translated
+                                    )
+                                    print("Translation: \(String(describing: translated))")
+                                    messages.append(msg)
+                                    group.leave()
+                                }
+                            }
+                            //if the same nativeLanguage then no need to translate messages
+                            else {
+                                let msg = ChatMessages(
+                                    text: text,
+                                    isFromCurrentUser: isFromCurrentUser,
+                                    isRead: isRead,
+                                    timestamp: timestamp,
+                                    repliedToText: repliedToText,
+                                    isLiked: isLiked,
+                                    documentID: documentID,
+                                    translatedText: nil
+                                )
+                                messages.append(msg)
+                            }
+                        }
+                        group.notify(queue: .main) {
+                            let sorted = messages.sorted(by: { ($0.timestamp ?? .distantPast) < ($1.timestamp ?? .distantPast) })
+                            completion(sorted)
+                            self.updateConversation(chatID: chatID, with: sorted)
+                        }
+                    }
                 }
-
-                self.updateConversation(chatID: chatID, with: messages)
-                onUpdate(messages)
             }
         }
     }
@@ -619,7 +684,6 @@ class ChatListViewModel: ObservableObject {
     //postcondition: this is going to be used for the isRead and determine who send it
     func markMessagesAsRead(for chatID: String) {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-
         let messagesRef = db.collection("chat").document(chatID).collection("messages")
         //looking at the 'isRead' field to see if its true or false
         messagesRef.whereField("isRead", isEqualTo: false)

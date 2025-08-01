@@ -12,7 +12,6 @@ import Kingfisher
 //MARK: - View (Main View)
 struct ChatListView: View {
     @StateObject private var viewModel = ChatListViewModel()
-    //@State private var selectedChat: ChatConversation? = nil
     @State private var discoveryPage = false
     @State private var pendingChatUserId: String? = nil
     @State private var path: [ChatRoute] = []
@@ -20,6 +19,7 @@ struct ChatListView: View {
     @Binding var unreadChatCount: Int
     
     var body: some View {
+        //this will be a push and pop
         NavigationStack(path: $path) {
             ZStack {
                 Color.black.edgesIgnoringSafeArea(.all)
@@ -83,7 +83,7 @@ struct ChatListView: View {
                     }
                 }
                 .background(Color.black)
-                //this will be the destination the user goes to so a basically a push and pop view
+                //this will be the destination the user goes to but now here is where we pop the stack by using .removeLast()
                 .navigationDestination(for: ChatRoute.self) { route in
                     switch route {
                     case .chatDetail(let id):
@@ -102,11 +102,12 @@ struct ChatListView: View {
                     }
                 }
             }
+            //going to check if the path is empty meaning it has no conversations and no screens (profile or discovery) are pushed into the stack
+            .toolbar(path.isEmpty ? .visible : .hidden, for: .tabBar)
         }
         //this needs to be changes when changes are being made since it keeps track of the count
         .onChange(of: viewModel.conversations) { conversations in
             unreadChatCount = conversations.filter { $0.hasUnreadMessages }.count
-            
             //check if we need to open a specific chat after conversations are loaded
             if let userId = pendingChatUserId,
                let conversation = conversations.first(where: { $0.friend.id == userId }) {
@@ -257,7 +258,7 @@ struct DiscoveryView: View {
                             let hasMessaged = viewModel.chattedUserIDs.contains(user.id)
                             //make the information of the profile all aligned by adding the vstack and padding (horizontal)
                             VStack(spacing: 0) {
-                                HStack {
+                                HStack(spacing: 12) {
                                     //the profile image should be overlayed with the flag and the active
                                     ZStack(alignment: .bottomLeading) {
                                         Button(action: {
@@ -272,15 +273,26 @@ struct DiscoveryView: View {
                                         .padding(.bottom, -8)
                                     }
                                     //have the username and what they are learning aligned
-                                    VStack(alignment: .leading) {
+                                    VStack(alignment: .leading, spacing: 4) {
                                         Text(user.username)
                                             .foregroundColor(.white)
                                             .font(.headline.weight(.bold))
-                                        Text("\(user.nativeLanguage.capitalized) → \(user.learningLanguage.capitalized) (Lvl. \(user.comprehensionLevel))")
-                                            .foregroundColor(.white)
+                                        HStack {
+                                            Text(user.nativeLanguage.uppercased())
+                                            Image(systemName: "chevron.right.2")
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(width: 15, height: 15)
+                                            Text(user.learningLanguage.uppercased())
+                                            
+                                        }
+                                        .foregroundColor(.white)
+                                        .font(.subheadline)
+                                        LevelDotsView(level: user.comprehensionLevel)
+                                            .padding(.top,-15)
+                                            .padding(.leading, -16)
                                             .font(.subheadline)
                                     }
-                                    
                                     Spacer()
                                     Button(action: {
                                         //checking if they already messaged user if yes open the chat
@@ -304,7 +316,7 @@ struct DiscoveryView: View {
                                             .cornerRadius(10)
                                     }
                                 }
-                                .padding(.vertical, 20)
+                                .padding(.vertical, 10)
                                 Divider().background(Color.gray)
                             }
                             .padding(.horizontal)
@@ -331,7 +343,7 @@ struct DiscoveryView: View {
             viewModel.fetchUsersByNativeLanguages(selectedLanguages)
         }
         else {
-            viewModel.fetchDiscoverableUsersFromUsers()
+            viewModel.fetchUsersBasedOnIsPro()
         }
     }
 }
@@ -340,26 +352,16 @@ struct NativeLanguageFilterView: View {
     @Binding var selectedLanguages: [String]
     //this closure function will help with what filter it is at
     var onFilterChanged:()-> Void
-    @State private var allLanguages = [
-        "af", "am", "ar", "az", "be", "bg", "bn", "bs", "ca", "ceb", "cs", "cy",
-        "da", "de", "el", "en", "eo", "es", "et", "eu", "fa", "fi", "fil", "fj",
-        "fr", "fy", "ga", "gd", "gl", "gu", "ha", "haw", "he", "hi", "hmn", "hr",
-        "ht", "hu", "hy", "id", "ig", "is", "it", "iw", "ja", "jw", "ka", "kk",
-        "km", "kn", "ko", "ku", "ky", "la", "lb", "lo", "lt", "lv", "mg", "mi",
-        "mk", "ml", "mn", "mr", "ms", "mt", "my", "ne", "nl", "no", "ny", "pa",
-        "pl", "ps", "pt", "ro", "ru", "rw", "sd", "si", "sk", "sl", "sm", "sn",
-        "so", "sq", "sr", "st", "su", "sv", "sw", "ta", "te", "tg", "th", "tk",
-        "tl", "tr", "tt", "ug", "uk", "ur", "uz", "vi", "xh", "yi", "yo", "zh", "zu"
-    ]
+    
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 //this will show the users selected countries
-                ForEach(selectedLanguages, id: \.self) { country in
+                ForEach(selectedLanguages, id: \.self) { code in
                     HStack(spacing: 5) {
-                        Text(languageFullName(country))
+                        Text(LanguageUtils.fullName(for: code))
                         Button(action: {
-                            selectedLanguages.removeAll { $0 == country }
+                            selectedLanguages.removeAll { $0 == code }
                             //call the function to get the users they filtered
                             onFilterChanged()
                         }) {
@@ -374,12 +376,12 @@ struct NativeLanguageFilterView: View {
                 }
                 //menu picker for when users filters the options
                 Menu{
-                    ForEach(allLanguages.filter { !selectedLanguages.contains($0) }, id: \.self) { country in
+                    ForEach(LanguageUtils.sortedLanguages.filter { !selectedLanguages.contains($0.code) }, id: \.code) { country in
                         Button(action: {
-                            selectedLanguages.append(country)
+                            selectedLanguages.append(country.code)
                             onFilterChanged()
                         }) {
-                            Text(languageFullName(country))
+                            Text(country.name)
                         }
                     }
                 } label: {
@@ -398,121 +400,6 @@ struct NativeLanguageFilterView: View {
         .onAppear {
             onFilterChanged()
         }
-    }
-    //function will allow me to convert the 'en' to the fullname for all languages
-    private func languageFullName(_ code: String) -> String {
-        let languageMap: [String: String] = [
-            "af": "Afrikaans",
-            "am": "Amharic",
-            "ar": "Arabic",
-            "az": "Azerbaijani",
-            "be": "Belarusian",
-            "bg": "Bulgarian",
-            "bn": "Bengali",
-            "bs": "Bosnian",
-            "ca": "Catalan",
-            "ceb": "Cebuano",
-            "cs": "Czech",
-            "cy": "Welsh",
-            "da": "Danish",
-            "de": "German",
-            "el": "Greek",
-            "en": "English",
-            "eo": "Esperanto",
-            "es": "Spanish",
-            "et": "Estonian",
-            "eu": "Basque",
-            "fa": "Persian",
-            "fi": "Finnish",
-            "fil": "Filipino",
-            "fj": "Fijian",
-            "fr": "French",
-            "fy": "Frisian",
-            "ga": "Irish",
-            "gd": "Scots Gaelic",
-            "gl": "Galician",
-            "gu": "Gujarati",
-            "ha": "Hausa",
-            "haw": "Hawaiian",
-            "he": "Hebrew",
-            "hi": "Hindi",
-            "hmn": "Hmong",
-            "hr": "Croatian",
-            "ht": "Haitian Creole",
-            "hu": "Hungarian",
-            "hy": "Armenian",
-            "id": "Indonesian",
-            "ig": "Igbo",
-            "is": "Icelandic",
-            "it": "Italian",
-            "iw": "Hebrew", // older ISO code
-            "ja": "Japanese",
-            "jw": "Javanese",
-            "ka": "Georgian",
-            "kk": "Kazakh",
-            "km": "Khmer",
-            "kn": "Kannada",
-            "ko": "Korean",
-            "ku": "Kurdish",
-            "ky": "Kyrgyz",
-            "la": "Latin",
-            "lb": "Luxembourgish",
-            "lo": "Lao",
-            "lt": "Lithuanian",
-            "lv": "Latvian",
-            "mg": "Malagasy",
-            "mi": "Maori",
-            "mk": "Macedonian",
-            "ml": "Malayalam",
-            "mn": "Mongolian",
-            "mr": "Marathi",
-            "ms": "Malay",
-            "mt": "Maltese",
-            "my": "Burmese",
-            "ne": "Nepali",
-            "nl": "Dutch",
-            "no": "Norwegian",
-            "ny": "Nyanja",
-            "pa": "Punjabi",
-            "pl": "Polish",
-            "ps": "Pashto",
-            "pt": "Portuguese",
-            "ro": "Romanian",
-            "ru": "Russian",
-            "rw": "Kinyarwanda",
-            "sd": "Sindhi",
-            "si": "Sinhala",
-            "sk": "Slovak",
-            "sl": "Slovenian",
-            "sm": "Samoan",
-            "sn": "Shona",
-            "so": "Somali",
-            "sq": "Albanian",
-            "sr": "Serbian",
-            "st": "Sesotho",
-            "su": "Sundanese",
-            "sv": "Swedish",
-            "sw": "Swahili",
-            "ta": "Tamil",
-            "te": "Telugu",
-            "tg": "Tajik",
-            "th": "Thai",
-            "tk": "Turkmen",
-            "tl": "Tagalog",
-            "tr": "Turkish",
-            "tt": "Tatar",
-            "ug": "Uyghur",
-            "uk": "Ukrainian",
-            "ur": "Urdu",
-            "uz": "Uzbek",
-            "vi": "Vietnamese",
-            "xh": "Xhosa",
-            "yi": "Yiddish",
-            "yo": "Yoruba",
-            "zh": "Chinese",
-            "zu": "Zulu"
-        ]
-        return languageMap[code.lowercased()] ?? code.capitalized
     }
 }
 //MARK: - Search button by username
