@@ -13,10 +13,12 @@ struct ChangeLanguageLevelFlow: View {
     @State private var languageLevels: [String : String] = [:]
     @State private var currentPage: Int = 0
     @State private var isLoading: Bool = true
+    @State private var currentSelectedLevel: String? = nil
 
-    var selectedLanguagesArray: [String]
+
     let uid: String
-    
+    @State private var filteredLanguagesArray: [String] = [] // language names
+
     @Environment(\.dismiss) private var dismiss
     
     let languageCodes: [String: String] = [
@@ -34,40 +36,50 @@ struct ChangeLanguageLevelFlow: View {
           "Ukrainian": "uk", "Urdu": "ur", "Vietnamese": "vi", "Welsh": "cy"
     ]
     
-    init(selectedLanguagesArray: [String], uid: String) {
-        self.selectedLanguagesArray = selectedLanguagesArray
+    init(uid: String) {
         self.uid = uid
-        for (index, lang) in selectedLanguagesArray.enumerated() {
-            
-            if let key = languageCodes.someKey(forValue: lang) {
-                self.selectedLanguagesArray[index] = key
-            }
-        }
     }
+
     
     var body: some View {
         ZStack {
             VStack {
-                if !isLoading && currentPage < selectedLanguagesArray.count {
-                    let currentLanguage = selectedLanguagesArray[currentPage]
+                if !isLoading && currentPage < filteredLanguagesArray.count {
+                    let progress = Double(currentPage + 1) / Double(filteredLanguagesArray.count)
+                    
+                    CustomProgressBar(progress: progress, height: 10)
+                        .padding(.bottom, 10)
+                    
+                    let currentLanguage = filteredLanguagesArray[currentPage]
                     LanguageLevelSelectionView(
-                        selectedLevel: Binding(
-                            get: { languageLevels[currentLanguage] ?? "" },
-                            set: { languageLevels[currentLanguage] = $0 }
-                        ),
+                        selectedLevel: $currentSelectedLevel,
                         languageName: currentLanguage,
                         onContinue: {
+                            languageLevels[currentLanguage] = currentSelectedLevel
+                            print("🚀 Saved '\(currentSelectedLevel ?? "nil")' for \(currentLanguage)")
+                            //currentSelectedLevel = nil // Clear for next screen
                             currentPage += 1
-
-                            if currentPage >= selectedLanguagesArray.count {
+                            if currentPage >= filteredLanguagesArray.count {
                                 Task {
                                     await saveLanguageLevels()
                                 }
                                 dismiss()
                             }
-                        }
+                        },
+                        fromSettings: true
                     )
-                } else if !isLoading && currentPage >= selectedLanguagesArray.count {
+                    .id(currentLanguage) // 💡 Forces reinit when language changes
+                    .onAppear {
+                        currentSelectedLevel = languageLevels[currentLanguage]
+                    }
+                    .onChange(of: currentPage) { newPage in
+                        if newPage < filteredLanguagesArray.count {
+                            let currentLanguage = filteredLanguagesArray[newPage]
+                            currentSelectedLevel = languageLevels[currentLanguage]
+                        }
+                    }
+
+                } else if !isLoading && currentPage >= filteredLanguagesArray.count {
                     ProgressView()
                 } else {
                     ProgressView("Loading existing levels...")
@@ -77,7 +89,7 @@ struct ChangeLanguageLevelFlow: View {
                 }
             }
             .background(Color.black.ignoresSafeArea())
-            .navigationTitle("Change Language Level")
+            //.navigationTitle("Change Language Level")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 if isLoading {
@@ -98,8 +110,10 @@ struct ChangeLanguageLevelFlow: View {
             let docRef = db.collection("users").document(uid)
             let document = try await docRef.getDocument()
 
-            if let data = document.data(),
-               let languagesData = data["languagesData"] as? [String: [String: Any]] {
+            if let data = document.data() {
+                let allLanguagesData = data["languagesData"] as? [String: [String: Any]] ?? [:]
+                let targetLanguageCodes = data["targetLanguageList"] as? [String] ?? []
+                let filteredData = allLanguagesData.filter { targetLanguageCodes.contains($0.key) }
 
                 let comprehensionLevelsMap: [Int: String] = [
                     1: "Just Starting",
@@ -110,21 +124,29 @@ struct ChangeLanguageLevelFlow: View {
                 ]
 
                 var loadedLevels: [String: String] = [:]
-                for (lang, details) in languagesData {
-                    if selectedLanguagesArray.contains(lang) {
-                        if let level = details["comprehensionLevel"] as? Int {
-                            loadedLevels[lang] = comprehensionLevelsMap[level] ?? "Just Starting"
+                var languageNames: [String] = []
+
+                for langCode in targetLanguageCodes {
+                    if let details = filteredData[langCode],
+                       let level = details["comprehensionLevel"] as? Int {
+                        if let langName = languageCodes.first(where: { $0.value == langCode })?.key {
+                            loadedLevels[langName] = comprehensionLevelsMap[level] ?? "Just Starting"
+                            languageNames.append(langName)
                         }
                     }
                 }
+
                 await MainActor.run {
                     self.languageLevels = loadedLevels
+                    self.filteredLanguagesArray = languageNames
                 }
             }
         } catch {
             print("Error fetching existing language levels: \(error.localizedDescription)")
         }
     }
+
+
 
     private func saveLanguageLevels() async {
         let db = FirebaseFirestore.Firestore.firestore()
@@ -137,11 +159,11 @@ struct ChangeLanguageLevelFlow: View {
             "Expert": 5
         ]
 
-        for language in selectedLanguagesArray {
+        for language in filteredLanguagesArray {
             if let selectedLevel = languageLevels[language] {
                 let comprehensionLevel = levelsDictionary[selectedLevel] ?? 1
-                let lang = languageCodes[language] ?? ""
-                updates["languagesData.\(lang).comprehensionLevel"] = comprehensionLevel
+                let langCode = languageCodes[language] ?? ""
+                updates["languagesData.\(langCode).comprehensionLevel"] = comprehensionLevel
             }
         }
         

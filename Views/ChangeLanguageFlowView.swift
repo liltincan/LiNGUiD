@@ -2,7 +2,6 @@ import SwiftUI
 import FirebaseFirestore
 
 struct ChangeLanguageFlowView: View {
-    var existingLanguages: Set<String>?
     var uid: String
     var preselectedLanguageCodes: Set<String>? // New optional parameter for short codes
     @State private var selectedNativeLanguages: Set<String> = []
@@ -13,7 +12,9 @@ struct ChangeLanguageFlowView: View {
     @State private var languageLevels: [String: String] = [:]
     @State private var page = 0 // Start at 0 for language selection
     @State private var selectPage = 0 // For level selection pagination
-    
+    @State private var nativeLanguageNamesToExclude: Set<String> = []
+    @State private var existingLanguages: Set<String> = []
+
     let languageCodes: [String: String] = [
           "Arabic": "ar", "Chinese": "zh", "English": "en", "French": "fr", "German": "de",
           "Italian": "it", "Portuguese": "pt", "Russian": "ru", "Spanish": "es",
@@ -34,7 +35,7 @@ struct ChangeLanguageFlowView: View {
          uid: String,
          preselectedLanguageCodes: Set<String>? = nil,
          selectedNativeLanguages: Set<String>) {
-        self.existingLanguages = existingLanguages
+        //self.existingLanguages = existingLanguages
         self.uid = uid
         self.preselectedLanguageCodes = preselectedLanguageCodes
         self._selectedNativeLanguages = State(initialValue: selectedNativeLanguages)
@@ -45,7 +46,7 @@ struct ChangeLanguageFlowView: View {
             switch page {
             case 0:
                 // Language Selection (mirrors onboarding case 2)
-                CustomProgressBar(progress: 0.6, height: 10)
+                CustomProgressBar(progress: 0.5, height: 10)
                     .padding(.bottom, 25)
                 
                 OnboardingPageView(index: 2)
@@ -54,7 +55,7 @@ struct ChangeLanguageFlowView: View {
                 LanguageSelectionView(
                     onContinue: { selected in
                         let selectedSet = Set(selected)
-                        let newLanguages = selectedSet.filter { !(existingLanguages ?? []).contains($0) }
+                        let newLanguages = selectedSet.filter { !existingLanguages.contains($0) }
                         
                         selectedLanguages = selectedSet
                         selectedLanguagesArray = Array(newLanguages)
@@ -70,9 +71,9 @@ struct ChangeLanguageFlowView: View {
                             page = 1
                         }
                     },
-                    selectionLimit: 50,
+                    selectionLimit: 49,
                     selectedLanguages: $selectedLanguages,
-                    excludeLanguages: [],
+                    excludeLanguages: Array(selectedNativeLanguages),
                     onDeselect: { language in
                         languageLevels.removeValue(forKey: language)
                     }
@@ -81,33 +82,33 @@ struct ChangeLanguageFlowView: View {
                 
             case 1:
                 // Language Level Selection (mirrors onboarding case 3)
-                if selectPage > 0 {
-                    HStack {
-                        Button(action: {
-                            selectPage -= 1
-                        }) {
-                            Image("Return_Button")
-                                .frame(width: 25, height: 25)
-                                .padding(.leading, 10)
-                        }
-                        Spacer()
-                    }
-                } else {
-                    HStack {
-                        Button(action: {
-                            selectPage = 0
-                            page -= 1
-                        }) {
-                            Image("Return_Button")
-                                .frame(width: 25, height: 25)
-                                .padding(.leading, 10)
-                        }
-                        Spacer()
-                    }
-                }
+//                if selectPage > 0 {
+//                    HStack {
+//                        Button(action: {
+//                            selectPage -= 1
+//                        }) {
+//                            Image("Return_Button")
+//                                .frame(width: 25, height: 25)
+//                                .padding(.leading, 10)
+//                        }
+//                        Spacer()
+//                    }
+//                } else {
+//                    HStack {
+//                        Button(action: {
+//                            selectPage = 0
+//                            page -= 1
+//                        }) {
+//                            Image("Return_Button")
+//                                .frame(width: 25, height: 25)
+//                                .padding(.leading, 10)
+//                        }
+//                        Spacer()
+//                    }
+//                }
                 
-                let baseProgress = 0.6
-                let step = 0.2 / Double(selectedLanguagesArray.count)
+                let baseProgress = 0.5
+                let step = (1.0 - baseProgress) / Double(selectedLanguagesArray.count)
                 let progress = baseProgress + (Double(selectPage + 1) * step)
                 
                 CustomProgressBar(progress: progress, height: 10)
@@ -132,7 +133,8 @@ struct ChangeLanguageFlowView: View {
                                 }
                                 dismiss()
                             }
-                        }
+                        },
+                        fromSettings: true
                     )
                     .padding(.top, 10)
                 }
@@ -142,19 +144,40 @@ struct ChangeLanguageFlowView: View {
             }
         }
         .onAppear {
-            // Convert preselected language codes to full names if provided
-            if let preselectedCodes = preselectedLanguageCodes {
-                let convertedLanguages = convertLanguageCodesToNames(preselectedCodes)
-                selectedLanguages = (existingLanguages ?? []).union(convertedLanguages)
-            } else {
-                selectedLanguages = existingLanguages ?? []
+            fetchUserLanguageLists(for: uid) { nativeCodes, targetCodes in
+                let nativeNames = convertLanguageCodesToNames(nativeCodes)
+                let targetNames = convertLanguageCodesToNames(targetCodes)
+                
+                nativeLanguageNamesToExclude = nativeNames
+                selectedNativeLanguages = nativeNames
+                selectedLanguages = targetNames
+                selectedLanguagesArray = []
+
+                // ✅ Assign this so comparison works correctly
+                existingLanguages = targetNames
             }
-            let convertedNativeLanguages = convertLanguageCodesToNames(selectedNativeLanguages)
-            selectedNativeLanguages = convertedNativeLanguages
         }
         .background(Color.black.ignoresSafeArea())
     }
     
+    private func fetchUserLanguageLists(for uid: String, completion: @escaping (Set<String>, Set<String>) -> Void) {
+        let db = Firestore.firestore()
+        let docRef = db.collection("users").document(uid)
+        
+        docRef.getDocument { document, error in
+            if let document = document, document.exists,
+               let data = document.data() {
+                
+                let nativeCodes = Set((data["nativeLanguageList"] as? [String]) ?? [])
+                let targetCodes = Set((data["targetLanguageList"] as? [String]) ?? [])
+                completion(nativeCodes, targetCodes)
+            } else {
+                print("❌ Failed to fetch language lists: \(error?.localizedDescription ?? "Unknown error")")
+                completion([], [])
+            }
+        }
+    }
+
     // Helper function to convert language codes to full names
     private func convertLanguageCodesToNames(_ codes: Set<String>) -> Set<String> {
         var languageNames: Set<String> = []

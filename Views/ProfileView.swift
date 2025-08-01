@@ -296,6 +296,7 @@ struct ProfileHeaderView: View {
 }
 
 struct LevelDotsView: View {
+    @Environment(\.colorScheme) var colorScheme
     let level: Int // current level, e.g., 3
     let maxLevel: Int = 5 // total dots
 
@@ -307,7 +308,7 @@ struct LevelDotsView: View {
                     .frame(width: 8, height: 8)
                     .overlay(
                         Circle()
-                            .stroke(Color.white, lineWidth: 0.75)
+                            .stroke(colorScheme == .dark ? Color.white : Color.black, lineWidth: 0.75)
                     )
             }
         }

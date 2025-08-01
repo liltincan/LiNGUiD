@@ -7,21 +7,25 @@ struct LanguageLevelSelectionView: View {
     let languageName: String
     var onContinue: (() -> Void)?
     var onBack: (() -> Void)? = nil
+    var fromSettings: Bool = false
 
     var body: some View {
         VStack(alignment: .leading) {
             ZStack{
-                HStack(alignment: .center) {
-                    Button(action: {
-                        onBack?()
-                    }) {
-                        Image("Return_Button")
-                            //.resizable()
-                            .frame(width: 25, height: 25)
+                if(!fromSettings){
+                    HStack(alignment: .center) {
+                        Button(action: {
+                            onBack?()
+                        }) {
+                            Image("Return_Button")
+                                //.resizable()
+                                .frame(width: 25, height: 25)
+                        }
+                        
+                        Spacer()
                     }
-                    
-                    Spacer()
                 }
+                
                 Text("Select your \n level in \(languageName)")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)

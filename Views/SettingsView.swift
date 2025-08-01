@@ -37,7 +37,7 @@ struct SettingsView: View {
                         DividerLine()
 
                         SettingsSection(title: "Content") {
-                            SettingsRowLink(title: "Change Level", destination: ChangeLanguageLevelFlow(selectedLanguagesArray: Array(languages), uid: uid!))
+                            SettingsRowLink(title: "Change Level", destination: ChangeLanguageLevelFlow(uid: uid!))
                             SettingsRowLink(title: "Change Language", destination: ChangeLanguageFlowView(uid: uid!, preselectedLanguageCodes: languages, selectedNativeLanguages: selectedNativeLanguages))
                         }
 

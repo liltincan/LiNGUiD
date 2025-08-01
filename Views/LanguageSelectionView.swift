@@ -34,7 +34,7 @@ struct LanguageSelectionView: View {
         let selectedFiltered = Array(selectedLanguages)
         let unselectedFiltered = searchFilteredLanguages.filter { !selectedLanguages.contains($0) }
         
-        return selectedFiltered + unselectedFiltered
+        return selectedFiltered.sorted() + unselectedFiltered
     }
 
     var body: some View {
