@@ -60,9 +60,10 @@ struct SettingsView: View {
                             SettingsRowLink(title: "Delete account", destination: DeleteAccountConfirmationView(), isDestructive: true)
                         }
                     }
-                    .padding(.top, 32)
                     .padding(.horizontal, 16)
                 }
+                .padding(.top, 32)
+                .scrollIndicators(.hidden)
             }
             .background(Color.black.ignoresSafeArea())
             .navigationTitle("Settings")

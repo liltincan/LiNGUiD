@@ -168,7 +168,8 @@ struct ChatRowView: View {
                             .frame(width:10, height:10)
                     }
                 }
-                .padding(.bottom, -8)
+                .padding(.bottom, -5)
+                .padding(.trailing, -5)
             }
             //this is now the convo information
             VStack(alignment: .leading, spacing: 4) {
