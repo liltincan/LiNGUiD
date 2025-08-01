@@ -1050,15 +1050,15 @@ struct TransparentNavigationBar: ViewModifier {
         appearance.backgroundColor = UIColor.systemBackground.withAlphaComponent(opacity)
 
         // Hide back button text
-        appearance.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
-        appearance.backButtonAppearance.highlighted.titleTextAttributes = [.foregroundColor: UIColor.clear]
-        appearance.backButtonAppearance.normal.titlePositionAdjustment = UIOffset(horizontal: -1000, vertical: 0)
-
-        // ✅ Make the chevron (back indicator) white
-        appearance.setBackIndicatorImage(
-            UIImage(systemName: "chevron.left")?.withTintColor(.white, renderingMode: .alwaysOriginal),
-            transitionMaskImage: UIImage(systemName: "chevron.left")?.withTintColor(.white, renderingMode: .alwaysOriginal)
-        )
+//        appearance.backButtonAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
+//        appearance.backButtonAppearance.highlighted.titleTextAttributes = [.foregroundColor: UIColor.clear]
+//        appearance.backButtonAppearance.normal.titlePositionAdjustment = UIOffset(horizontal: -1000, vertical: 0)
+//
+//        // ✅ Make the chevron (back indicator) white
+//        appearance.setBackIndicatorImage(
+//            UIImage(systemName: "chevron.left")?.withTintColor(.white, renderingMode: .alwaysOriginal),
+//            transitionMaskImage: UIImage(systemName: "chevron.left")?.withTintColor(.white, renderingMode: .alwaysOriginal)
+//        )
 
         // Apply appearance
         UINavigationBar.appearance().standardAppearance = appearance

@@ -68,6 +68,13 @@ struct SettingsView: View {
             .background(Color.black.ignoresSafeArea())
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Settings")
+                        .foregroundColor(.white)
+                        .font(.headline)
+                }
+            }
             .toolbar(.hidden, for: .tabBar)
             .alert("Are you sure you want to log out?", isPresented: $showLogoutAlert) {
                 Button("Log out", role: .destructive) {
