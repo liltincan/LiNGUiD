@@ -296,7 +296,7 @@ struct ProfileHeaderView: View {
                     VStack(spacing: -10) {
                         Text(userSession.currentUser?.nativeLanguage?.uppercased() ?? "")
                             .font(.system(size: 14, weight: .medium))
-                        LevelDotsView(level: 5)
+                        MiniProgressBarView()
                             .padding(.top, -7.5)
                     }
                     
@@ -351,20 +351,43 @@ struct LevelDotsView: View {
     let maxLevel: Int = 5 // total dots
 
     var body: some View {
+        // Determine the first empty index (if any)
+        let firstEmptyIndex = level < maxLevel ? level : nil
+
         HStack(spacing: 1.5) {
             ForEach(0..<maxLevel, id: \.self) { index in
+                let isFilled = index < level
+                let isFirstEmpty = index == firstEmptyIndex
+
                 Circle()
-                    .fill(index < level ? Color.appPrimaryColor : Color.clear)
-                    .frame(width: 4, height: 4 )
+                    .fill(isFilled ? Color.appPrimaryColor : Color.white)
+                    .frame(width: isFirstEmpty ? 2 : 4, height: isFirstEmpty ? 2 : 4)
                     .overlay(
                         Circle()
-                            .stroke(colorScheme == .dark ? Color.white : Color.black, lineWidth: 0.50)
+                            .stroke(colorScheme == .dark ? Color.white : Color.black, lineWidth: 0.5)
                     )
             }
         }
         .padding()
         .background(Color.clear)
-        //.background(Color.black)
+    }
+}
+
+struct MiniProgressBarView: View {
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(Color.appPrimaryColor)
+                .frame(width: 26, height: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 2)
+                        .stroke(colorScheme == .dark ? Color.white : Color.black, lineWidth: 0.5)
+                )
+        }
+        .padding()
+        .background(Color.clear)
     }
 }
 
