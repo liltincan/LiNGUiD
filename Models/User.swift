@@ -82,6 +82,7 @@ struct User: Codable, Identifiable {
         targetLanguage =
             try container.decodeIfPresent(String.self, forKey: .targetLanguage)
             ?? ""
+        targetLanguageList = try container.decodeIfPresent([String].self, forKey: .targetLanguageList)
         nativeLanguage = try container.decodeIfPresent(String.self, forKey: .nativeLanguage)
         languagesData = try container.decodeIfPresent(
             [String: LanguagesData].self,

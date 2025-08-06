@@ -17,6 +17,7 @@ struct ChangeLanguageFlowView: View {
     @State private var existingLanguages: Set<String> = []
     @State private var showGetProPopup = false
     @StateObject private var proVM = ProStatusViewModel()
+    @State private var showForeignPopup = false
 
     let languageCodes: [String: String] = [
           "Arabic": "ar", "Chinese": "zh", "English": "en", "French": "fr", "German": "de",
@@ -75,11 +76,16 @@ struct ChangeLanguageFlowView: View {
                                 page = 1
                             }
                         },
-                        selectionLimit: 49,
+                        selectionLimit: 3,
                         selectedLanguages: $selectedLanguages,
                         excludeLanguages: Array(selectedNativeLanguages),
                         onDeselect: { language in
                             languageLevels.removeValue(forKey: language)
+                        },
+                        onSelectionLimitReached_Foreign: {
+                            withAnimation {
+                                showForeignPopup = true
+                            }
                         }
                     )
                     .layoutPriority(1)
@@ -232,6 +238,52 @@ struct ChangeLanguageFlowView: View {
                 }
             }
             .animation(.easeInOut, value: showGetProPopup)
+        )
+        .overlay(
+            ZStack {
+                if showForeignPopup {
+                    // Dimmed blurred background
+                    Color.black.opacity(0.9)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation {
+                                showForeignPopup = false
+                            }
+                        }
+                    
+                    // Alert box
+                    VStack(spacing: 20) {
+                        Text("Selection Limit Reached")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        Text("You can only select 3 target languages at a time")
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                        
+                        Button(action: {
+                            withAnimation {
+                                showForeignPopup = false
+                            }
+                        }) {
+                            Text("OK")
+                                .frame(minWidth: 250)
+                                .padding()
+                                .background(Color.white)
+                                .foregroundColor(Color.appPrimaryColor)
+                                .cornerRadius(8)
+                        }
+                    }
+                    .padding()
+                    .background(Color.appPrimaryColor)
+                    .cornerRadius(12)
+                    .shadow(radius: 10)
+                    .padding(.horizontal, 40)
+                    .transition(.slideUpFromBottom)
+                }
+            }
+            .animation(.easeInOut, value: showForeignPopup)
         )
         .background(Color.black.ignoresSafeArea())
     }

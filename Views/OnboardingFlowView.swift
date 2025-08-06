@@ -22,6 +22,7 @@ struct OnboardingFlowView: View {
     @FocusState private var isUsernameFocused: Bool
     @State private var showGetProPopup = false
     @State private var showCustomAlert = false
+    @State private var showForeignPopup = false
     @StateObject private var proVM = ProStatusViewModel()
     
     private let total = 0  // number of pages
@@ -113,11 +114,16 @@ struct OnboardingFlowView: View {
                                 targetLanguages = selected
                                 page += 1
                             },
-                            selectionLimit: 49,
+                            selectionLimit: 3,
                             selectedLanguages: $selectedTargetLanguages,
                             excludeLanguages: nativeLanguages,
                             onDeselect: { language in
                                 languageLevels.removeValue(forKey: language)
+                            },
+                            onSelectionLimitReached_Foreign: {
+                                withAnimation {
+                                    showForeignPopup = true
+                                }
                             }
                         )
                         .layoutPriority(1)
@@ -478,6 +484,52 @@ struct OnboardingFlowView: View {
                 }
             }
             .animation(.easeInOut, value: showCustomAlert)
+        )
+        .overlay(
+            ZStack {
+                if showForeignPopup {
+                    // Dimmed blurred background
+                    Color.black.opacity(0.9)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation {
+                                showForeignPopup = false
+                            }
+                        }
+                    
+                    // Alert box
+                    VStack(spacing: 20) {
+                        Text("Selection Limit Reached")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        Text("You can only select 3 target languages at a time")
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(.white)
+                        
+                        Button(action: {
+                            withAnimation {
+                                showForeignPopup = false
+                            }
+                        }) {
+                            Text("OK")
+                                .frame(minWidth: 250)
+                                .padding()
+                                .background(Color.white)
+                                .foregroundColor(Color.appPrimaryColor)
+                                .cornerRadius(8)
+                        }
+                    }
+                    .padding()
+                    .background(Color.appPrimaryColor)
+                    .cornerRadius(12)
+                    .shadow(radius: 10)
+                    .padding(.horizontal, 40)
+                    .transition(.slideUpFromBottom)
+                }
+            }
+            .animation(.easeInOut, value: showForeignPopup)
         )
     }
     
