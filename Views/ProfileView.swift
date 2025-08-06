@@ -466,6 +466,7 @@ struct VideoGridSection: View {
                                             .font(.title2)
                                             .foregroundColor(.white)
                                             .padding(8)
+                                            .padding(.top, 5)
                                     }
                                 }
                                 Spacer()
@@ -532,6 +533,8 @@ struct Videos: View {
     @State private var retryCount = 0
     private let maxRetryCount = 3
 
+    @State private var isShowingVideoSheet = false
+
     private var selectedVideo: Video? {
         videoArray.first { $0.url.absoluteString == videoURL }
     }
@@ -548,13 +551,8 @@ struct Videos: View {
 
     var body: some View {
         if let video = selectedVideo {
-            NavigationLink {
-                VideoView(
-                    videos: orderedVideos,
-                    userSession: userSession,
-                    startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
-                    selectedTab: $selectedTab
-                )
+            Button {
+                isShowingVideoSheet = true
             } label: {
                 AsyncImage(url: URL(string: thumbnailURL), transaction: Transaction(animation: .easeInOut)) { phase in
                     switch phase {
@@ -590,6 +588,49 @@ struct Videos: View {
                 .frame(width: gridItemWidth, height: thumbnailHeight)
                 .clipped()
                 .id(reloadID) //forces reload when ID changes
+            }
+            .fullScreenCover(isPresented: $isShowingVideoSheet) {
+                GeometryReader { geometry in
+                    ZStack {
+                        Color.black.edgesIgnoringSafeArea(.all)
+                        
+                        // Use VerticalVideoScrollView for consistent video player experience
+                        VideoView(
+                            videos: orderedVideos,
+                            userSession: userSession,
+                            startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
+                            selectedTab: $selectedTab
+                        )
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .padding(.top, 60)
+                        
+                        // Custom back button with chevron and text
+                        VStack {
+                            HStack {
+                                Button {
+                                    isShowingVideoSheet = false
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "chevron.left")
+                                            .font(.system(size: 18, weight: .semibold))
+                                        Text("Back")
+                                            .font(.system(size: 17, weight: .medium))
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(Color.black.opacity(0.3))
+                                    .clipShape(Capsule())
+                                }
+                                .padding(.leading, 20)
+                                .padding(.top, 80)
+                                Spacer()
+                            }
+                            Spacer()
+                        }
+                    }
+                }
+                .ignoresSafeArea()
             }
         } else {
             Color.gray.frame(width: gridItemWidth, height: thumbnailHeight)
