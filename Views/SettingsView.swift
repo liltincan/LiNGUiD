@@ -45,8 +45,8 @@ struct SettingsView: View {
 
                         SettingsSection(title: "Information") {
                             SettingsRowLink(title: "About", destination: AboutView())
-                            SettingsRowLink(title: "Privacy", destination: PrivacyView())
-                            SettingsRowLink(title: "Help", destination: HelpView())
+                            SettingsRowLink(title: "Privacy", destination: PrivacyPolicyView())
+                            SettingsRowLink(title: "TermsOfService", destination: TermsOfServiceView())
                             SettingsRowLink(title: "Request a Feature", destination: RequestFeatureView())
                         }
 
@@ -256,37 +256,3 @@ struct DeleteAccountConfirmationView: View {
     }
 }
 
-struct AboutView: View {
-    var body: some View {
-        Text("About Linguid")
-            .navigationTitle("About")
-    }
-}
-
-struct PrivacyView: View {
-    var body: some View {
-        Text("Linguid Privacy Policy")
-            .navigationTitle("Privacy")
-    }
-}
-
-struct HelpView: View {
-    var body: some View {
-        Text("Linguid Help Center")
-            .navigationTitle("Help")
-    }
-}
-
-struct RequestFeatureView: View {
-    var body: some View {
-        Text("Request a New Feature")
-            .navigationTitle("Request a Feature")
-    }
-}
-
-struct GoProView: View {
-    var body: some View {
-        Text("Go Pro Features")
-            .navigationTitle("Go Pro")
-    }
-}

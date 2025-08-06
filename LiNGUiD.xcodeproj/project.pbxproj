@@ -18,6 +18,10 @@
 		138F1B962DEE0DF700F3B31B /* VideoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B952DEE0DF300F3B31B /* VideoView.swift */; };
 		138F1B982DEF6D2F00F3B31B /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138F1B972DEF6D2900F3B31B /* EditProfileView.swift */; };
 		139ABECE2DF2271100EB45FD /* ChangePasswordViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139ABECD2DF2270C00EB45FD /* ChangePasswordViewModel.swift */; };
+		13D14A862E414D880012FDA0 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D14A852E414D880012FDA0 /* AboutView.swift */; };
+		13D14A882E4154C50012FDA0 /* TermsOfServiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D14A872E4154C50012FDA0 /* TermsOfServiceView.swift */; };
+		13D14A8A2E4156F70012FDA0 /* PrivacyPolicyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D14A892E4156F70012FDA0 /* PrivacyPolicyView.swift */; };
+		13D14A8C2E41A3F50012FDA0 /* RequestFeatureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13D14A8B2E41A3F50012FDA0 /* RequestFeatureView.swift */; };
 		13F4B15F2DFC99A70019BE81 /* ChangeLanguageFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13F4B15E2DFC99A20019BE81 /* ChangeLanguageFlowView.swift */; };
 		13F4B1612DFCB87A0019BE81 /* ChangeLanguageLevelFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13F4B1602DFCB86C0019BE81 /* ChangeLanguageLevelFlow.swift */; };
 		603628C22DFA91CE00C6D0E5 /* AppTextTranslate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 603628C12DFA91C900C6D0E5 /* AppTextTranslate.swift */; };
@@ -136,6 +140,10 @@
 		138F1B952DEE0DF300F3B31B /* VideoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoView.swift; sourceTree = "<group>"; };
 		138F1B972DEF6D2900F3B31B /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		139ABECD2DF2270C00EB45FD /* ChangePasswordViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangePasswordViewModel.swift; sourceTree = "<group>"; };
+		13D14A852E414D880012FDA0 /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		13D14A872E4154C50012FDA0 /* TermsOfServiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsOfServiceView.swift; sourceTree = "<group>"; };
+		13D14A892E4156F70012FDA0 /* PrivacyPolicyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyView.swift; sourceTree = "<group>"; };
+		13D14A8B2E41A3F50012FDA0 /* RequestFeatureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestFeatureView.swift; sourceTree = "<group>"; };
 		13F4B15E2DFC99A20019BE81 /* ChangeLanguageFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeLanguageFlowView.swift; sourceTree = "<group>"; };
 		13F4B1602DFCB86C0019BE81 /* ChangeLanguageLevelFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeLanguageLevelFlow.swift; sourceTree = "<group>"; };
 		603628C12DFA91C900C6D0E5 /* AppTextTranslate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTextTranslate.swift; sourceTree = "<group>"; };
@@ -324,6 +332,10 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				13D14A8B2E41A3F50012FDA0 /* RequestFeatureView.swift */,
+				13D14A892E4156F70012FDA0 /* PrivacyPolicyView.swift */,
+				13D14A872E4154C50012FDA0 /* TermsOfServiceView.swift */,
+				13D14A852E414D880012FDA0 /* AboutView.swift */,
 				7ED8BA4A2E32C7900048C37C /* ChatMessagesConvoView.swift */,
 				8FFAB9072E32B3D000D7DFD6 /* GetProView.swift */,
 				132B93422E257D64003F6DA9 /* VideoCommentView.swift */,
@@ -632,6 +644,7 @@
 				8FB9296F2DE116C00020AFCD /* PracticeView.swift in Sources */,
 				13F4B15F2DFC99A70019BE81 /* ChangeLanguageFlowView.swift in Sources */,
 				81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */,
+				13D14A8A2E4156F70012FDA0 /* PrivacyPolicyView.swift in Sources */,
 				132B93412E257D27003F6DA9 /* Comment.swift in Sources */,
 				D62604692E2082FB00BA36FB /* DMVideoPreviewViewModel.swift in Sources */,
 				D626046B2E20831000BA36FB /* DMVideoPreview.swift in Sources */,
@@ -660,15 +673,18 @@
 				8FB929562DE02A790020AFCD /* VideoRepository.swift in Sources */,
 				8FB929572DE02A790020AFCD /* FirebaseAuthService.swift in Sources */,
 				60974D862DE79BE70075CAAE /* AppTitleText.swift in Sources */,
+				13D14A8C2E41A3F50012FDA0 /* RequestFeatureView.swift in Sources */,
 				D6BA59E82DF36B2200E6E137 /* DeepLinkCoordinator.swift in Sources */,
 				D613080F2E1C8D680089F942 /* SharedVideoPreviewView.swift in Sources */,
 				8FB929502DE02A540020AFCD /* VideoFeedViewModel.swift in Sources */,
+				13D14A882E4154C50012FDA0 /* TermsOfServiceView.swift in Sources */,
 				8FB9294F2DE02A3F0020AFCD /* Video.swift in Sources */,
 				81F436432DF2831300DA9BDA /* LanguageSelectionView.swift in Sources */,
 				8FB9296D2DE116A20020AFCD /* DashboardView.swift in Sources */,
 				132B93432E257D64003F6DA9 /* VideoCommentView.swift in Sources */,
 				132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */,
 				D6BA584B2DED2B1F00E6E137 /* VideoPlayerViewModel.swift in Sources */,
+				13D14A862E414D880012FDA0 /* AboutView.swift in Sources */,
 				7EFDD81C2E0C8DB400154192 /* Chat.swift in Sources */,
 				60974D5F2DE6561A0075CAAE /* AppDelegate.swift in Sources */,
 				8FB929512DE02A590020AFCD /* LoginViewModel.swift in Sources */,
