@@ -18,7 +18,8 @@ class ChatListViewModel: ObservableObject {
     @Published var conversations : [ChatConversation] = []
     @Published var chattedUserIDs: Set<String> = []
     @Published var isInitialLoadDone = false
-    
+    @Published var learningLanguage: String = ""
+
     //look at the database now
     private var db = Firestore.firestore()
     //will keep track of each updates that are being made at the moment
@@ -29,6 +30,7 @@ class ChatListViewModel: ObservableObject {
     
     init(){
         fetchChats()
+        fetchCurrentUserLearningLanguage()
     }
     //MARK: - Fetch Chats
     //precondition: none
@@ -316,6 +318,7 @@ class ChatListViewModel: ObservableObject {
                 }
                 //this data is the updated for chats
                 else {
+                    print("✅ Message sent to chatID: \(chatID) from senderID: \(currentUserID)")
                     chatRef.updateData([
                         "lastMessage": text,
                         "lastMessageTimestamp": FieldValue.serverTimestamp(),
@@ -426,6 +429,26 @@ class ChatListViewModel: ObservableObject {
             }
         }
     }
+    //MARK: Will need to get the users targetLanguage
+    //precondition: none
+    //postcondition: gets the target language of what the uesr is learning and then set the learning language to that so it can show the filter
+    func fetchCurrentUserLearningLanguage() {
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        //read the collection called 'users'
+        db.collection("users").document(currentUserID).getDocument { [weak self] snapshot, error in
+            guard let self = self,
+                  let data = snapshot?.data(),
+                  //get the targetLangauge from the users
+                  let targetLang = data["targetLanguage"] as? String else {
+                print("Failed to get current user's learning language.")
+                return
+            }
+            DispatchQueue.main.async {
+                //now set it to the published so it can update
+                self.learningLanguage = targetLang
+            }
+        }
+    }
     //MARK: Will get users by country only
     //precondition: none
     //postcondition: gets the users by thier native language and you can add more than one native language to search
@@ -476,22 +499,6 @@ class ChatListViewModel: ObservableObject {
                     self.discoverableUsers = result
                 }
             }
-    }
-    //MARK: Fetch users who speak my target langauge that are native speakers
-    //precondition: call the fetchUsersByNativeLanguages
-    //postcondition: going to compare the users and check if the users targetLanguage matches the nativeLanguages and if yes then call it in the function we are calling
-    func fetchNativeSpeakersOfMyTargetLanguage() {
-        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-        db.collection("users").document(currentUserID).getDocument { [weak self] snapshot, error in
-            guard let self = self,
-                  let data = snapshot?.data(),
-                  let targetLang = data["targetLanguage"] as? String else {
-                print("Failed to get current user's targetLanguage")
-                return
-            }
-            //call the function that checks by native language
-            self.fetchUsersByNativeLanguages([targetLang])
-        }
     }
     //MARK: Fetching users by their username
     //precondition: none
@@ -590,7 +597,7 @@ class ChatListViewModel: ObservableObject {
             }
         }
     }
-
+    
     //MARK: - Real time updates (will update right when the database changes)
     //precondition: none
     //postcodition: will allowed for messages to update right when you are sending and need to use @State since it is valid for Listener

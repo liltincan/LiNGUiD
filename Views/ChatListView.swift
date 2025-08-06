@@ -91,11 +91,12 @@ struct ChatListView: View {
                             path.removeLast()
                         }, path: $path)
                     case .discovery:
-                        DiscoveryView(viewModel: viewModel) { selectedUserId in
+                        DiscoveryView(viewModel: viewModel, onUserSelected: { selectedUserId in
                             path.append(.profile(selectedUserId))
-                        } onBack: {
+                        }, onBack: {
                             path.removeLast()
-                        }
+                        }, defaultLanguage: viewModel.learningLanguage)
+                        
                     case .profile(let id):
                         OtherUserProfileView(userId: id, selectedTab: $selectedTab)
                             .padding(.top, -35)
@@ -123,6 +124,7 @@ struct ChatListView: View {
                 handleStartChat(userId: userId, username: username)
             }
         }
+        
     }
     //function will check if the chat exists if it does then no need to create chat just call the chat to view it
     private func handleStartChat(userId: String, username: String) {
@@ -210,7 +212,6 @@ struct ChatRowView: View {
     private func relativeTimeString(_ date: Date) -> String {
         let now = Date()
         let timeInterval = now.timeIntervalSince(date)
-        
         if (timeInterval < 60) {
             return "just now"
         }
@@ -227,9 +228,10 @@ struct DiscoveryView: View {
     @ObservedObject var viewModel: ChatListViewModel
     var onUserSelected: (String) -> Void
     var onBack: () -> Void
+    var defaultLanguage: String
     @State private var searchText: String = ""
     @State private var selectedLanguages: [String] = []
-
+    
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
@@ -249,7 +251,7 @@ struct DiscoveryView: View {
                 }
                 .padding()
                 //call the filter option so user can now filter what they want
-                NativeLanguageFilterView(selectedLanguages: $selectedLanguages, onFilterChanged: applyFilters)
+                NativeLanguageFilterView(selectedLanguages: $selectedLanguages, defaultLanguage: defaultLanguage, onFilterChanged: applyFilters)
                 Divider().background(Color.gray)
                 ScrollView {
                     LazyVStack(spacing: 0) {
@@ -284,7 +286,6 @@ struct DiscoveryView: View {
                                                 .scaledToFit()
                                                 .frame(width: 15, height: 15)
                                             Text(user.learningLanguage.uppercased())
-                                            
                                         }
                                         .foregroundColor(.white)
                                         .font(.subheadline)
@@ -325,6 +326,10 @@ struct DiscoveryView: View {
                 }
                 //will load the users when this view appears right away
                 .onAppear {
+                    //have to check that it not the same as the target language and if not then append it to the selected languages
+                    if (!selectedLanguages.contains(defaultLanguage)) {
+                        selectedLanguages.append(defaultLanguage)
+                    }
                     applyFilters()
                 }
                 //hide the scrollable on the side
@@ -350,6 +355,7 @@ struct DiscoveryView: View {
 //MARK: - Search Language to filter
 struct NativeLanguageFilterView: View {
     @Binding var selectedLanguages: [String]
+    var defaultLanguage: String
     //this closure function will help with what filter it is at
     var onFilterChanged:()-> Void
     
@@ -360,12 +366,15 @@ struct NativeLanguageFilterView: View {
                 ForEach(selectedLanguages, id: \.self) { code in
                     HStack(spacing: 5) {
                         Text(LanguageUtils.fullName(for: code))
-                        Button(action: {
-                            selectedLanguages.removeAll { $0 == code }
-                            //call the function to get the users they filtered
-                            onFilterChanged()
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
+                        //checking to make sure its not the default since we cannot delete that
+                        if (code != defaultLanguage) {
+                            Button(action: {
+                                selectedLanguages.removeAll { $0 == code }
+                                //call the function to get the users they filtered
+                                onFilterChanged()
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                            }
                         }
                     }
                     .padding(.horizontal, 12)
@@ -427,7 +436,7 @@ struct SearchByUsernameView: View {
                     TextField("", text: $searchUsername)
                         .foregroundColor(.black)
                         .padding(.horizontal)
-                        //will change while user is typing the username so pops up by the start
+                    //will change while user is typing the username so pops up by the start
                         .onChange(of: searchUsername) { _ in
                             onSearchChanged()
                         }
