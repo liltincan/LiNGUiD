@@ -10,7 +10,6 @@ import FirebaseAuth
 import AVFoundation
 import FirebaseStorage
 
-
 //MARK: - Conversation View (use in ChatListView)
 struct ChatMessagesConvoView: View {
     let chatID: String
@@ -63,6 +62,7 @@ struct ChatMessagesConvoView: View {
                             if let currentUserID = Auth.auth().currentUser?.uid,
                                let otherUID = chat.otherUserID(currentUserID: currentUserID) {
                                 print("Profile tapped for user id in messages group: \(otherUID)")
+                                //this will take you to the profile user which is their ID not Video
                                 path.append(.profile(otherUID))
                             }
                         }) {
@@ -111,7 +111,6 @@ struct ChatMessagesConvoView: View {
                                     }
                                     //call the message view that will show all messages
                                     messageView(message)
-                                        .padding(.bottom, 5)
                                         .id(message.id)
                                 }
                             }
@@ -139,6 +138,7 @@ struct ChatMessagesConvoView: View {
                 replyBanner()
                 //call the function where users shows keyboard to send message
                 messageInputField()
+                    .padding(.top, 10)
             }
             .background(Color.black)
             //.toolbar(.hidden, for: .navigationBar)
@@ -162,7 +162,7 @@ struct ChatMessagesConvoView: View {
     //MARK: - This is the main view where the messages will show up
     private func messageView(_ message: ChatMessages) -> some View {
         HStack {
-            //shifts right since we are current users
+            //MARK: Users input
             if (message.isFromCurrentUser) {
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4) {
@@ -218,10 +218,11 @@ struct ChatMessagesConvoView: View {
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: 280, alignment: .trailing)
+                            //.padding(.vertical, 1)
                     }
                 }
             }
-            //shifts left since it's other users messages
+            //MARK: Friends so shift left
             else {
                 //checking if draggingMessageID will equal the message and if not then false
                 let isDraggingMessage = draggingMessageID == message.id
@@ -307,6 +308,7 @@ struct ChatMessagesConvoView: View {
                         .onTapGesture(count: 2) {
                             toggleLike(for: message)
                         }
+                        .padding(.vertical, 1)
                     }
                 }
                 .offset(x: isDraggingMessage ? dragOffset : 0)

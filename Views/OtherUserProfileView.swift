@@ -30,7 +30,7 @@ struct OtherUserProfileView: View {
     
     var body: some View {
         ZStack {
-            ScrollView {
+            VStack {
                 VStack {
                     OtherUserProfileHeaderView(
                         userName: vm.userName,
@@ -41,9 +41,10 @@ struct OtherUserProfileView: View {
                         fullScreenProfilePictureURL: $fullScreenProfilePictureURL,
                         onBackTapped: {
                             dismiss()
-                        }
+                        },
+                        country: vm.country ?? "ERROR"
                     )
-                    .padding(.bottom, 10)
+                    .padding(.top, 2.5)
                     
                     ProfileStatsView(
                         videoCount: vm.videoCount,
@@ -53,7 +54,7 @@ struct OtherUserProfileView: View {
                             print("Followers tapped")
                         }
                     )
-                    .padding(.bottom, 10)
+                    .padding(.top, -10)
                     
                     OtherUserProfileActionButtons(
                         userId: userId,
@@ -62,20 +63,20 @@ struct OtherUserProfileView: View {
                         selectedTab: $selectedTab,
                         vm: vm
                     )
-                    .padding(.bottom, 15)
-                    
-                    VideoGridSection(
-                        videoThumbnails: vm.videoThumbnails.reversed(),
-                        videoURLs: vm.videoURLs.reversed(),
-                        uploadingVideos: [],
-                        noVideosMessage: "The user hasn't uploaded any videos yet.",
-                        videoArray: vm.uploadedVideoArray.reversed(),
-                        selectedTab: $selectedTab
-                    )
-                        
+                    .padding(.bottom, 10)
+                    ScrollView{
+                        VideoGridSection(
+                            videoThumbnails: vm.videoThumbnails.reversed(),
+                            videoURLs: vm.videoURLs.reversed(),
+                            uploadingVideos: [],
+                            noVideosMessage: "The user hasn't uploaded any videos yet.",
+                            videoArray: vm.uploadedVideoArray.reversed(),
+                            selectedTab: $selectedTab
+                        )
+                    }
+                    .scrollIndicators(.hidden)
                 }
             }
-            .scrollIndicators(.hidden)
         }
         .safeAreaInset(edge: .top) {
             Color.clear.frame(height: 60) // Allows pull-to-refresh spinner to show
@@ -94,14 +95,21 @@ struct OtherUserProfileView: View {
                     Rectangle()
                         .fill(Material.ultraThinMaterial)
                         .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.easeInOut) {
+                                showingFullScreenProfilePicture = false
+                                fullScreenProfilePictureURL = nil
+                            }
+                        }
                     
                     ZStack {
-                        ZStack(alignment: .topTrailing) {
+                        ZStack() {
                             AsyncImage(url: url) { phase in
                                 if let image = phase.image {
                                     image
                                         .resizable()
                                         .scaledToFit()
+                                        .frame(width: 350, height: 700)
                                 } else if phase.error != nil {
                                     Image(systemName: "exclamationmark.triangle.fill")
                                         .resizable()
@@ -111,17 +119,6 @@ struct OtherUserProfileView: View {
                                 } else {
                                     ProgressView()
                                 }
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            
-                            Button {
-                                showingFullScreenProfilePicture = false
-                                fullScreenProfilePictureURL = nil
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.largeTitle)
-                                    .foregroundColor(.white)
-                                    .padding(15)
                             }
                         }
                     }
@@ -165,6 +162,22 @@ struct OtherUserProfileHeaderView: View {
     @Binding var showingFullScreenProfilePicture: Bool
     @Binding var fullScreenProfilePictureURL: String?
     let onBackTapped: () -> Void
+    let country: String
+    
+    @ViewBuilder
+    private var targetLanguageLevelsView: some View {
+        HStack(spacing: -20) {
+            ForEach(vm.targetLanguageList.sorted(), id: \.self) { language in
+                VStack(spacing: -10) {
+                    Text(language.uppercased())
+                        .font(.system(size: 14, weight: .medium))
+
+                    LevelDotsView(level: vm.user?.languagesData?[language]?.comprehensionLevel ?? 0)
+                        .padding(.top, -7.5)
+                }
+            }
+        }
+    }
     
     var body: some View {
         VStack {
@@ -173,16 +186,26 @@ struct OtherUserProfileHeaderView: View {
                     onBackTapped()
                 } label: {
                     Image(systemName: "chevron.left")
-                        .font(.title2)
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.primary)
                 }
+                .padding(.leading, 20)
                 
                 Spacer()
                 
-                Text(userName)
-                    .font(.system(size: 27))
-                    .bold()
-                    .foregroundColor(.primary)
+                HStack(spacing: 0) {
+                    Text(userName)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.primary)
+
+                    if vm.isProUser {
+                        Image(systemName: "checkmark.seal.fill")
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, Color.appPrimaryColor)
+                            .font(.system(size: 16))
+                    }
+                }
+                .padding(.trailing, -5)
                 
                 Spacer()
                 
@@ -190,39 +213,62 @@ struct OtherUserProfileHeaderView: View {
                     // More options menu
                 } label: {
                     Image(systemName: "ellipsis")
-                        .font(.title2)
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.primary)
                 }
+                .padding(.trailing, 20)
             }
-            .padding(.horizontal)
+            .padding(.bottom, 10)
             
             Button {
                 showingFullScreenProfilePicture = true
                 fullScreenProfilePictureURL = profilePictureURL
             } label: {
-                if profilePictureURL != "" {
-                    AsyncImage(url: URL(string: profilePictureURL)) { result in
-                        result.image?
+                ZStack {
+                    if profilePictureURL != "" {
+                        AsyncImage(url: URL(string: profilePictureURL)) { result in
+                            result.image?
+                                .resizable()
+                                .scaledToFill()
+                        }
+                    } else {
+                        Image(systemName: "person.crop.circle.fill")
                             .resizable()
                             .scaledToFill()
-                            .clipShape(Circle())
-                            .contentShape(Circle())
+                            .foregroundColor(.secondary)
                     }
-                    .frame(width: 100, height: 100)
-                    .padding(.bottom, 15)
-                } else {
-                    Image(systemName: "person.crop.circle.fill")
+                }
+                .frame(width: 70, height: 70)
+                .clipShape(Circle())
+                .contentShape(Circle())
+            }
+            .padding(.top, -12.5)
+            
+            Text(CountryFlagConverter.getFlag(for: country.lowercased()))
+                .font(.system(size: 20))
+                .padding(.top, -25)
+                .padding(.leading, -35)
+            
+            VStack(spacing: 0){
+                HStack(spacing: -10) {
+                    VStack(spacing: -10) {
+                        Text(vm.nativeLanguage?.uppercased() ?? "")
+                            .font(.system(size: 14, weight: .medium))
+                        MiniProgressBarView()
+                            .padding(.top, -7.5)
+                    }
+
+                    Image(systemName: "chevron.right.2")
                         .resizable()
-                        .frame(width: 100, height: 100)
-                        .foregroundColor(.secondary)
-                        .padding(.bottom, 15)
+                        .scaledToFit()
+                        .frame(width: 10, height: 10)
+                        .padding(.top, -15)
+                        .fontWeight(.semibold)
+
+                    targetLanguageLevelsView //cleaner and faster for compiler
                 }
             }
-            
-            Text(languageDisplay)
-                .lineLimit(1)
-                .padding(.bottom, 10)
-                .foregroundColor(.primary)
+            .padding(.top, -5)
         }
     }
 }
@@ -235,7 +281,7 @@ struct OtherUserProfileActionButtons: View {
     @StateObject var vm: OtherUserProfileViewModel
     
     var body: some View {
-        HStack {
+        HStack(spacing: 12.5) {
             Button {
                 Task {
                     if isFollowing {
@@ -245,14 +291,13 @@ struct OtherUserProfileActionButtons: View {
                     }
                 }
             } label: {
-                Text(isFollowing ? "Followed" : "Follow")
+                Text(isFollowing ? "Following" : "Follow")
                     .foregroundColor(isFollowing ? .white : .white)
-                    .fontWeight(.medium)
-                    .font(.system(size: 16))
-                    .padding(15)
-                    .frame(maxWidth: 100, maxHeight: 45)
-                    .background(isFollowing ? Color.appSecondaryColor : Color.appPrimaryColor)
-                    .cornerRadius(10)
+                    .font(.system(size: 16, weight: .medium))
+                    //.padding(15)
+                    .frame(width: 80, height: 32, alignment: .center)
+                    .background(isFollowing ? Color.appPrimaryColor.opacity(0.90) : Color.appPrimaryColor)
+                    .cornerRadius(8)
             }
             
             Button {
@@ -275,12 +320,11 @@ struct OtherUserProfileActionButtons: View {
             } label: {
                 Text("Message")
                     .foregroundColor(.white)
-                    .fontWeight(.medium)
-                    .font(.system(size: 16))
-                    .padding(15)
-                    .frame(maxWidth: 100, maxHeight: 45)
+                    .font(.system(size: 16, weight: .medium))
+                    //.padding(15)
+                    .frame(width: 80, height: 32, alignment: .center)
                     .background(Color.appPrimaryColor)
-                    .cornerRadius(10)
+                    .cornerRadius(8)
             }
             
             Button {
@@ -288,12 +332,11 @@ struct OtherUserProfileActionButtons: View {
             } label: {
                 Text("Share")
                     .foregroundColor(.white)
-                    .fontWeight(.medium)
-                    .font(.system(size: 16))
-                    .padding(15)
-                    .frame(maxWidth: 100, maxHeight: 45)
+                    .font(.system(size: 16, weight: .medium))
+                    //.padding(15)
+                    .frame(width: 80, height: 32, alignment: .center)
                     .background(Color.appPrimaryColor)
-                    .cornerRadius(10)
+                    .cornerRadius(8)
             }
         }
     }

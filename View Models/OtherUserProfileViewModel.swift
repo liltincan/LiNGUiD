@@ -19,6 +19,8 @@ class OtherUserProfileViewModel: ObservableObject {
     @Published var videoURLs: [String] = []
     @Published var isFollowing: Bool = false
     @Published var nativeLanguage: String? = nil
+    @Published var country: String? = nil
+    @Published var isPro: Bool = false
     
     // New: Store complete Video objects
     @Published var uploadedVideoArray: [Video] = []
@@ -31,6 +33,11 @@ class OtherUserProfileViewModel: ObservableObject {
         self.userId = userId
     }
     
+    //checking pro status
+    var isProUser: Bool {
+        return isPro
+    }
+
     // MARK: - Computed Properties
     var userName: String {
         return user?.userName ?? ""
@@ -94,6 +101,11 @@ class OtherUserProfileViewModel: ObservableObject {
         return ""
     }
     
+    //fetching target language
+    var targetLanguageList: [String] {
+        user?.targetLanguageList ?? []
+    }
+
     // MARK: - Data Fetching
     func fetchUserData(userSession: UserSessionViewModel) async {
         do {
@@ -108,10 +120,13 @@ class OtherUserProfileViewModel: ObservableObject {
             }
             
             let fetchedUser = try document.data(as: User.self)
+            let isPro = document.data()?["isPro"] as? Bool ?? false
             
             await MainActor.run {
                 self.user = fetchedUser
                 self.nativeLanguage = fetchedUser.nativeLanguage?.capitalized
+                self.country = fetchedUser.country?.capitalized
+                self.isPro = isPro
                 self.errorMessage = nil
             }
             

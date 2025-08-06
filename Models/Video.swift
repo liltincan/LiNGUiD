@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 struct Video: Identifiable, Codable, Equatable {
     let id: String
@@ -12,8 +13,8 @@ struct Video: Identifiable, Codable, Equatable {
     let commentCount: Int
     let language: String
     static func == (lhs: Video, rhs: Video) -> Bool {
-    return lhs.id == rhs.id
-}
+        return lhs.id == rhs.id
+    }
 }
 
 struct Captions: Codable, Equatable {
