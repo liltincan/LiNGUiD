@@ -98,7 +98,7 @@ struct ProfileView: View {
                                     .frame(height: 40)
                                     .overlay(
                                         Rectangle()
-                                            .stroke(colorScheme == .dark ? Color.clear : Color.clear, lineWidth: 1) // border color & thickness
+                                            .stroke(colorScheme == .dark ? Color.clear : Color.clear, lineWidth: 1)
                                     )
 
                                 // Progress fill
@@ -129,7 +129,7 @@ struct ProfileView: View {
                                     Spacer()
                                 }
                             }
-                            .padding(.top, -10) // space from top
+                            .padding(.top, -10)
                         }
 
                         Spacer()
@@ -172,7 +172,7 @@ struct ProfileView: View {
                                         }
                                     }
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .background(Color.clear) // Ensures the tap registers outside image only
+                                    .background(Color.clear)
                                 }
                             }
                             .padding(20)
@@ -226,7 +226,6 @@ struct ProfileHeaderView: View {
     @Binding var selectedTab: Int
     @StateObject private var proVM = ProStatusViewModel()
     @State private var shouldNavigateToEdit = false
-    
     
     var body: some View {
         VStack {
@@ -284,7 +283,6 @@ struct ProfileHeaderView: View {
                 }
             } label: {
                 ZStack {
-                    // Profile image or default
                     if profilePictureURL != "" {
                         AsyncImage(url: URL(string: profilePictureURL)) { result in
                             result.image?
@@ -310,19 +308,11 @@ struct ProfileHeaderView: View {
                 .contentShape(Circle())
             }
             .padding(.top, -20)
-
-
             
-            // Use the country name to flag converter
             Text(CountryFlagConverter.getFlag(for: country.lowercased()))
                 .font(.system(size: 20))
                 .padding(.top, -25)
                 .padding(.leading, -35)
-        
-//            Text(languageDisplay)
-//                .lineLimit(1)
-//                .padding(.bottom, 10)
-//                .foregroundColor(.primary)
             
             VStack(spacing: 0){
                 HStack(spacing: -10) {
@@ -380,11 +370,10 @@ struct ProfileHeaderView: View {
 
 struct LevelDotsView: View {
     @Environment(\.colorScheme) var colorScheme
-    let level: Int // current level, e.g., 3
-    let maxLevel: Int = 5 // total dots
+    let level: Int
+    let maxLevel: Int = 5
 
     var body: some View {
-        // Determine the first empty index (if any)
         let firstEmptyIndex = level < maxLevel ? level : nil
 
         HStack(spacing: 1.5) {
@@ -450,7 +439,7 @@ struct ProfileActionButtons: View {
     let username: String
     let pfp: String
     @Binding var isShowingUploadView: Bool
-    let onUploadComplete: () async -> Void  // Add this parameter
+    let onUploadComplete: () async -> Void
     
     var body: some View {
         HStack(spacing: 12.5) {
@@ -463,7 +452,7 @@ struct ProfileActionButtons: View {
                 UploadView(onComplete: {
                     isShowingUploadView = false
                     Task {
-                        await onUploadComplete()  // Wrap in Task
+                        await onUploadComplete()
                     }
                 })
             } label: {
@@ -478,7 +467,7 @@ struct VideoGridSection: View {
     let videoThumbnails: [String]
     let videoURLs: [String]
     let uploadingVideos: [UploadManager.UploadingVideo]
-    let noVideosMessage: String?  // Optional custom message
+    let noVideosMessage: String?
     let gridItemWidth = (UIScreen.main.bounds.width - 5) / 3
     let thumbnailHeight = (UIScreen.main.bounds.width - 5) * 16 / 27
     var videoArray: [Video]
@@ -513,7 +502,7 @@ struct VideoGridSection: View {
                         if video.isUploading {
                             Color.appPrimaryColor.opacity(0.5)
                             ZStack {
-                                Color.clear  // Ensures the ZStack takes up full space if needed
+                                Color.clear
                                 CustomProgressView(progress: 0.45)
                                 
                                 VStack {
@@ -532,7 +521,7 @@ struct VideoGridSection: View {
                                                     .stroke(Color.white, lineWidth: 1.0)
                                             )
                                     }
-                                    .padding(.bottom, 40)  // Space from the bottom
+                                    .padding(.bottom, 40)
                                 }
                             }
                         }
@@ -543,37 +532,20 @@ struct VideoGridSection: View {
                     )
                 }
                 ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
-                    if(fromOtherUserProfile){
-                        Videos(
-                            thumbnailURL: thumbnailURL,
-                            videoURL: videoURLs[index],
-                            index: index,
-                            videoArray: videoArray,
-                            allVideoURLs: videoURLs,
-                            selectedTab: $selectedTab,
-                            fromOtherUserProfile: true
-                        )
-                        .environmentObject(userSession)
-                        .overlay(
-                            Rectangle()
-                                .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
-                        )
-                    } else {
-                        Videos(
-                            thumbnailURL: thumbnailURL,
-                            videoURL: videoURLs[index],
-                            index: index,
-                            videoArray: videoArray,
-                            allVideoURLs: videoURLs,
-                            selectedTab: $selectedTab,
-                            fromOtherUserProfile: false
-                        )
-                        .environmentObject(userSession)
-                        .overlay(
-                            Rectangle()
-                                .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
-                        )
-                    }
+                    Videos(
+                        thumbnailURL: thumbnailURL,
+                        videoURL: videoURLs[index],
+                        index: index,
+                        videoArray: videoArray,
+                        allVideoURLs: videoURLs,
+                        selectedTab: $selectedTab,
+                        fromOtherUserProfile: fromOtherUserProfile
+                    )
+                    .environmentObject(userSession)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
+                    )
                 }
             }
             .padding(.horizontal, 5)
@@ -608,11 +580,10 @@ struct Videos: View {
     let gridItemWidth = (UIScreen.main.bounds.width - 5) / 3
     let thumbnailHeight = (UIScreen.main.bounds.width - 5) * 16 / 27
     
-    
     @EnvironmentObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
 
-    @State private var reloadID = UUID() //force reload by changing this
+    @State private var reloadID = UUID()
     @State private var retryCount = 0
     private let maxRetryCount = 3
 
@@ -636,26 +607,8 @@ struct Videos: View {
     
     var body: some View {
         if let video = selectedVideo {
-            NavigationLink {
-                if(fromOtherUserProfile){
-                    VideoView(
-                        videos: orderedVideos,
-                        userSession: userSession,
-                        startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
-                        selectedTab: $selectedTab,
-                        fromProfile: true,
-                        ownProfile: false
-                    )
-                }else{
-                    VideoView(
-                        videos: orderedVideos,
-                        userSession: userSession,
-                        startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
-                        selectedTab: $selectedTab,
-                        fromProfile: false,
-                        ownProfile: true
-                    )
-                }
+            Button {
+                isShowingVideoSheet = true
             } label: {
                 AsyncImage(url: URL(string: thumbnailURL), transaction: Transaction(animation: .easeInOut)) { phase in
                     switch phase {
@@ -690,69 +643,24 @@ struct Videos: View {
                 }
                 .frame(width: gridItemWidth, height: thumbnailHeight)
                 .clipped()
-                .id(reloadID) //forces reload when ID changes
+                .id(reloadID)
             }
             .fullScreenCover(isPresented: $isShowingVideoSheet) {
                 GeometryReader { geometry in
                     ZStack {
                         Color.black.edgesIgnoringSafeArea(.all)
-                        if(fromOtherUserProfile){
-                            VideoView(
-                                videos: orderedVideos,
-                                userSession: userSession,
-                                startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
-                                selectedTab: $selectedTab,
-                                fromProfile: true,
-                                ownProfile: false
-                            )
-                            .frame(width: geometry.size.width, height: geometry.size.height)
-                            .padding(.top, 60)
-                        }else{
-                            VideoView(
-                                videos: orderedVideos,
-                                userSession: userSession,
-                                startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
-                                selectedTab: $selectedTab,
-                                fromProfile: false,
-                                ownProfile: true
-                            )
-                            .frame(width: geometry.size.width, height: geometry.size.height)
-                            .padding(.top, 60)
-                        }
-                        // Use VerticalVideoScrollView for consistent video player experience
-//                        VideoView(
-//                            videos: orderedVideos,
-//                            userSession: userSession,
-//                            startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
-//                            selectedTab: $selectedTab,
-//                            fromProfile: <#T##Bool#>
-//                        )
                         
+                        VideoView(
+                            videos: orderedVideos,
+                            userSession: userSession,
+                            startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
+                            selectedTab: $selectedTab,
+                            fromProfile: fromOtherUserProfile,
+                            ownProfile: !fromOtherUserProfile
+                        )
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .padding(.top, 60)
                         
-                        // Custom back button with chevron and text
-                        VStack {
-                            HStack {
-                                Button {
-                                    isShowingVideoSheet = false
-                                } label: {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "chevron.left")
-                                            .font(.system(size: 18, weight: .semibold))
-                                        Text("Back")
-                                            .font(.system(size: 17, weight: .medium))
-                                    }
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color.black.opacity(0.3))
-                                    .clipShape(Capsule())
-                                }
-                                .padding(.leading, 20)
-                                .padding(.top, 80)
-                                Spacer()
-                            }
-                            Spacer()
-                        }
                     }
                 }
                 .ignoresSafeArea()
@@ -763,7 +671,6 @@ struct Videos: View {
     }
 }
 
-
 struct Buttons: View{
     let text: String
     
@@ -771,10 +678,8 @@ struct Buttons: View{
         Text(text)
             .foregroundColor(.white)
             .font(.system(size: 16, weight: .medium))
-            //.padding(15)
             .frame(width: 80, height: 32, alignment: .center)
             .background(Color.appPrimaryColor)
             .cornerRadius(8)
     }
 }
-
