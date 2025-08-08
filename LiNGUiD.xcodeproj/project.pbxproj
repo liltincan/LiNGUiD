@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		047C2F532E0C5FA40052C0C3 /* VideoUploadService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */; };
 		0493FF562E0C614700D6F989 /* LaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0493FF552E0C614700D6F989 /* LaunchManager.swift */; };
+		130D35F32E4574EF00DEDCD0 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 130D35F22E4574EF00DEDCD0 /* FirebaseFunctions */; };
 		132020502DE8D07100DD8AF1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1320204F2DE8D07100DD8AF1 /* SettingsView.swift */; };
 		132B93412E257D27003F6DA9 /* Comment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132B93402E257D27003F6DA9 /* Comment.swift */; };
 		132B93432E257D64003F6DA9 /* VideoCommentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132B93422E257D64003F6DA9 /* VideoCommentView.swift */; };
@@ -232,6 +233,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				130D35F32E4574EF00DEDCD0 /* FirebaseFunctions in Frameworks */,
 				8F51F2282DE022D200397726 /* FirebaseAnalytics in Frameworks */,
 				8F51F22A2DE022D200397726 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
 				81CC3AF12E15B4000010512B /* TOCropViewController in Frameworks */,
@@ -487,6 +489,7 @@
 				81CC3AF02E15B4000010512B /* TOCropViewController */,
 				D613085A2E1E0B970089F942 /* FirebaseMessaging */,
 				7EE63CF62E1E415F005F5466 /* Kingfisher */,
+				130D35F22E4574EF00DEDCD0 /* FirebaseFunctions */,
 			);
 			productName = LiNGUiD;
 			productReference = 8F823B4C2DD987F8007B6E5E /* LiNGUiD.app */;
@@ -1129,6 +1132,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		130D35F22E4574EF00DEDCD0 /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8F51F2242DE022D200397726 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
+		};
 		609F7A432E0763110031682A /* SwiftUIFlow */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 600FB7BA2E075EC5007CD96E /* XCRemoteSwiftPackageReference "SwiftUIFlow" */;

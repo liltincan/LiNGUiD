@@ -2,6 +2,8 @@ import SwiftUI
 import Photos
 import FirebaseAuth
 import FirebaseFirestore
+import FirebaseFunctions
+import FirebaseMessaging
 
 struct SettingsView: View {
     var likedVideos: [String]
@@ -14,7 +16,11 @@ struct SettingsView: View {
     var uid: String?
     var selectedNativeLanguages: Set<String>
     @State private var showLogoutAlert = false
+    @State private var showDeleteAlert = false
+    @State private var isDeleting = false
+    @State private var deletionError: String?
     @StateObject private var loginVM = LoginViewModel()
+    @StateObject private var accountService = AccountDeletionService()
     @EnvironmentObject var state: AppState
     @Environment(\.dismiss) var dismiss
     @Binding var selectedTab: Int
@@ -57,7 +63,9 @@ struct SettingsView: View {
                             SettingsRowButton(title: "Log out", isDestructive: true) {
                                 showLogoutAlert = true
                             }
-                            SettingsRowLink(title: "Delete account", destination: DeleteAccountConfirmationView(), isDestructive: true)
+                            SettingsRowButton(title: "Delete account", isDestructive: true) {
+                                showDeleteAlert = true
+                            }
                         }
                     }
                     .padding(.horizontal, 16)
@@ -68,19 +76,49 @@ struct SettingsView: View {
             .background(Color.black.ignoresSafeArea())
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Settings")
-                        .foregroundColor(.white)
-                        .font(.headline)
-                }
-            }
             .toolbar(.hidden, for: .tabBar)
             .alert("Are you sure you want to log out?", isPresented: $showLogoutAlert) {
                 Button("Log out", role: .destructive) {
                     logout()
                 }
                 Button("Cancel", role: .cancel) {}
+            }
+            .alert("Delete Account", isPresented: $showDeleteAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    deleteAccount()
+                }
+            } message: {
+                Text("This action cannot be undone. All your data will be permanently deleted.")
+            }
+            .overlay {
+                if isDeleting {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                    
+                    VStack {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.5)
+                        
+                        Text("Deleting account...")
+                            .foregroundColor(.white)
+                            .font(.headline)
+                            .padding(.top, 16)
+                    }
+                    .padding()
+                    .background(Color.black.opacity(0.8))
+                    .cornerRadius(12)
+                }
+            }
+            .alert("Error", isPresented: .constant(deletionError != nil)) {
+                Button("OK") {
+                    deletionError = nil
+                }
+            } message: {
+                if let error = deletionError {
+                    Text(error)
+                }
             }
         }
     }
@@ -93,8 +131,72 @@ struct SettingsView: View {
             dismiss()
         }
     }
+    
+    func deleteAccount() {
+        isDeleting = true
+        deletionError = nil
+        
+        Task {
+            do {
+                try await accountService.deleteUserAccount()
+                
+                await MainActor.run {
+                    isDeleting = false
+                    // User will be automatically signed out after deletion
+                    onLogout()
+                    dismiss()
+                }
+                
+            } catch {
+                await MainActor.run {
+                    isDeleting = false
+                    deletionError = error.localizedDescription
+                }
+            }
+        }
+    }
 }
 
+// MARK: - Updated Account Deletion Service
+class AccountDeletionService: ObservableObject {
+    
+    func deleteUserAccount() async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw AccountDeletionError.notAuthenticated
+        }
+        
+        let uid = user.uid
+        print("Starting account deletion for user: \(uid)")
+        
+        // Use the comprehensive deletion function (includes cloud function call)
+        try await FirestoreService.shared.deleteAllUserData()
+        
+        print("Account deletion completed successfully")
+    }
+}
+
+// MARK: - Custom Errors
+enum AccountDeletionError: LocalizedError {
+    case notAuthenticated
+    case serverError(String)
+    case unexpectedResponse
+    case unknown(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .notAuthenticated:
+            return "Unable to access account information"
+        case .serverError(let message):
+            return "Server error: \(message)"
+        case .unexpectedResponse:
+            return "Unexpected response from server"
+        case .unknown(let message):
+            return "Error: \(message)"
+        }
+    }
+}
+
+// MARK: - UI Components (unchanged)
 struct GoProSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -230,7 +332,6 @@ struct UIConstants {
 }
 
 // MARK: - Liked and Saved Views
-
 struct LikedView: View {
     var videoThumbnails: [String]
     var videoURLs: [String]
@@ -265,4 +366,3 @@ struct DeleteAccountConfirmationView: View {
             .navigationTitle("Delete Account")
     }
 }
-
