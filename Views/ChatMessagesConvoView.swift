@@ -31,6 +31,9 @@ struct ChatMessagesConvoView: View {
     @State private var audioURL: URL?
     @State private var isRecording = false
     
+    //MARK: Translating the message based on tapping
+    @State private var showTranslateMessage: Set<String> = []
+    
     @Binding var path: [ChatRoute]
     @FocusState private var focusfield: FocusField?
     
@@ -117,6 +120,8 @@ struct ChatMessagesConvoView: View {
                         }
                         .padding(.vertical, 8)
                     }
+                    //this dismisses the keyboard when user scrolls down
+                    .scrollDismissesKeyboard(.interactively)
                     .onChange(of: messages) { newMessages in
                         guard let last = newMessages.last else { return }
                         DispatchQueue.main.async {
@@ -141,7 +146,6 @@ struct ChatMessagesConvoView: View {
                     .padding(.top, 10)
             }
             .background(Color.black)
-            //.toolbar(.hidden, for: .navigationBar)
             .navigationBarBackButtonHidden(true)
             .padding(.bottom, 10)
             //when this view loads-> it will then load up the convos as they update using the listerner
@@ -149,9 +153,15 @@ struct ChatMessagesConvoView: View {
                 viewModel.listenToMessages(for: chatID) { msg in
                     self.messages = msg
                 }
+                showTranslateMessage = loadTranslatedSet(for: chatID)
+                
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                     viewModel.markMessagesAsRead(for: chatID)
                 }
+            }
+            //this will show whenever user taps so it is changing at that exact moment
+            .onChange(of: showTranslateMessage) { newVal in
+                saveTranslatedSet(newVal, for: chatID)
             }
             .onTapGesture {
                 //dismiss the keyboard hwen users touches the chat
@@ -218,7 +228,6 @@ struct ChatMessagesConvoView: View {
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: 280, alignment: .trailing)
-                            //.padding(.vertical, 1)
                     }
                 }
             }
@@ -260,7 +269,7 @@ struct ChatMessagesConvoView: View {
                                     if (message.isLiked) {
                                         Image(systemName: "heart.fill")
                                             .foregroundColor(.white)
-                                        //the heart will be this size
+                                            //the heart will be this size
                                             .font(.system(size: 12))
                                             .padding(5)
                                             .background(Circle().fill(Color.linguidPurple))
@@ -277,12 +286,14 @@ struct ChatMessagesConvoView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(message.text)
                                 .foregroundColor(.black)
-                            if let translated = message.translatedText {
+                            //they both have to be true in order to go in the statement
+                            if showTranslateMessage.contains(message.id), let translated = message.translatedText {
                                 Divider().background(Color.gray.opacity(0.4)).padding(.vertical, 2)
                                 Text(translated)
                                     .font(.caption)
                                     .foregroundColor(.linguidPurple)
                             }
+                            
                         }
                         .padding(10)
                         .background(Color.white)
@@ -305,8 +316,16 @@ struct ChatMessagesConvoView: View {
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: 280, alignment: .leading)
-                        .onTapGesture(count: 2) {
-                            toggleLike(for: message)
+                        .simultaneousGesture(
+                            TapGesture(count: 2).onEnded {
+                                toggleLike(for: message)
+                            }
+                        )
+                        .onTapGesture {
+                            //will only add once and will not add removal so if not in the set then return
+                            guard !showTranslateMessage.contains(message.id) else { return }
+                            showTranslateMessage.insert(message.id)
+                            saveTranslatedSet(showTranslateMessage, for: chatID)
                         }
                         .padding(.vertical, 1)
                     }
@@ -523,7 +542,6 @@ struct ChatMessagesConvoView: View {
                 }
             }
         }
-
         self.audioURL = nil
         self.replyingTo = nil
     }
@@ -539,7 +557,8 @@ struct ChatMessagesConvoView: View {
             storageRef.downloadURL { url, error in
                 if let downloadURL = url {
                     completion(downloadURL.absoluteString)
-                } else {
+                }
+                else {
                     completion(nil)
                 }
             }
@@ -585,6 +604,19 @@ struct ChatMessagesConvoView: View {
     //function will call the isLiked and determine if it is true or not
     private func toggleLike(for message: ChatMessages) {
         viewModel.toggleLike(for: message, in: chatID)
+    }
+    //function will put the translation of the tap anywhere in the file
+    private func loadTranslatedSet(for chatID: String) -> Set<String> {
+        let key = "translated_\(chatID)"
+        guard let data = UserDefaults.standard.data(forKey: key),
+              let arr = try? JSONDecoder().decode([String].self, from: data) else { return [] }
+        return Set(arr)
+    }
+    //function will save the translation
+    private func saveTranslatedSet(_ set: Set<String>, for chatID: String) {
+        let key = "translated_\(chatID)"
+        let data = try? JSONEncoder().encode(Array(set))
+        UserDefaults.standard.set(data, forKey: key)
     }
 }
 //MARK: - This will be the UI of how the audio should look

@@ -11,6 +11,7 @@ struct RootCoordinatorView: View {
     @State private var navigationPath = NavigationPath()
     
     @State private var startingVideoId: String? = nil
+    @State private var logoShow = true
     
     @EnvironmentObject var notificationService: NotificationService
 
@@ -20,11 +21,11 @@ struct RootCoordinatorView: View {
 
     var body: some View {
         ZStack {
-            if !hasCheckedOnboarding {
-                ProgressView()
-            } else {
+            //if !hasCheckedOnboarding {
+            //    ProgressView()
+            //} else {
                 mainContent
-            }
+            //}
         }
         .task {
             await checkInitialState()
@@ -54,19 +55,40 @@ struct RootCoordinatorView: View {
     
     @ViewBuilder
     private var mainContent: some View {
-        if !appState.isSignedIn {
-            authView
-        } else if appState.needsOnboarding {
-            onboardingView
-        } else {
-            MainTabView(
-                selectedTab: $selectedTab,
-                deepLinkedVideoID: $startingVideoId,
-                onLogout: logout
-            )
-            .id(startingVideoId) // Important: triggers view reload when ID changes
-            .environmentObject(userSession)
+        ZStack {
+            Color(red: 22/255, green: 1/255, blue: 46/255)
+                .edgesIgnoringSafeArea(.all)
+            if(logoShow) {
+                Image("ApplogoWallpaper")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 200, height: 200)
+                    .transition(.opacity)
+                    .onAppear {
+                        //this will delay before it shows the login
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation {
+                                //flag it back to false so it can show the login thing
+                                logoShow = false
+                            }
+                        }
+                    }
+            }
+            else if !appState.isSignedIn {
+                authView
+            } else if appState.needsOnboarding {
+                onboardingView
+            } else {
+                MainTabView(
+                    selectedTab: $selectedTab,
+                    deepLinkedVideoID: $startingVideoId,
+                    onLogout: logout
+                )
+                .id(startingVideoId) // Important: triggers view reload when ID changes
+                .environmentObject(userSession)
+            }
         }
+        .animation(.easeInOut, value: logoShow)
     }
 
     @ViewBuilder

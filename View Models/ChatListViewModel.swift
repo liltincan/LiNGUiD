@@ -627,6 +627,7 @@ class ChatListViewModel: ObservableObject {
                     self.db.collection("users").document(otherUserID).getDocument { partnerSnapshot, _ in
                         let partnerLang = partnerSnapshot?.data()?["nativeLanguage"] as? String ?? "en"
                         
+                        //have mulitple threads running at the same time
                         let group = DispatchGroup()
                         var messages: [ChatMessages] = []
                         //now get the information that is in the messages (the fields)
@@ -677,6 +678,7 @@ class ChatListViewModel: ObservableObject {
                                 messages.append(msg)
                             }
                         }
+                        //now notfiy that they are all finished
                         group.notify(queue: .main) {
                             let sorted = messages.sorted(by: { ($0.timestamp ?? .distantPast) < ($1.timestamp ?? .distantPast) })
                             completion(sorted)
