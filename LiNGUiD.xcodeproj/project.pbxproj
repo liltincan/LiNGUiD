@@ -293,7 +293,6 @@
 		8F51F2172DE01C0D00397726 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				7E64AD142E4709A900857F53 /* TapTracker.swift */,
 				132B93402E257D27003F6DA9 /* Comment.swift */,
 				7EFDD81B2E0C8DB200154192 /* Chat.swift */,
 				60F9307F2DE98E2A00E37156 /* User.swift */,
@@ -332,6 +331,7 @@
 				8F51F2342DE023FB00397726 /* LoginViewModel.swift */,
 				D69E53EB2DEA4B5000329D64 /* UserSessionViewModel.swift */,
 				D6BA584A2DED2B1F00E6E137 /* VideoPlayerViewModel.swift */,
+				7E64AD142E4709A900857F53 /* TapTracker.swift */,
 			);
 			path = "View Models";
 			sourceTree = "<group>";

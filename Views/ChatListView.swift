@@ -482,6 +482,8 @@ struct SearchByUsernameView: View {
     }
 }
 //MARK: Checks if the user exists if not then prompt the error
+//precondition: none
+//postcondition: will show up if there are no user
 struct NoSearchResultsView: View {
     let query: String
     var body: some View {
