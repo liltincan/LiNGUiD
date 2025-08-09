@@ -15,6 +15,9 @@ struct ChatMessagesConvoView: View {
     let chatID: String
     @ObservedObject var viewModel: ChatListViewModel
     @StateObject private var audioMeter = AudioMeterObserver(recorder: nil)
+    @StateObject private var tap = TapTracker(maxPerDay: 20)
+    @Environment(\.scenePhase) private var scenePhase
+    
     //MARK: Closure function that allows user to go back to the main
     var onBack: () -> Void
     //MARK: Converation messages
@@ -33,6 +36,7 @@ struct ChatMessagesConvoView: View {
     
     //MARK: Translating the message based on tapping
     @State private var showTranslateMessage: Set<String> = []
+    @State private var showLimitAlert = false
     
     @Binding var path: [ChatRoute]
     @FocusState private var focusfield: FocusField?
@@ -56,10 +60,11 @@ struct ChatMessagesConvoView: View {
             VStack {
                 if let chat = viewModel.chats.first(where: { $0.id == chatID }) {
                     //this is for the profile,name, maybe active, and phone call (HEADER)
-                    HStack(spacing: 12) {
+                    HStack(spacing: 15) {
                         Button(action: onBack) {
                             Image(systemName: "chevron.left")
                                 .foregroundColor(.white)
+                                .font(.system(size: 20))
                         }
                         Button(action: {
                             if let currentUserID = Auth.auth().currentUser?.uid,
@@ -167,6 +172,38 @@ struct ChatMessagesConvoView: View {
                 //dismiss the keyboard hwen users touches the chat
                 focusfield = nil
             }
+            .onChange(of: scenePhase) { phase in
+                if phase == .active {
+                    tap.resetForNewDayIfNeeded()
+                }
+            }
+            .overlay(
+                ZStack {
+                    if (showLimitAlert) {
+                        Color.black.opacity(0.9)
+                            .ignoresSafeArea()
+                            .transition(.opacity)
+                            .onTapGesture {
+                                withAnimation {
+                                    showLimitAlert = false
+                                }
+                            }
+                        VStack {
+                            Spacer()
+                            GetProView()
+                                .frame(width: UIScreen.main.bounds.width * 0.5, height: UIScreen.main.bounds.height * 0.5)
+                                .padding(.horizontal, 20)
+                                .background(
+                                    Color(red: 22/255, green: 0/255, blue: 46/255)
+                                        .cornerRadius(24)
+                                )
+                            Spacer()
+                        }
+                        .transition(.slideUpFromBottom)
+                    }
+                }
+                .animation(.easeInOut, value: showLimitAlert)
+            )
         }
     }
     //MARK: - This is the main view where the messages will show up
@@ -324,8 +361,13 @@ struct ChatMessagesConvoView: View {
                         .onTapGesture {
                             //will only add once and will not add removal so if not in the set then return
                             guard !showTranslateMessage.contains(message.id) else { return }
-                            showTranslateMessage.insert(message.id)
-                            saveTranslatedSet(showTranslateMessage, for: chatID)
+                            if(tap.tryConsume()) {
+                                showTranslateMessage.insert(message.id)
+                                saveTranslatedSet(showTranslateMessage, for: chatID)
+                            }
+                            else {
+                                showLimitAlert = true
+                            }
                         }
                         .padding(.vertical, 1)
                     }

@@ -19,7 +19,6 @@ struct Chat: Identifiable {
     var profileimage: String
     var isActive: Bool
     var lastSeen: Date?
-    var hiddenFor: [String]
     var lastMessageTimestamp: Date?
     var nativeLanguage: String
     var learningLanguage: String

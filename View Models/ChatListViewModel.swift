@@ -27,7 +27,7 @@ class ChatListViewModel: ObservableObject {
     //this will be updating when changes are made in the user profile
     private var userListeners: [String: ListenerRegistration] = [:]
 
-    
+    //default constructor
     init(){
         fetchChats()
         fetchCurrentUserLearningLanguage()
@@ -55,7 +55,12 @@ class ChatListViewModel: ObservableObject {
                     let data = doc.data()
                     let participants = data["participantIDs"] as? [String] ?? []
 
-                    if let hiddenFor = data["hiddenFor"] as? [String], hiddenFor.contains(currentUserID) {
+                    // ==== NEW: soft-delete filter via hideSince cutoff ====
+                    let lastMessageTimestamp = (data["lastMessageTimestamp"] as? Timestamp)?.dateValue()
+                    let hideSinceMap = data["hideSince"] as? [String: Timestamp]
+                    let hideCutoff = hideSinceMap?[currentUserID]?.dateValue()
+                    if let cutoff = hideCutoff, let last = lastMessageTimestamp, last <= cutoff {
+                        // user archived this thread and no newer message has arrived
                         continue
                     }
 
@@ -105,7 +110,6 @@ class ChatListViewModel: ObservableObject {
                             profileimage: userData?["profilePhotoUrl"] as? String ?? "defaultProfile",
                             isActive: userData?["isActive"] as? Bool ?? false,
                             lastSeen: (userData?["lastSeen"] as? Timestamp)?.dateValue(),
-                            hiddenFor: data["hiddenFor"] as? [String] ?? [],
                             lastMessageTimestamp: (data["lastMessageTimestamp"] as? Timestamp)?.dateValue(),
                             nativeLanguage: nativeLang,
                             learningLanguage: learningLangCode,
@@ -161,41 +165,21 @@ class ChatListViewModel: ObservableObject {
             
             if let existingDoc = existing {
                 let chatRef = self.db.collection("chat").document(existingDoc.documentID)
-                let hiddenFor = existingDoc.data()["hiddenFor"] as? [String] ?? []
-                //this will be if users 'deletes' the chat
-                if hiddenFor.contains(currentUserID) {
-                    chatRef.updateData([
-                        "hiddenFor": FieldValue.arrayRemove([currentUserID]),
-                        "lastMessage": hiMessage,
-                        "lastMessageTimestamp": FieldValue.serverTimestamp(),
-                        "messageResetTimestamps.\(currentUserID)": FieldValue.serverTimestamp()
-                    ]) { _ in
-                        chatRef.collection("messages").addDocument(data: [
-                            "text": hiMessage,
-                            "senderID": currentUserID,
-                            "timestamp": FieldValue.serverTimestamp(),
-                            "isRead": false
-                        ])
-                        self.fetchChats()
-                        completion?(existingDoc.documentID)
-                    }
-                }
-                else {
-                    //data that will go in 'messages'
-                    chatRef.collection("messages").addDocument(data: [
-                        "text": hiMessage,
-                        "senderID": currentUserID,
-                        "timestamp": FieldValue.serverTimestamp(),
-                        "isRead": false
-                    ])
-                    //this will update the latest message so it can show the latest message with timestamp as well
-                    chatRef.updateData([
-                        "lastMessage": hiMessage,
-                        "lastMessageTimestamp": FieldValue.serverTimestamp()
-                    ])
-                    self.fetchChats()
-                    completion?(existingDoc.documentID)
-                }
+                
+                //data that will go in 'messages'
+                chatRef.collection("messages").addDocument(data: [
+                    "text": hiMessage,
+                    "senderID": currentUserID,
+                    "timestamp": FieldValue.serverTimestamp(),
+                    "isRead": false
+                ])
+                //this will update the latest message so it can show the latest message with timestamp as well
+                chatRef.updateData([
+                    "lastMessage": hiMessage,
+                    "lastMessageTimestamp": FieldValue.serverTimestamp()
+                ])
+                self.fetchChats()
+                completion?(existingDoc.documentID)
 
                 return
             }
@@ -239,8 +223,10 @@ class ChatListViewModel: ObservableObject {
                 return
             }
             //this will help keep track to clear the messges for the user that hides it
-            let resetTimestamps = data["messageResetTimestamps"] as? [String: Timestamp]
-            let resetTime = resetTimestamps?[currentUserID]?.dateValue()
+            let hideSince = data["hideSince"] as? [String: Timestamp]
+            let resetTime = hideSince?[currentUserID]?.dateValue()
+            // ===================================
+            
             //then we fetch the messages (helper function)
             self.fetchAllMessages(for: chatID, after: resetTime, completion: completion)
         }
@@ -322,8 +308,6 @@ class ChatListViewModel: ObservableObject {
                     chatRef.updateData([
                         "lastMessage": text,
                         "lastMessageTimestamp": FieldValue.serverTimestamp(),
-                        "hiddenFor": FieldValue.arrayRemove([recipientID]),
-                        //"messageResetTimestamps.\(recipientID)": FieldValue.delete()
                     ]) { _ in
                     }
                 }
@@ -370,19 +354,15 @@ class ChatListViewModel: ObservableObject {
     //postcondition: this will hide (pretend it deletes) a chat from user until they both delete it
     func softDeleteChatForCurrentUser(chatID: String) {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-        //this will hide the chat only
         let chatRef = db.collection("chat").document(chatID)
         chatRef.updateData([
-            "hiddenFor": FieldValue.arrayUnion([currentUserID]),
-            "messageResetTimestamps.\(currentUserID)": FieldValue.serverTimestamp()
+            "hideSince.\(currentUserID)": FieldValue.serverTimestamp()
         ]) { [weak self] error in
-            if let error = error {
-                print("Failed to hide chat: \(error)")
-                print("The user that tried to hide the chat is: \(currentUserID)")
-            }
-            else {
-                self?.conversations.removeAll(where: { $0.friend.id == chatID })
-                self?.chats.removeAll(where: { $0.id == chatID })
+            if error == nil {
+                self?.conversations.removeAll { $0.friend.id == chatID }
+                self?.chats.removeAll { $0.id == chatID }
+            } else {
+                print("Failed to hide chat: \(error!)")
             }
         }
     }
@@ -416,7 +396,6 @@ class ChatListViewModel: ObservableObject {
                     profileimage: data["profilePhotoUrl"] as? String ?? "defaultProfile",
                     isActive: data["isActive"] as? Bool ?? false,
                     lastSeen: (data["lastSeen"] as? Timestamp)?.dateValue(),
-                    hiddenFor: [],
                     lastMessageTimestamp: nil,
                     nativeLanguage: nativeLang,
                     learningLanguage: learningLangCode,
@@ -487,7 +466,6 @@ class ChatListViewModel: ObservableObject {
                         profileimage: data["profilePhotoUrl"] as? String ?? "defaultProfile",
                         isActive: data["isActive"] as? Bool ?? false,
                         lastSeen: (data["lastSeen"] as? Timestamp)?.dateValue(),
-                        hiddenFor: [],
                         lastMessageTimestamp: nil,
                         nativeLanguage: nativeLang,
                         learningLanguage: learningLangCode,
@@ -530,7 +508,6 @@ class ChatListViewModel: ObservableObject {
                     profileimage: data["profilePhotoUrl"] as? String ?? "defaultProfile",
                     isActive: data["isActive"] as? Bool ?? false,
                     lastSeen: (data["lastSeen"] as? Timestamp)?.dateValue(),
-                    hiddenFor: [],
                     lastMessageTimestamp: nil,
                     nativeLanguage: nativeLang,
                     learningLanguage: learningLangCode,
@@ -603,52 +580,83 @@ class ChatListViewModel: ObservableObject {
     //postcodition: will allowed for messages to update right when you are sending and need to use @State since it is valid for Listener
     func listenToMessages(for chatID: String, completion: @escaping ([ChatMessages]) -> Void) {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-        //this will go in the 'chat' collection and then go in the 'messages' collection
-        let messagesRef = db.collection("chat").document(chatID).collection("messages")
-            .order(by: "timestamp")
-        
-        messagesRef.addSnapshotListener { [weak self] snapshot, error in
-            guard let self = self,
-                  let documents = snapshot?.documents else {
+
+        //this will go in the 'chat' collection and then go in the field 'hideSince'
+        db.collection("chat").document(chatID).getDocument { [weak self] chatSnapshot, _ in
+            guard let self = self, let chatData = chatSnapshot?.data() else {
                 completion([])
                 return
             }
-            //getting the current and partner language
-            self.db.collection("chat").document(chatID).getDocument { chatSnapshot, _ in
-                guard let chatData = chatSnapshot?.data(),
-                      let participants = chatData["participantIDs"] as? [String],
-                      let otherUserID = participants.first(where: { $0 != currentUserID }) else {
+            //look in the 'hideSince' field and get the time
+            let hideSinceMap = chatData["hideSince"] as? [String: Timestamp]
+            //here check what user hid the convo and at what time
+            let hideCutoff = hideSinceMap?[currentUserID]?.dateValue()
+
+            //this will be  a query that filters messages after hideCutoff
+            var query: Query = self.db.collection("chat").document(chatID).collection("messages")
+                .order(by: "timestamp")
+            //now here we will look at the messages after the cut off happened
+            if let cutoff = hideCutoff {
+                query = query.whereField("timestamp", isGreaterThan: cutoff)
+            }
+
+            //now add the listener to the filtered query
+            query.addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self,
+                      let documents = snapshot?.documents else {
                     completion([])
                     return
                 }
-                //here we have to look into the users and then get their nativeLanguage
-                self.db.collection("users").document(currentUserID).getDocument { userSnapshot, _ in
-                    let currentLang = userSnapshot?.data()?["nativeLanguage"] as? String ?? "en"
-                    self.db.collection("users").document(otherUserID).getDocument { partnerSnapshot, _ in
-                        let partnerLang = partnerSnapshot?.data()?["nativeLanguage"] as? String ?? "en"
-                        
-                        //have mulitple threads running at the same time
-                        let group = DispatchGroup()
-                        var messages: [ChatMessages] = []
-                        //now get the information that is in the messages (the fields)
-                        for doc in documents {
-                            let data = doc.data()
-                            let text = data["text"] as? String ?? ""
-                            let senderID = data["senderID"] as? String ?? ""
-                            let isFromCurrentUser = senderID == currentUserID
 
-                            let isRead = data["isRead"] as? Bool ?? false
-                            let serverTimestamp = (data["timestamp"] as? Timestamp)?.dateValue()
-                            let localFallback = (data["localTimestamp"] as? Timestamp)?.dateValue()
-                            let timestamp = serverTimestamp ?? localFallback ?? Date()
-                            let repliedToText = data["repliedToText"] as? String
-                            let isLiked = data["isLiked"] as? Bool ?? false
-                            let documentID = doc.documentID
-                            //this will then check if the user does not match the nativeLanguage of the other user
-                            if (!isFromCurrentUser && partnerLang != currentLang) {
-                                group.enter()
-                                translateTextV2(text: text, sourceLang: partnerLang, targetLang: currentLang) { translated in
-                                    let msg = ChatMessages(
+                //getting the partner language
+                self.db.collection("chat").document(chatID).getDocument { chatSnapshot2, _ in
+                    guard let chatData2 = chatSnapshot2?.data(),
+                          let participants = chatData2["participantIDs"] as? [String],
+                          let otherUserID = participants.first(where: { $0 != currentUserID }) else {
+                        completion([])
+                        return
+                    }
+                    //here we have to look into the users (current) nativeLanguage and then other user nativeLanguage
+                    self.db.collection("users").document(currentUserID).getDocument { userSnapshot, _ in
+                        let currentLang = userSnapshot?.data()?["nativeLanguage"] as? String ?? "en"
+                        self.db.collection("users").document(otherUserID).getDocument { partnerSnapshot, _ in
+                            let partnerLang = partnerSnapshot?.data()?["nativeLanguage"] as? String ?? "en"
+
+                            //have multiple threads running at the same time
+                            let group = DispatchGroup()
+                            var messages: [ChatMessages] = []
+
+                            for doc in documents {
+                                let data = doc.data()
+                                let text = data["text"] as? String ?? ""
+                                let senderID = data["senderID"] as? String ?? ""
+                                let isFromCurrentUser = senderID == currentUserID
+                                let isRead = data["isRead"] as? Bool ?? false
+                                let serverTimestamp = (data["timestamp"] as? Timestamp)?.dateValue()
+                                let localFallback = (data["localTimestamp"] as? Timestamp)?.dateValue()
+                                let timestamp = serverTimestamp ?? localFallback ?? Date.distantPast
+                                let repliedToText = data["repliedToText"] as? String
+                                let isLiked = data["isLiked"] as? Bool ?? false
+                                let documentID = doc.documentID
+                                //this will then check if the user does not match the nativeLanguage of the other user
+                                if (!isFromCurrentUser && partnerLang != currentLang) {
+                                    group.enter()
+                                    translateTextV2(text: text, sourceLang: partnerLang, targetLang: currentLang) { translated in
+                                        messages.append(ChatMessages(
+                                            text: text,
+                                            isFromCurrentUser: isFromCurrentUser,
+                                            isRead: isRead,
+                                            timestamp: timestamp,
+                                            repliedToText: repliedToText,
+                                            isLiked: isLiked,
+                                            documentID: documentID,
+                                            translatedText: translated
+                                        ))
+                                        group.leave()
+                                    }
+                                }
+                                else {
+                                    messages.append(ChatMessages(
                                         text: text,
                                         isFromCurrentUser: isFromCurrentUser,
                                         isRead: isRead,
@@ -656,33 +664,16 @@ class ChatListViewModel: ObservableObject {
                                         repliedToText: repliedToText,
                                         isLiked: isLiked,
                                         documentID: documentID,
-                                        translatedText: translated
-                                    )
-                                    print("Translation: \(String(describing: translated))")
-                                    messages.append(msg)
-                                    group.leave()
+                                        translatedText: nil
+                                    ))
                                 }
                             }
-                            //if the same nativeLanguage then no need to translate messages
-                            else {
-                                let msg = ChatMessages(
-                                    text: text,
-                                    isFromCurrentUser: isFromCurrentUser,
-                                    isRead: isRead,
-                                    timestamp: timestamp,
-                                    repliedToText: repliedToText,
-                                    isLiked: isLiked,
-                                    documentID: documentID,
-                                    translatedText: nil
-                                )
-                                messages.append(msg)
+                            //now notify that they are all finished
+                            group.notify(queue: .main) {
+                                let sorted = messages.sorted { ($0.timestamp ?? .distantPast) < ($1.timestamp ?? .distantPast) }
+                                completion(sorted)
+                                self.updateConversation(chatID: chatID, with: sorted)
                             }
-                        }
-                        //now notfiy that they are all finished
-                        group.notify(queue: .main) {
-                            let sorted = messages.sorted(by: { ($0.timestamp ?? .distantPast) < ($1.timestamp ?? .distantPast) })
-                            completion(sorted)
-                            self.updateConversation(chatID: chatID, with: sorted)
                         }
                     }
                 }
