@@ -12,9 +12,23 @@ struct ProfileView: View {
     @State private var fullScreenProfilePictureURL: String?
     
     @EnvironmentObject var uploadManager: UploadManager
+    @EnvironmentObject var backgroundUploader: BackgroundUploader
     @State private var isShowingUploadView = false
+    @State private var overlayVisible = true
     @Binding var selectedTab: Int
     let onLogout: () -> Void
+    
+    private var showOverlay: Bool {
+        backgroundUploader.totalToUpload > 0 && (overlayVisible || !backgroundUploader.isUploadComplete)
+    }
+    private var barProgress: Double {
+        backgroundUploader.isUploadComplete ? 1 : backgroundUploader.barProgressNormalized
+    }
+    private var stepText: String {
+        backgroundUploader.isUploadComplete
+        ? "Upload complete!"
+        : "Uploading \(backgroundUploader.completedCount + 1)/\(backgroundUploader.totalToUpload)...\(Int((barProgress * 100).rounded()))%"
+    }
     
     @Environment(\.colorScheme) var colorScheme
 
@@ -87,56 +101,66 @@ struct ProfileView: View {
                 }
             }
             .overlay(
-                // Upload Progress Bar
                 ZStack {
                     VStack(spacing: 0) {
-                        if uploadManager.totalToUpload > 0 {
+                        if showOverlay {
                             ZStack(alignment: .leading) {
-                                // Background bar
                                 Rectangle()
                                     .fill(Color.appPrimaryColor.opacity(0.5))
                                     .frame(height: 40)
-                                    .overlay(
-                                        Rectangle()
-                                            .stroke(colorScheme == .dark ? Color.clear : Color.clear, lineWidth: 1)
-                                    )
+                                    .overlay(Rectangle().stroke(colorScheme == .dark ? .clear : .clear, lineWidth: 1))
 
-                                // Progress fill
                                 Rectangle()
                                     .fill(Color.appPrimaryColor.opacity(0.75))
-                                    .frame(
-                                        width: UIScreen.main.bounds.width * CGFloat(uploadManager.progress),
-                                        height: 40
-                                    )
-                                    .clipShape(
-                                        uploadManager.progress < 1
-                                        ? RoundedCorner(radius: 0, corners: [.topRight, .bottomRight])
-                                        : RoundedCorner(radius: 0, corners: [.topRight, .bottomRight])
-                                    )
-                                    .animation(.easeInOut, value: uploadManager.progress)
+                                    .frame(width: UIScreen.main.bounds.width * CGFloat(barProgress), height: 40)
+                                    .clipShape(RoundedCorner(radius: 0, corners: [.topRight, .bottomRight]))
+                                    .animation(backgroundUploader.isUploadComplete ? nil : .easeInOut(duration: 0.12),
+                                               value: barProgress)
 
-                                // Upload text (centered)
                                 HStack {
-                                    Text(
-                                        uploadManager.completedCount == uploadManager.totalToUpload
-                                        ? "Upload complete!"
-                                        : "Uploading \(uploadManager.completedCount + 1)/\(uploadManager.totalToUpload)...\(Int(uploadManager.progress * 100))%"
-                                    )
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.white)
-                                    .padding(.leading, 20)
-                                    Spacer()
-                                    Spacer()
+                                    let done = backgroundUploader.isUploadComplete
+
+                                    Text(stepText)
+                                      .font(.system(size: 16, weight: .medium))
+                                      .foregroundColor(.white)
+                                      .frame(maxWidth: .infinity, alignment: done ? .center : .leading)
+                                      .padding(.leading, done ? 0 : 20)
+                                      .animation(.easeInOut(duration: 0.25), value: done)
                                 }
                             }
                             .padding(.top, -10)
+                            .transition(.opacity)
                         }
 
                         Spacer()
                     }
                 }
             )
-            .animation(.easeInOut, value: uploadManager.completedCount)
+            //.animation(.easeInOut, value: showOverlay)
+            .onChange(of: backgroundUploader.isUploadComplete) { _, done in
+                if done {
+                    // Hold “Upload complete!” briefly, then fade out
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        withAnimation(.easeInOut(duration: 0.35)) {
+                            overlayVisible = false
+                        }
+                        // After the fade finishes (~0.35s), clear the uploader’s visual state
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            // We're on the main thread; the method is @MainActor-safe
+                            backgroundUploader.clearFinishedBatchVisuals()
+                        }
+                    }
+                } else {
+                    withAnimation { overlayVisible = true }
+                }
+            }
+            .onChange(of: backgroundUploader.totalToUpload) { _, total in
+                // If a new item gets enqueued later, show the overlay again
+                if total > 0 {
+                    withAnimation { overlayVisible = true }
+                }
+            }
+
             .overlay(
                 ZStack {
                     //Fullscreen Profile Picture
@@ -209,6 +233,19 @@ struct ProfileView: View {
             await vm.fetchUserData()
             userSession.getCurrentUser()
         }
+    }
+    
+    private var currentUploadId: String? {
+        let i = uploadManager.currentIndex
+        return uploadManager.uploadingVideos.indices.contains(i)
+            ? uploadManager.uploadingVideos[i].localIdentifier
+            : nil
+    }
+
+    private var overlayPercentInt: Int {
+        guard let id = currentUploadId else { return 0 }
+        // keep the same rounding as your thumbnail
+        return Int(((backgroundUploader.progressById[id] ?? 0) * 100).rounded())
     }
 }
 
@@ -503,25 +540,26 @@ struct VideoGridSection: View {
                             Color.appPrimaryColor.opacity(0.5)
                             ZStack {
                                 Color.clear
-                                CustomProgressView(progress: 0.45)
-                                
-                                VStack {
-                                    Spacer()
-                                    Spacer()
-                                    Button {
-                                        uploadManager.cancelUpload(for: video.localIdentifier)
-                                    } label: {
-                                        Text("cancel")
-                                            .font(.system(size: 8, weight: .medium))
-                                            .foregroundColor(.white)
-                                            .padding(.horizontal, 4)
-                                            .padding(.vertical, 2)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 4)
-                                                    .stroke(Color.white, lineWidth: 1.0)
-                                            )
+                                CustomProgressView(progress: video.progress)
+                                if video.progress < 0.99{
+                                    VStack {
+                                        Spacer()
+                                        Spacer()
+                                        Button {
+                                            uploadManager.cancelUpload(for: video.localIdentifier)
+                                        } label: {
+                                            Text("cancel")
+                                                .font(.system(size: 8, weight: .medium))
+                                                .foregroundColor(.white)
+                                                .padding(.horizontal, 4)
+                                                .padding(.vertical, 2)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 4)
+                                                        .stroke(Color.white, lineWidth: 1.0)
+                                                )
+                                        }
+                                        .padding(.bottom, 40)
                                     }
-                                    .padding(.bottom, 40)
                                 }
                             }
                         }

@@ -50,6 +50,7 @@
 		7EFDD81C2E0C8DB400154192 /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81B2E0C8DB200154192 /* Chat.swift */; };
 		7EFDD81E2E0C8DD600154192 /* ChatListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */; };
 		810707522E41247E00F9E709 /* ProStatusViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810707512E41247200F9E709 /* ProStatusViewModel.swift */; };
+		8138F40A2E480A8900675DB6 /* BackgroundUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8138F4092E480A7D00675DB6 /* BackgroundUploader.swift */; };
 		8177D3E62DF8D4B100FA6800 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E52DF8D4AC00FA6800 /* UploadView.swift */; };
 		8177D3E82DF8D69A00FA6800 /* VideoThumbnailSelectableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */; };
 		81CC3AEF2E15B4000010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AEE2E15B4000010512B /* CropViewController */; };
@@ -168,6 +169,7 @@
 		7EFDD81B2E0C8DB200154192 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
 		7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListViewModel.swift; sourceTree = "<group>"; };
 		810707512E41247200F9E709 /* ProStatusViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProStatusViewModel.swift; sourceTree = "<group>"; };
+		8138F4092E480A7D00675DB6 /* BackgroundUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundUploader.swift; sourceTree = "<group>"; };
 		8177D3E52DF8D4AC00FA6800 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
 		8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoThumbnailSelectableView.swift; sourceTree = "<group>"; };
 		81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomProgessView.swift; sourceTree = "<group>"; };
@@ -383,6 +385,7 @@
 		8F51F2202DE01C9C00397726 /* Coordinators */ = {
 			isa = PBXGroup;
 			children = (
+				8138F4092E480A7D00675DB6 /* BackgroundUploader.swift */,
 				81E960712E20350500EEE22D /* UploadManager.swift */,
 				8F51F23A2DE0249A00397726 /* VideoFeedCoordinatorView.swift */,
 				8F51F2392DE0248500397726 /* AuthCoordinatorView.swift */,
@@ -645,6 +648,7 @@
 				134970E42E1B3E030053E214 /* OtherUserProfileView.swift in Sources */,
 				60974D8A2DE803810075CAAE /* PracticeWordView.swift in Sources */,
 				D69E52012DE6CC5500329D64 /* PlayerView.swift in Sources */,
+				8138F40A2E480A8900675DB6 /* BackgroundUploader.swift in Sources */,
 				81F436412DF2830600DA9BDA /* LanguageLevelSelectionView.swift in Sources */,
 				13F4B1612DFCB87A0019BE81 /* ChangeLanguageLevelFlow.swift in Sources */,
 				60E0B91D2DF53A5C0065B772 /* DashboardViewModel.swift in Sources */,

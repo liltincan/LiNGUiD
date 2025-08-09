@@ -455,56 +455,49 @@ struct AddThumbnailView: View {
             }
 
             Button(action: {
-                isProcessing = true // Show full screen overlay immediately
+                isProcessing = true
 
                 Task.detached(priority: .userInitiated) {
                     var tempCompressedURLs: [String: URL] = [:]
 
-                    // Compress videos
+                    // Compress (or just map to original) first
                     for asset in assets {
                         if let compressedURL = await compressVideo(from: asset) {
                             tempCompressedURLs[asset.localIdentifier] = compressedURL
                         }
                     }
 
-                    // Upload videos
                     await MainActor.run {
-                        compressedVideoURL = tempCompressedURLs
+                        // Show items in your UI bar
                         uploadManager.addUploadingVideos(assets, thumbnails: thumbnailOverrides)
                     }
 
                     for asset in assets {
-                        let id = asset.localIdentifier
-                        await uploadManager.startUpload(for: asset) {
-                            do {
-                                let data = try Data(contentsOf: tempCompressedURLs[id]!)
-                                let thumbData = thumbnailOverrides[id]?.jpegData(compressionQuality: 0.9)
+                        guard let fileURL = tempCompressedURLs[asset.localIdentifier] else { continue }
+                        let filename = getVideoFilename(from: asset)
+                        let thumbData = thumbnailOverrides[asset.localIdentifier]?.jpegData(compressionQuality: 0.9)
 
-                                _ = try await uploadService.uploadVideo(
-                                    videoData: data,
-                                    filename: getVideoFilename(from: asset),
-                                    category: "general",
-                                    language: "auto",
-                                    uploaderId: Auth.auth().currentUser?.uid,
-                                    thumbnailData: thumbData
-                                )
-
-                                await MainActor.run {
-                                    uploadManager.markUploaded(id)
-                                }
-
-                            } catch {
-                                print("⚠️ Upload failed for \(id): \(error)")
-                            }
+                        do {
+                            try BackgroundUploader.shared.enqueue(
+                                videoFileURL: fileURL,
+                                thumbnailJPEG: thumbData,
+                                filename: filename,
+                                category: "general",
+                                language: "auto",
+                                uploaderId: Auth.auth().currentUser?.uid,
+                                localIdentifier: asset.localIdentifier
+                            )
+                        } catch {
+                            print("Failed to enqueue \(asset.localIdentifier): \(error)")
                         }
                     }
 
-                    // Hide overlay + navigate back to profile
                     await MainActor.run {
-                        onComplete?()
+                        onComplete?()   // navigate back; uploads keep going in bg
                         isProcessing = false
                     }
                 }
+
             }) {
                 Text("Upload")
                     .font(.headline)
