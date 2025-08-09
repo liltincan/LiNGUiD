@@ -14,7 +14,19 @@ import FirebaseAuth
 import FirebaseFirestore
 
 class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
-    
+    var window: UIWindow?
+    // Keep the completion handler the system gives us until the session says "I'm done".
+    var backgroundSessionCompletionHandler: (() -> Void)?
+
+    func application(_ application: UIApplication,
+        handleEventsForBackgroundURLSession identifier: String,
+        completionHandler: @escaping () -> Void) {
+        // Recreate the session so delegates will be called
+        BackgroundUploader.shared.recreateSessionIfNeeded(identifier: identifier)
+        BackgroundUploader.shared.setSystemCompletionHandler(completionHandler)
+        print("[BG] handleEventsForBackgroundURLSession \(identifier)")
+    }
+
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil

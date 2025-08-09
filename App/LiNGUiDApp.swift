@@ -11,10 +11,11 @@ struct LiNGUiDApp: App {
     @StateObject var deepLinkCoordinator = DeepLinkCoordinator()
     @StateObject var notificationService = NotificationService()
     @StateObject private var uploadManager = UploadManager()
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        _ = BackgroundUploader.shared
         DependencyContainer.shared.registerAll()
-        
     }
 
     var body: some Scene {
