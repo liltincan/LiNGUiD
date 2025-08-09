@@ -103,6 +103,7 @@ struct UploadView: View {
                                 assets: selectedAssets,
                                 compressedVideoURLs: compressedVideoURLs,
                                 onComplete: {
+                                    navigateToThumbnail = false
                                     onComplete?()  // tells ProfileView to pop UploadView
                                 },
                                 thumbnailOverrides: $thumbnailOverrides
@@ -407,7 +408,9 @@ struct AddThumbnailView: View {
     @EnvironmentObject var uploadManager: UploadManager
     @Environment(\.dismiss) var dismiss
 
-
+    @State private var isProcessing = false
+    @State private var compressedVideoURL: [String: URL] = [:]
+    
     var body: some View {
         VStack {
             Text("Edit Thumbnails")
@@ -452,19 +455,30 @@ struct AddThumbnailView: View {
             }
 
             Button(action: {
-                onComplete?()
-                isUploading = true
-                uploadManager.addUploadingVideos(assets, thumbnails: thumbnailOverrides)
-                
-                Task {
+                isProcessing = true // Show full screen overlay immediately
+
+                Task.detached(priority: .userInitiated) {
+                    var tempCompressedURLs: [String: URL] = [:]
+
+                    // Compress videos
+                    for asset in assets {
+                        if let compressedURL = await compressVideo(from: asset) {
+                            tempCompressedURLs[asset.localIdentifier] = compressedURL
+                        }
+                    }
+
+                    // Upload videos
+                    await MainActor.run {
+                        compressedVideoURL = tempCompressedURLs
+                        uploadManager.addUploadingVideos(assets, thumbnails: thumbnailOverrides)
+                    }
+
                     for asset in assets {
                         let id = asset.localIdentifier
-                        uploadManager.startUpload(for: asset) {
+                        await uploadManager.startUpload(for: asset) {
                             do {
-                                let data = try await loadVideoData(asset: asset)
+                                let data = try Data(contentsOf: tempCompressedURLs[id]!)
                                 let thumbData = thumbnailOverrides[id]?.jpegData(compressionQuality: 0.9)
-                                
-                                try Task.checkCancellation()
 
                                 _ = try await uploadService.uploadVideo(
                                     videoData: data,
@@ -475,24 +489,21 @@ struct AddThumbnailView: View {
                                     thumbnailData: thumbData
                                 )
 
-                                try Task.checkCancellation()
-
                                 await MainActor.run {
                                     uploadManager.markUploaded(id)
                                 }
 
                             } catch {
-                                if Task.isCancelled {
-                                    print("⛔️ Upload cancelled for \(id)")
-                                } else {
-                                    print("⚠️ Upload failed for \(id): \(error)")
-                                }
+                                print("⚠️ Upload failed for \(id): \(error)")
                             }
                         }
                     }
 
-                    isUploading = false
-                    dismiss()
+                    // Hide overlay + navigate back to profile
+                    await MainActor.run {
+                        onComplete?()
+                        isProcessing = false
+                    }
                 }
             }) {
                 Text("Upload")
@@ -502,7 +513,7 @@ struct AddThumbnailView: View {
                     .background(Color.appPrimaryColor)
                     .cornerRadius(8)
             }
-            .disabled(isUploading)
+            .disabled(isProcessing)
             .padding(.bottom, 10)
             .padding(.horizontal, 10)
 
@@ -556,7 +567,23 @@ struct AddThumbnailView: View {
                 }
             )
         }
+        .overFullScreen(isPresented: $isProcessing) {
+            ZStack {
+                Color.black.opacity(0.85).ignoresSafeArea()
+                VStack(spacing: 12) {
+                    ProgressView("Processing Videos…")
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .foregroundColor(.white)
+                        .font(.headline)
+                    Text("This may take a few moments")
+                        .foregroundColor(.white)
+                        .font(.subheadline)
+                }
+            }
+            .preferredColorScheme(.dark)
+        }
         .background(Color.black.ignoresSafeArea())
+        
     }
     
     private func loadVideoData(asset: PHAsset) async throws -> Data {
@@ -588,11 +615,9 @@ struct AddThumbnailView: View {
                     videoData = try await convertAssetToData(asset: firstAsset)
                 }
                 
-                // ✅ STEP: Get selected thumbnail
                 let thumbnailImage = thumbnailOverrides[firstAsset.localIdentifier]
                 let thumbnailData = thumbnailImage?.jpegData(compressionQuality: 0.9)
 
-                // Upload to Python API
                 let response = try await uploadService.uploadVideo(
                     videoData: videoData,
                     filename: getVideoFilename(from: firstAsset),
@@ -616,6 +641,44 @@ struct AddThumbnailView: View {
         }
     }
     
+    private func compressVideo(from asset: PHAsset) async -> URL? {
+        await withCheckedContinuation { continuation in
+            let options = PHVideoRequestOptions()
+            options.deliveryMode = .highQualityFormat
+            options.isNetworkAccessAllowed = true
+
+            PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, _ in
+                guard let avAsset = avAsset else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                let compressedURL = FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString)
+                    .appendingPathExtension("mp4")
+
+                guard let exportSession = AVAssetExportSession(asset: avAsset, presetName: AVAssetExportPreset1280x720) else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+
+                exportSession.outputURL = compressedURL
+                exportSession.outputFileType = .mp4
+                exportSession.shouldOptimizeForNetworkUse = true
+
+                exportSession.exportAsynchronously {
+                    switch exportSession.status {
+                    case .completed:
+                        continuation.resume(returning: compressedURL)
+                    default:
+                        print("Compression failed: \(exportSession.error?.localizedDescription ?? "unknown error")")
+                        continuation.resume(returning: nil)
+                    }
+                }
+            }
+        }
+    }
+
     private func getVideoFilename(from asset: PHAsset) -> String {
         let resources = PHAssetResource.assetResources(for: asset)
         if let resource = resources.first {
@@ -899,7 +962,82 @@ struct TOCropView: UIViewControllerRepresentable {
     }
 }
 
+struct OverFullScreen<Content: View>: UIViewControllerRepresentable {
+    @Binding var isPresented: Bool
+    let content: () -> Content
+    let animated: Bool
+    let transitionStyle: UIModalTransitionStyle
 
+    init(isPresented: Binding<Bool>,
+         animated: Bool = true,
+         transitionStyle: UIModalTransitionStyle = .crossDissolve,
+         @ViewBuilder content: @escaping () -> Content) {
+        self._isPresented = isPresented
+        self.animated = animated
+        self.transitionStyle = transitionStyle
+        self.content = content
+    }
+
+    func makeUIViewController(context: Context) -> UIViewController {
+        let vc = UIViewController()
+        vc.view.backgroundColor = .clear
+        return vc
+    }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        // Present
+        if isPresented {
+            if context.coordinator.hostingController == nil {
+                let host = UIHostingController(rootView: AnyView(content()))
+                host.modalPresentationStyle = .overFullScreen
+                host.modalTransitionStyle = transitionStyle
+                // Make background clear so SwiftUI content can show a dimmer Color behind it.
+                host.view.backgroundColor = .clear
+
+                // Present from the container controller
+                uiViewController.present(host, animated: animated) {
+                    context.coordinator.hostingController = host
+                }
+            } else {
+                context.coordinator.hostingController?.rootView = AnyView(content())
+            }
+        } else {
+            // Dismiss
+            if let host = context.coordinator.hostingController {
+                host.dismiss(animated: animated) {
+                    context.coordinator.hostingController = nil
+                }
+            }
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    class Coordinator {
+        var hostingController: UIHostingController<AnyView>?
+    }
+}
+
+extension View {
+    func overFullScreen<ModalContent: View>(
+        isPresented: Binding<Bool>,
+        animated: Bool = true,
+        transitionStyle: UIModalTransitionStyle = .crossDissolve,
+        @ViewBuilder content: @escaping () -> ModalContent
+    ) -> some View {
+        background(
+            OverFullScreen(isPresented: isPresented,
+                           animated: animated,
+                           transitionStyle: transitionStyle,
+                           content: { content().eraseToAnyView() })
+                .frame(width: 0, height: 0)
+        )
+    }
+}
+
+fileprivate extension View {
+    func eraseToAnyView() -> AnyView { AnyView(self) }
+}
 
 //struct UploadView_Previews: PreviewProvider {
 //    static var previews: some View {
