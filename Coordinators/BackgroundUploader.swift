@@ -7,18 +7,38 @@
 
 import Foundation
 import UIKit
+import Combine
 
-final class BackgroundUploader: NSObject {
+final class BackgroundUploader: NSObject, ObservableObject {
     static let shared = BackgroundUploader()
 
-    // Notifications your UI can observe
     static let progressNote = Notification.Name("BGUploadProgress")
-    static let finishedNote = Notification.Name("BGUploadFinished")
+    static let finishedNote  = Notification.Name("BGUploadFinished")
+
+    // Live per-item progress (0…1)
+    @Published private(set) var progressById: [String: Double] = [:]
+
+    // NEW: queue state so UI can compute steps without UploadManager
+    @Published private(set) var enqueuedIds: [String] = []      // in order
+    @Published private(set) var activeId: String?               // current uploading id
+    @Published private(set) var completedIds: Set<String> = []  // finished ids
+
+    // NEW: convenience computed values for the bar
+    var totalToUpload: Int { enqueuedIds.count }
+    var completedCount: Int { completedIds.count }
+    var isUploadComplete: Bool { totalToUpload > 0 && completedCount == totalToUpload }
+
+    /// 0…1 for the current item (holds at 1 when complete so bar stays full briefly)
+    var barProgressNormalized: Double {
+        if isUploadComplete { return 1 }
+        guard let id = activeId else { return 0 }
+        return progressById[id] ?? 0
+    }
 
     private let sessionId = "com.linguid.video.background.session"
     private var session: URLSession!
     private var systemCompletionHandler: (() -> Void)?
-    
+
     private var pending: [URLSessionUploadTask] = []
     private var active: URLSessionUploadTask?
 
@@ -45,20 +65,21 @@ final class BackgroundUploader: NSObject {
         config.waitsForConnectivity = true
         config.allowsExpensiveNetworkAccess = true
         config.allowsConstrainedNetworkAccess = true
-        config.httpMaximumConnectionsPerHost = 1
+        config.httpMaximumConnectionsPerHost = 1 // sequential
         return URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }
 
     struct PayloadMeta: Codable {
-        let localIdentifier: String       // PHAsset.localIdentifier (for your UI list)
+        let localIdentifier: String
         let filename: String
         let category: String
         let language: String
         let uploaderId: String?
-        let multipartPath: String         // temp file path we created
+        let multipartPath: String
     }
 
-    /// Public entry: create multipart file on disk + start upload task
+    // MARK: - Public API
+
     func enqueue(
         videoFileURL: URL,
         thumbnailJPEG: Data?,
@@ -80,7 +101,6 @@ final class BackgroundUploader: NSObject {
 
         var task = session.uploadTask(with: request, fromFile: multipartURL)
 
-        // stash metadata for progress/rehydration
         let meta = PayloadMeta(
             localIdentifier: localIdentifier,
             filename: filename,
@@ -92,27 +112,46 @@ final class BackgroundUploader: NSObject {
         let metaData = try JSONEncoder().encode(meta)
         task.taskDescription = String(data: metaData, encoding: .utf8)
 
-        // queue, don't start yet
+        // NEW: seed UI state
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            if !self.enqueuedIds.contains(localIdentifier) {
+                self.enqueuedIds.append(localIdentifier)
+            }
+            self.progressById[localIdentifier] = 0
+        }
+
         pending.append(task)
         kickstartIfIdle()
     }
 
+    func percent(for localIdentifier: String) -> Double {
+        (progressById[localIdentifier] ?? 0) * 100
+    }
+
+    // MARK: - Internals
+
     private func kickstartIfIdle() {
         guard active == nil, !pending.isEmpty else { return }
         active = pending.removeFirst()
+        if
+            let metaJSON = active?.taskDescription?.data(using: .utf8),
+            let meta = try? JSONDecoder().decode(PayloadMeta.self, from: metaJSON)
+        {
+            DispatchQueue.main.async { [weak self] in
+                self?.activeId = meta.localIdentifier     // NEW: tell UI which one is running
+            }
+        }
         active?.resume()
     }
 
-    // MARK: - Helpers
-
     private func buildRequest() throws -> URLRequest {
         guard let url = URL(string: "https://makechicken.onrender.com/api/upload_video") else {
-            throw NSError(domain: "BGUploader", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+            throw NSError(domain: "BGUploader", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
         }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
-        // Content-Type for multipart will be set inside file body; here we duplicate the same boundary
-        // but servers are fine as long as the body is correct. We'll set header exactly to match the body boundary:
         req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         return req
     }
@@ -127,14 +166,12 @@ final class BackgroundUploader: NSObject {
         language: String,
         uploaderId: String?
     ) throws -> URL {
-        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("multipart")
+        let tmp = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("multipart")
         var data = Data()
 
-        func append(_ string: String) {
-            data.append(string.data(using: .utf8)!)
-        }
-
-        // text field
+        func append(_ s: String) { data.append(s.data(using: .utf8)!) }
         func addText(name: String, value: String) {
             append("--\(boundary)\r\n")
             append("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n")
@@ -144,12 +181,9 @@ final class BackgroundUploader: NSObject {
         addText(name: "category", value: category)
         addText(name: "language", value: language)
         if let uploaderId { addText(name: "uploader_id", value: uploaderId) }
-
-        // Optional: keep API happy with defaults
         addText(name: "topics", value: "[]")
         addText(name: "level", value: "auto")
 
-        // thumbnail (optional)
         if let thumb = thumbnailJPEG {
             append("--\(boundary)\r\n")
             append("Content-Disposition: form-data; name=\"thumbnail\"; filename=\"thumb.jpg\"\r\n")
@@ -158,7 +192,6 @@ final class BackgroundUploader: NSObject {
             append("\r\n")
         }
 
-        // video file  **IMPORTANT: name must be "file"**
         append("--\(boundary)\r\n")
         append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n")
         append("Content-Type: video/mp4\r\n\r\n")
@@ -168,43 +201,58 @@ final class BackgroundUploader: NSObject {
         append("\r\n")
         append("--\(boundary)--\r\n")
 
-
         try data.write(to: tmp, options: .atomic)
         return tmp
     }
+    
+    @MainActor
+    func clearFinishedBatchVisuals() {
+        // Only clear if nothing is uploading anymore
+        guard isUploadComplete else { return }
+        enqueuedIds.removeAll()
+        completedIds.removeAll()
+        progressById.removeAll()
+        activeId = nil
+    }
 }
 
-// MARK: - URLSessionDelegate
+// MARK: - URLSession Delegates
 extension BackgroundUploader: URLSessionDelegate, URLSessionTaskDelegate, URLSessionDataDelegate {
 
-    // Progress
     func urlSession(_ session: URLSession,
                     task: URLSessionTask,
                     didSendBodyData bytesSent: Int64,
                     totalBytesSent: Int64,
                     totalBytesExpectedToSend: Int64) {
-        print("[BG] progress \(totalBytesSent)/\(totalBytesExpectedToSend)")
         guard
+            totalBytesExpectedToSend > 0,
             let metaJSON = task.taskDescription?.data(using: .utf8),
             let meta = try? JSONDecoder().decode(PayloadMeta.self, from: metaJSON)
         else { return }
 
-        let progress = totalBytesExpectedToSend > 0 ? Double(totalBytesSent) / Double(totalBytesExpectedToSend) : 0
+        let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
+
+        // Legacy broadcast (optional)
         NotificationCenter.default.post(
             name: BackgroundUploader.progressNote,
             object: nil,
-            userInfo: [
-                "localIdentifier": meta.localIdentifier,
-                "progress": progress
-            ]
+            userInfo: ["localIdentifier": meta.localIdentifier, "progress": progress]
         )
+
+        // Update published progress
+        DispatchQueue.main.async { [weak self] in
+            self?.progressById[meta.localIdentifier] = progress
+            // keep activeId accurate even if the system reorders callbacks
+            if self?.activeId != meta.localIdentifier {
+                self?.activeId = meta.localIdentifier
+            }
+        }
     }
 
-    // Finish (success or error)
-    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        print("[BG] didComplete \(task.taskIdentifier). error:", error as Any)
+    func urlSession(_ session: URLSession,
+                    task: URLSessionTask,
+                    didCompleteWithError error: Error?) {
         defer {
-            // Cleanup multipart temp file
             if
                 let metaJSON = task.taskDescription?.data(using: .utf8),
                 let meta = try? JSONDecoder().decode(PayloadMeta.self, from: metaJSON) {
@@ -220,20 +268,34 @@ extension BackgroundUploader: URLSessionDelegate, URLSessionTaskDelegate, URLSes
         NotificationCenter.default.post(
             name: BackgroundUploader.finishedNote,
             object: nil,
-            userInfo: [
-                "localIdentifier": meta.localIdentifier,
-                "error": error as NSError? as Any
-            ]
+            userInfo: ["localIdentifier": meta.localIdentifier, "error": error as NSError? as Any]
         )
-        if active?.taskIdentifier == task.taskIdentifier {
-            active = nil
-            kickstartIfIdle()
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            if error == nil {
+                self.progressById[meta.localIdentifier] = 1
+                self.completedIds.insert(meta.localIdentifier)
+            }
+            // advance queue
+            if self.active?.taskIdentifier == task.taskIdentifier {
+                self.active = nil
+                self.activeId = nil
+                self.kickstartIfIdle()
+            }
+
+            // Optional: when the whole batch is done, you can clear after a delay
+            // if self.isUploadComplete {
+            //   DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            //     self.enqueuedIds.removeAll()
+            //     self.completedIds.removeAll()
+            //     self.progressById.removeAll()
+            //   }
+            // }
         }
     }
 
-    // System wakes us when all background events for this session have been delivered
     func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
-        print("[BG] urlSessionDidFinishEvents")
         DispatchQueue.main.async { [weak self] in
             self?.systemCompletionHandler?()
             self?.systemCompletionHandler = nil
