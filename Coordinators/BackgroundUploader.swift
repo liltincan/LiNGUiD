@@ -23,12 +23,10 @@ final class BackgroundUploader: NSObject, ObservableObject {
     @Published private(set) var activeId: String?               // current uploading id
     @Published private(set) var completedIds: Set<String> = []  // finished ids
 
-    // NEW: convenience computed values for the bar
     var totalToUpload: Int { enqueuedIds.count }
     var completedCount: Int { completedIds.count }
     var isUploadComplete: Bool { totalToUpload > 0 && completedCount == totalToUpload }
 
-    /// 0…1 for the current item (holds at 1 when complete so bar stays full briefly)
     var barProgressNormalized: Double {
         if isUploadComplete { return 1 }
         guard let id = activeId else { return 0 }
@@ -78,7 +76,6 @@ final class BackgroundUploader: NSObject, ObservableObject {
         let multipartPath: String
     }
 
-    // MARK: - Public API
 
     func enqueue(
         videoFileURL: URL,
@@ -129,7 +126,6 @@ final class BackgroundUploader: NSObject, ObservableObject {
         (progressById[localIdentifier] ?? 0) * 100
     }
 
-    // MARK: - Internals
 
     private func kickstartIfIdle() {
         guard active == nil, !pending.isEmpty else { return }
@@ -216,7 +212,6 @@ final class BackgroundUploader: NSObject, ObservableObject {
     }
 }
 
-// MARK: - URLSession Delegates
 extension BackgroundUploader: URLSessionDelegate, URLSessionTaskDelegate, URLSessionDataDelegate {
 
     func urlSession(_ session: URLSession,
@@ -252,48 +247,55 @@ extension BackgroundUploader: URLSessionDelegate, URLSessionTaskDelegate, URLSes
     func urlSession(_ session: URLSession,
                     task: URLSessionTask,
                     didCompleteWithError error: Error?) {
-        defer {
-            if
-                let metaJSON = task.taskDescription?.data(using: .utf8),
-                let meta = try? JSONDecoder().decode(PayloadMeta.self, from: metaJSON) {
-                try? FileManager.default.removeItem(atPath: meta.multipartPath)
-            }
+        // Decode task metadata once; keep it for cleanup + notifications
+        var meta: PayloadMeta? = nil
+        if let data = task.taskDescription?.data(using: .utf8) {
+            meta = try? JSONDecoder().decode(PayloadMeta.self, from: data)
         }
 
-        guard
-            let metaJSON = task.taskDescription?.data(using: .utf8),
-            let meta = try? JSONDecoder().decode(PayloadMeta.self, from: metaJSON)
-        else { return }
+        // Always clean up the multipart temp file (if we know it)
+        if let m = meta {
+            try? FileManager.default.removeItem(atPath: m.multipartPath)
+        }
 
-        NotificationCenter.default.post(
-            name: BackgroundUploader.finishedNote,
-            object: nil,
-            userInfo: ["localIdentifier": meta.localIdentifier, "error": error as NSError? as Any]
-        )
+        // If we have metadata, notify listeners (optional but preserves your current behavior)
+        if let m = meta {
+            NotificationCenter.default.post(
+                name: BackgroundUploader.finishedNote,
+                object: nil,
+                userInfo: ["localIdentifier": m.localIdentifier, "error": error as NSError? as Any]
+            )
+        }
 
+        // Update UI state on main
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            if error == nil {
-                self.progressById[meta.localIdentifier] = 1
-                self.completedIds.insert(meta.localIdentifier)
+
+            if let m = meta {
+                let nsErr = error as NSError?
+
+                if nsErr == nil {
+                    self.progressById[m.localIdentifier] = 1
+                    self.completedIds.insert(m.localIdentifier)
+                }
+                else if nsErr?.domain == NSURLErrorDomain && nsErr?.code == NSURLErrorCancelled {
+                    self.progressById.removeValue(forKey: m.localIdentifier)
+                    self.enqueuedIds.removeAll { $0 == m.localIdentifier }
+                }
+                else {
+                    self.progressById.removeValue(forKey: m.localIdentifier)
+                }
             }
-            // advance queue
+
+            // Advance the queue if this task was the active one
             if self.active?.taskIdentifier == task.taskIdentifier {
                 self.active = nil
                 self.activeId = nil
                 self.kickstartIfIdle()
             }
-
-            // Optional: when the whole batch is done, you can clear after a delay
-            // if self.isUploadComplete {
-            //   DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            //     self.enqueuedIds.removeAll()
-            //     self.completedIds.removeAll()
-            //     self.progressById.removeAll()
-            //   }
-            // }
         }
     }
+
 
     func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
         DispatchQueue.main.async { [weak self] in
@@ -302,3 +304,49 @@ extension BackgroundUploader: URLSessionDelegate, URLSessionTaskDelegate, URLSes
         }
     }
 }
+
+extension BackgroundUploader {
+    @MainActor
+    func cancelUpload(id: String) {
+        // cancel pending task if found
+        if let i = pending.firstIndex(where: { decodeMeta(for: $0)?.localIdentifier == id }) {
+            let task = pending.remove(at: i)
+            task.cancel()
+        }
+        // cancel active task if it's the one
+        else if let a = active, decodeMeta(for: a)?.localIdentifier == id {
+            a.cancel()
+            active = nil
+            activeId = nil
+        }
+
+        // Shrink the batch size: treat cancelled as removed from the plan
+        enqueuedIds.removeAll { $0 == id }
+        progressById.removeValue(forKey: id)
+        completedIds.remove(id) // in case it was accidentally marked
+
+        // Move on if needed
+        kickstartIfIdle()
+    }
+
+    @MainActor
+    func cancelAll() {
+        pending.forEach { $0.cancel() }
+        pending.removeAll()
+
+        active?.cancel()
+        active = nil
+        activeId = nil
+
+        enqueuedIds.removeAll()
+        completedIds.removeAll()
+        progressById.removeAll()
+    }
+
+    // Decode helper for matching tasks to ids
+    fileprivate func decodeMeta(for task: URLSessionTask) -> PayloadMeta? {
+        guard let data = task.taskDescription?.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(PayloadMeta.self, from: data)
+    }
+}
+
