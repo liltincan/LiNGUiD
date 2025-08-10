@@ -108,6 +108,14 @@ class UploadManager: ObservableObject {
         completedCount = 0
     }
 
+    @MainActor
+    func removeUploadingVideo(id: String) {
+        if let i = uploadingVideos.firstIndex(where: { $0.localIdentifier == id }) {
+            uploadingVideos.remove(at: i)
+            objectWillChange.send() // nudge any views bound to the array
+        }
+    }
+
 }
 extension UploadManager {
     var progress: Double {
