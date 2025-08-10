@@ -569,7 +569,7 @@ struct VideoGridSection: View {
                                                         .stroke(Color.white, lineWidth: 1.0)
                                                 )
                                         }
-                                        .padding(.bottom, 40)
+                                        .padding(.bottom, 30)
                                     }
                                 }
                             }
