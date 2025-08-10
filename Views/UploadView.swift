@@ -22,6 +22,7 @@ struct UploadView: View {
     @State private var isCompressing = false
 
     let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 3)
+    private let selectionLimit = 25
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -303,16 +304,18 @@ struct UploadView: View {
     }
 
     private func handleSelection(for asset: PHAsset) {
-        if selectedAssets.contains(asset) {
-            selectedAssets.removeAll { $0 == asset }
+        if let idx = selectedAssets.firstIndex(of: asset) {
+            // deselect if already selected
+            selectedAssets.remove(at: idx)
         } else {
-            if isMultiSelect {
-                selectedAssets.append(asset)
-            } else {
-                selectedAssets = [asset]
+            // enforce max
+            guard selectedAssets.count < selectionLimit else {
+                return
             }
+            selectedAssets.append(asset)
         }
     }
+
 
     private func loadVideos() {
         PHPhotoLibrary.requestAuthorization(for: .readWrite) { authStatus in
