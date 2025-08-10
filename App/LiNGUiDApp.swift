@@ -12,6 +12,7 @@ struct LiNGUiDApp: App {
     @StateObject var notificationService = NotificationService()
     @StateObject private var uploadManager = UploadManager()
     @Environment(\.scenePhase) private var scenePhase
+    @StateObject private var backgroundUploader = BackgroundUploader.shared
 
     init() {
         _ = BackgroundUploader.shared
@@ -23,6 +24,7 @@ struct LiNGUiDApp: App {
             RootCoordinatorView()
                 .environmentObject(state)
                 .environmentObject(uploadManager)
+                .environmentObject(backgroundUploader)
                 .environment(\.font, .custom("Poppins", size: 16))
                 .environmentObject(deepLinkCoordinator)
                 .environmentObject(notificationService)
