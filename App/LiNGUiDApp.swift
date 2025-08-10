@@ -14,7 +14,6 @@ struct LiNGUiDApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var backgroundUploader = BackgroundUploader.shared
 
-
     init() {
         _ = BackgroundUploader.shared
         DependencyContainer.shared.registerAll()
