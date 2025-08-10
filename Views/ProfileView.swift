@@ -477,6 +477,11 @@ struct ProfileActionButtons: View {
     let pfp: String
     @Binding var isShowingUploadView: Bool
     let onUploadComplete: () async -> Void
+    @EnvironmentObject var backgroundUploader: BackgroundUploader
+    
+    private var isUploading: Bool {
+        backgroundUploader.totalToUpload > 0 && !backgroundUploader.isUploadComplete
+    }
     
     var body: some View {
         HStack(spacing: 12.5) {
@@ -493,8 +498,12 @@ struct ProfileActionButtons: View {
                     }
                 })
             } label: {
-                Buttons(text: "upload")
+                Buttons(text: isUploading ? "upload" : "upload")
+                        .opacity(isUploading ? 0.6 : 1)
             }
+            .disabled(isUploading)
+            .animation(isUploading ? .easeInOut.delay(1) : .easeInOut, value: isUploading)
+            
             Buttons(text: "share")
         }
     }
@@ -510,6 +519,7 @@ struct VideoGridSection: View {
     var videoArray: [Video]
     @Binding var selectedTab: Int
     @EnvironmentObject var uploadManager: UploadManager
+    @EnvironmentObject var backgroundUploader: BackgroundUploader
     @EnvironmentObject var userSession: UserSessionViewModel
     let fromOtherUserProfile: Bool
 
@@ -546,13 +556,14 @@ struct VideoGridSection: View {
                                         Spacer()
                                         Spacer()
                                         Button {
-                                            uploadManager.cancelUpload(for: video.localIdentifier)
+                                            backgroundUploader.cancelUpload(id: video.localIdentifier)
+                                            uploadManager.removeUploadingVideo(id: video.localIdentifier)
                                         } label: {
                                             Text("cancel")
-                                                .font(.system(size: 8, weight: .medium))
+                                                .font(.system(size: 12, weight: .medium))
                                                 .foregroundColor(.white)
-                                                .padding(.horizontal, 4)
-                                                .padding(.vertical, 2)
+                                                .padding(.horizontal, 8)
+                                                .padding(.vertical, 4)
                                                 .overlay(
                                                     RoundedRectangle(cornerRadius: 4)
                                                         .stroke(Color.white, lineWidth: 1.0)
