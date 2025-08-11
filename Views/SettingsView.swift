@@ -25,13 +25,18 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
     @Binding var selectedTab: Int
     let onLogout: () -> Void
+    @StateObject private var proVM = ProStatusViewModel()
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 0) {
-                        GoProSection()
+                        if proVM.isPro {
+                            proUserSection()
+                        } else {
+                            GoProSection()
+                        }
                         
                         DividerLine()
                         
@@ -121,6 +126,16 @@ struct SettingsView: View {
                 }
             }
         }
+        .onAppear {
+            guard let uid = uid, !uid.isEmpty else {
+                print("SettingsView: missing uid; not starting Pro listener")
+                return
+            }
+            proVM.startListening(uid: uid)
+        }
+        .onDisappear {
+            proVM.stopListening()
+        }
     }
 
     func logout() {
@@ -206,6 +221,39 @@ struct GoProSection: View {
                 .padding(.bottom, 12)
             
             NavigationLink(destination: GetProView(fromSettings: true)) {
+                HStack {
+                    Image("linguid_pro_banner")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 30)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(white: 0.1))
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+    }
+}
+
+struct proUserSection: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Manage Subscription")
+                .font(UIConstants.sectionFont)
+                .foregroundColor(UIConstants.sectionColor)
+                .padding(.bottom, 12)
+            
+            NavigationLink(destination: ManageSubscriptionView()) {
                 HStack {
                     Image("linguid_pro_banner")
                         .resizable()

@@ -53,6 +53,7 @@
 		8138F40A2E480A8900675DB6 /* BackgroundUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8138F4092E480A7D00675DB6 /* BackgroundUploader.swift */; };
 		8177D3E62DF8D4B100FA6800 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E52DF8D4AC00FA6800 /* UploadView.swift */; };
 		8177D3E82DF8D69A00FA6800 /* VideoThumbnailSelectableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */; };
+		818F2EEA2E4AD12200DD9EBE /* ManageSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */; };
 		81CC3AEF2E15B4000010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AEE2E15B4000010512B /* CropViewController */; };
 		81CC3AF12E15B4000010512B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF02E15B4000010512B /* TOCropViewController */; };
 		81CC3AF32E15B44A0010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF22E15B44A0010512B /* CropViewController */; };
@@ -172,6 +173,7 @@
 		8138F4092E480A7D00675DB6 /* BackgroundUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundUploader.swift; sourceTree = "<group>"; };
 		8177D3E52DF8D4AC00FA6800 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
 		8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoThumbnailSelectableView.swift; sourceTree = "<group>"; };
+		818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageSubscriptionView.swift; sourceTree = "<group>"; };
 		81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomProgessView.swift; sourceTree = "<group>"; };
 		81E960712E20350500EEE22D /* UploadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadManager.swift; sourceTree = "<group>"; };
 		81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageLevelSelectionView.swift; sourceTree = "<group>"; };
@@ -341,6 +343,7 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */,
 				81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */,
 				13D14A8B2E41A3F50012FDA0 /* RequestFeatureView.swift */,
 				13D14A892E4156F70012FDA0 /* PrivacyPolicyView.swift */,
@@ -638,6 +641,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				818F2EEA2E4AD12200DD9EBE /* ManageSubscriptionView.swift in Sources */,
 				132D56582E20509800B6D237 /* OtherUserProfileViewModel.swift in Sources */,
 				8FB929582DE02A8A0020AFCD /* DependencyContainer.swift in Sources */,
 				603628C22DFA91CE00C6D0E5 /* AppTextTranslate.swift in Sources */,
