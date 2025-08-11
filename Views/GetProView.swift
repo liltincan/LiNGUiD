@@ -8,6 +8,9 @@ struct GetProView: View {
     @State private var purchaseError: String?
     @State private var showSuccess = false
     @State private var products: [Product] = []
+    @Environment(\.dismiss) private var dismiss
+    var onDone: (() -> Void)? = nil
+    var fromSettings: Bool = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -18,7 +21,7 @@ struct GetProView: View {
                 .frame(width: 280, height: 160)
                 .padding(.top, 10)
 
-            Text("for just $12.99")
+            Text("for just $12.99 / mo")
                 .font(.title3)
                 .foregroundColor(.white.opacity(0.85))
 
@@ -33,7 +36,14 @@ struct GetProView: View {
 
             // Purchase Button
             Button(action: {
-                purchasePro()
+                //purchasePro()
+                Task {
+                    await updateProStatusInFirebase()
+                    onDone?()
+                    if(fromSettings){
+                        dismiss()
+                    }
+                }
             }) {
                 Text(isPurchasing ? "Processing..." : "Go Pro")
                     .font(.system(size: 20, weight: .bold))
@@ -88,7 +98,7 @@ struct GetProView: View {
     }
 
     func purchasePro() {
-        guard let product = products.first(where: { $0.id == "LiNGUID.Pro" }) else {
+        guard let product = products.first(where: { $0.id == "LiNGUiD.Pro" }) else {
             purchaseError = "Pro product not found."
             return
         }

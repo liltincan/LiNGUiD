@@ -3,6 +3,8 @@ import FirebaseAuth
 import GoogleSignIn
 import AuthenticationServices
 import UIKit
+import FirebaseFirestore
+
 
 @MainActor
 class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
@@ -50,6 +52,8 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
                 return false
             }
 
+            await ensureUserDocumentDefaults(email: email)
+            
             email = ""
             password = ""
             errorMessage = nil
@@ -68,6 +72,7 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
             do {
                 let success = try await authService.signInWithGoogle(presenting: presenting, appState: appState)
                 if success {
+                    await ensureUserDocumentDefaults(email: Auth.auth().currentUser?.email)
                     onSuccess()
                 } else {
                     errorMessage = "Google sign-in failed"
@@ -96,6 +101,7 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
                 }
 
                 try await authService.signInWithApple(credential: credential, rawNonce: nonce, appState: appState)
+                await ensureUserDocumentDefaults(email: Auth.auth().currentUser?.email)
                 onSuccess()
             } catch {
                 errorMessage = error.localizedDescription
@@ -177,6 +183,32 @@ class LoginViewModel: NSObject, ObservableObject, ASAuthorizationControllerDeleg
             return false
         }
     }
+    
+    private func ensureUserDocumentDefaults(email: String?) async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+        let ref = db.collection("users").document(uid)
+
+        do {
+            let snap = try await ref.getDocument()
+            let hasDoc = snap.exists
+            let hasIsPro = (snap.data()?["isPro"] != nil)
+
+            // Create doc if missing, or fill the isPro field if absent.
+            if !hasDoc {
+                try await ref.setData([
+                    "isPro": false,
+                    "email": email ?? NSNull(),
+                    "createdAt": FieldValue.serverTimestamp()
+                ], merge: true)
+            } else if !hasIsPro {
+                try await ref.setData(["isPro": false], merge: true)
+            }
+        } catch {
+            print("ensureUserDocumentDefaults error: \(error)")
+        }
+    }
+
 
 }
 

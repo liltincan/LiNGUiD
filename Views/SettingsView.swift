@@ -205,7 +205,7 @@ struct GoProSection: View {
                 .foregroundColor(UIConstants.sectionColor)
                 .padding(.bottom, 12)
             
-            NavigationLink(destination: GetProView()) {
+            NavigationLink(destination: GetProView(fromSettings: true)) {
                 HStack {
                     Image("linguid_pro_banner")
                         .resizable()
