@@ -420,11 +420,14 @@ struct LevelDotsView: View {
 
                 Circle()
                     .fill(isFilled ? Color.appPrimaryColor : Color.white)
-                    .frame(width: isFirstEmpty ? 2 : 4, height: isFirstEmpty ? 2 : 4)
+                    .frame(width: isFirstEmpty ? 3 : 4, height: isFirstEmpty ? 3 : 4)
                     .overlay(
                         Circle()
                             .stroke(colorScheme == .dark ? Color.white : Color.black, lineWidth: 0.5)
                     )
+                    .padding(.leading, isFirstEmpty ? 1 : 0)
+                    .padding(.trailing, isFirstEmpty ? 0.75 : 0)
+                    .padding(.top, isFirstEmpty ? 0.5 : 0)
             }
         }
         .padding()
