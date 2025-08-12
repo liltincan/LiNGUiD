@@ -8,7 +8,8 @@ struct VideoView: View {
     @State private var currentIndex: Int
     @ObservedObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
-    init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int, selectedTab: Binding<Int>, fromProfile: Bool, ownProfile: Bool) {
+    let onLogout: () -> Void
+    init(videos: [Video], userSession: UserSessionViewModel, startIndex: Int, selectedTab: Binding<Int>, fromProfile: Bool, ownProfile: Bool, onLogout: @escaping () -> Void) {
         self.videos = videos
         print(videos)
         self.userSession = userSession
@@ -16,6 +17,7 @@ struct VideoView: View {
         self._selectedTab = selectedTab
         self.fromProfile = fromProfile
         self.ownProfile = ownProfile
+        self.onLogout = onLogout
     }
 
     var body: some View {
@@ -35,7 +37,8 @@ struct VideoView: View {
                         userSession: userSession,
                         selectedTab: $selectedTab,
                         fromProfile: true,
-                        ownProfile: false
+                        ownProfile: false,
+                        onLogout: onLogout
                     )
                 }else{
                     VerticalVideoScrollView(
@@ -44,7 +47,8 @@ struct VideoView: View {
                         userSession: userSession,
                         selectedTab: $selectedTab,
                         fromProfile: false,
-                        ownProfile: true
+                        ownProfile: true,
+                        onLogout: onLogout
                     )
                 }
             }
@@ -61,6 +65,7 @@ struct VerticalVideoScrollView: View {
     @Binding var selectedTab: Int
     let fromProfile: Bool
     let ownProfile: Bool
+    let onLogout: () -> Void
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
@@ -80,7 +85,8 @@ struct VerticalVideoScrollView: View {
                                     containerHeight: screenHeight,
                                     selectedTab: $selectedTab,
                                     fromProfile: true,
-                                    ownProfile: false
+                                    ownProfile: false,
+                                    onLogout: onLogout
                                 )
                                 .frame(width: screenWidth, height: screenHeight)
                                 .id(video.id)  // Using stable video ID
@@ -93,7 +99,8 @@ struct VerticalVideoScrollView: View {
                                     containerHeight: screenHeight,
                                     selectedTab: $selectedTab,
                                     fromProfile: false,
-                                    ownProfile: true
+                                    ownProfile: true,
+                                    onLogout: onLogout
                                 )
                                 .frame(width: screenWidth, height: screenHeight)
                                 .id(video.id)  // Using stable video ID
@@ -161,6 +168,7 @@ struct VideoPageView: View {
     @State private var uploaderPfp: String?
     let fromProfile: Bool
     let ownProfile: Bool
+    let onLogout: () -> Void
     
     var body: some View {
         ZStack {
@@ -181,7 +189,8 @@ struct VideoPageView: View {
                     commentCount: video.commentCount,
                     selectedTab: $selectedTab,
                     showingInFullScreen: true,
-                    ownProfile: false
+                    ownProfile: false,
+                    onLogout: onLogout
                 )
                 .environmentObject(userSession)
                 .id(video.id)
@@ -200,8 +209,10 @@ struct VideoPageView: View {
                     videoSaves: video.saves,
                     commentCount: video.commentCount,
                     selectedTab: $selectedTab,
-                    showingInFullScreen: false,
-                    ownProfile: true
+                    showingInFullScreen: true,
+                    ownProfile: true,
+                    onLogout: onLogout
+                    
                 )
                 .environmentObject(userSession)
                 .id(video.id)

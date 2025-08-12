@@ -17,6 +17,7 @@ struct ChatListView: View {
     @State private var path: [ChatRoute] = []
     @State private var selectedTab: Int = 0
     @Binding var unreadChatCount: Int
+    let onLogout: () -> Void
     
     var body: some View {
         //this will be a push and pop
@@ -98,7 +99,7 @@ struct ChatListView: View {
                         }, defaultLanguage: viewModel.learningLanguage)
                         
                     case .profile(let id):
-                        OtherUserProfileView(userId: id, selectedTab: $selectedTab)
+                        OtherUserProfileView(userId: id, selectedTab: $selectedTab, onLogout: onLogout)
                             .padding(.top, -60)
                     }
                 }

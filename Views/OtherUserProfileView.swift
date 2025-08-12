@@ -22,10 +22,13 @@ struct OtherUserProfileView: View {
     let userId: String
     @Binding var selectedTab: Int
     
-    init(userId: String, selectedTab: Binding<Int>) {
+    let onLogout: () -> Void
+    
+    init(userId: String, selectedTab: Binding<Int>, onLogout: @escaping () -> Void) {
         self.userId = userId
         self._selectedTab = selectedTab
         _vm = StateObject(wrappedValue: OtherUserProfileViewModel(userId: userId))
+        self.onLogout = onLogout
     }
     
     var body: some View {
@@ -72,7 +75,8 @@ struct OtherUserProfileView: View {
                             noVideosMessage: "The user hasn't uploaded any videos yet.",
                             videoArray: vm.uploadedVideoArray.reversed(),
                             selectedTab: $selectedTab,
-                            fromOtherUserProfile: true
+                            fromOtherUserProfile: true,
+                            onLogout: onLogout
                         )
                     }
                     .scrollIndicators(.hidden)
@@ -211,7 +215,7 @@ struct OtherUserProfileHeaderView: View {
                 Spacer()
                 
                 Button {
-                    // More options menu
+                    //Here
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 16, weight: .bold))

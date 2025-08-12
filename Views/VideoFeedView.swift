@@ -12,12 +12,15 @@ struct VideoFeedView: View {
     
     @State private var hasScrolledToInitialVideo = false
     
+    let onLogout: () -> Void
+    
     // Add initializer to accept optional video ID
-    init(userSession: UserSessionViewModel, startingVideoId: String? = nil, selectedTab: Binding<Int>) {
+    init(userSession: UserSessionViewModel, startingVideoId: String? = nil, selectedTab: Binding<Int>, onLogout: @escaping () -> Void) {
         self.userSession = userSession
         self.startingVideoId = startingVideoId
         self._selectedTab = selectedTab
         print("startingVideoId: \(String(describing: startingVideoId))")
+        self.onLogout = onLogout
     }
 
     var body: some View {
@@ -43,7 +46,8 @@ struct VideoFeedView: View {
                     vm: vm,
                     startingVideoId: startingVideoId,
                     hasScrolledToInitialVideo: $hasScrolledToInitialVideo,
-                    selectedTab: $selectedTab
+                    selectedTab: $selectedTab,
+                    onLogout: onLogout
                 )
             }
         }
@@ -81,6 +85,9 @@ struct VerticalVideoFeed: View {
 
     @Binding var hasScrolledToInitialVideo: Bool
     @Binding var selectedTab: Int
+    
+    let onLogout: () -> Void
+    
     var body: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
@@ -99,7 +106,8 @@ struct VerticalVideoFeed: View {
                                 language: vm.selectedLanguage,
                                 containerWidth: screenWidth,
                                 containerHeight: screenHeight,
-                                selectedTab: $selectedTab
+                                selectedTab: $selectedTab,
+                                onLogout: onLogout
                             )
                             .frame(width: screenWidth, height: screenHeight)
                             .id(video.id) // Use stable video ID for scrolling
@@ -190,6 +198,7 @@ struct FeedVideoPage: View {
     let containerHeight: CGFloat
     @Binding var selectedTab: Int
     @State private var uploaderPfp: String?
+    let onLogout: () -> Void
     
     var body: some View {
         ZStack {
@@ -210,7 +219,8 @@ struct FeedVideoPage: View {
                 commentCount: video.commentCount,
                 selectedTab: $selectedTab,
                 showingInFullScreen: false,
-                ownProfile: false
+                ownProfile: false,
+                onLogout: onLogout
             )
             .environmentObject(userSession)
             .id(video.id)

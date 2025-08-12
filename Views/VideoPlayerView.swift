@@ -20,7 +20,8 @@ struct VideoPlayerView: View {
     @State private var showProfile = false
     let showingInFullScreen: Bool
     let ownProfile: Bool
-    
+    let onLogout: () -> Void // <-- Add this property
+
     @Binding var selectedTab: Int
     init(
         url: URL,
@@ -37,7 +38,8 @@ struct VideoPlayerView: View {
         commentCount: Int,
         selectedTab: Binding<Int>,
         showingInFullScreen: Bool,
-        ownProfile: Bool
+        ownProfile: Bool,
+        onLogout: @escaping () -> Void
     ) {
         self.url = url
         self.videoId = videoId
@@ -54,6 +56,7 @@ struct VideoPlayerView: View {
         self._selectedTab = selectedTab
         self.showingInFullScreen = showingInFullScreen
         self.ownProfile = ownProfile
+        self.onLogout = onLogout // <-- Store the closure
     }
 
     @State private var isPlaying = false
@@ -121,12 +124,13 @@ struct VideoPlayerView: View {
                             .onTapGesture {
                                 togglePlayPause()
                             }
+                            .ignoresSafeArea(edges: .top)
                         
                         Spacer()
                     }
                     .ignoresSafeArea(edges: .top)
                     
-                    // Action buttons overlay
+                    // Action buttons overlay - Fixed positioning at bottom right
                     VStack {
                         Spacer()
                         HStack {
@@ -157,8 +161,17 @@ struct VideoPlayerView: View {
                                 }
                                 .fullScreenCover(isPresented: $showProfile) {
                                     NavigationStack {
-                                        OtherUserProfileView(userId: uploaderId, selectedTab: $selectedTab)
-                                            .padding(.top, -62.5)
+                                        if(uploaderId == Auth.auth().currentUser?.uid){
+                                            ProfileView(
+                                                userSession: UserSessionViewModel(),
+                                                onLogout: onLogout,
+                                                selectedTab: $selectedTab,
+                                                showBackButton: true
+                                            )
+                                        } else {
+                                            OtherUserProfileView(userId: uploaderId, selectedTab: $selectedTab, onLogout: onLogout)
+                                                .padding(.top, -62.5)
+                                        }
                                     }
                                 }
                                 .simultaneousGesture(
@@ -354,9 +367,33 @@ struct VideoPlayerView: View {
                                 }
                             }
                             .padding(.trailing, 20)
-                            .padding(.bottom, showingInFullScreen ? 60 : max(tabBarHeight + safeAreaBottom + 20, 20))
+                            .padding(.bottom, showingInFullScreen ? 100 : max(tabBarHeight + safeAreaBottom + 20, 20))
                         }
                         
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    .padding(.trailing, 0)
+                    
+                    // Fixed positioned back button overlay
+                    if (showingInFullScreen || ownProfile) && isActive {
+                        VStack {
+                            HStack {
+                                Button(action: { dismiss() }) {
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 18, weight: .bold))
+                                        .frame(width: 12, height: 18)
+                                        .foregroundColor(.white)
+                                        .padding(.leading, 20)
+                                        .padding(.vertical, 4)
+                                        .background(Color.clear)
+                                }
+                                Spacer()
+                            }
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .padding(.top, 80)
+                        .padding(.leading, 20)
                     }
                     
                     // Captions overlay
@@ -401,8 +438,12 @@ struct VideoPlayerView: View {
                             .cornerRadius(8)
                             .padding(.horizontal, 20)
                             .padding(.trailing, 80) // Space for action buttons
-                            .padding(.bottom, max(tabBarHeight + safeAreaBottom + 20, 20))
+                            .padding(.bottom, showingInFullScreen ? 60 : max(safeAreaBottom + 100, 60))
                         }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .padding(.bottom, showingInFullScreen ? 200 : max(safeAreaBottom + 200, 200))
+                        .padding(.horizontal, 20)
+                        .padding(.trailing, 80) // Space for action buttons
                     }
                     
                     // Word popup overlay
@@ -426,23 +467,10 @@ struct VideoPlayerView: View {
                             )
                             .padding(.bottom, 200)
                         }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     }
                 }
-                .toolbar {
-                    if (showingInFullScreen || ownProfile) && isActive{
-                        ToolbarItem(placement: .navigationBarLeading) {
-                            Button(action: { dismiss() }) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .frame(width: 12, height: 18)
-                                    .foregroundColor(.white)
-                                    .padding(.leading, 20)
-                                    .padding(.vertical, 4)
-                                    .background(Color.clear)
-                            }
-                        }
-                    }
-                }
+                .ignoresSafeArea(edges: .top)
                 .navigationBarBackButtonHidden(true)
             }
         }

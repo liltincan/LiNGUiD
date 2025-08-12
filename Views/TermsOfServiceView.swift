@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct TermsOfServiceView: View {
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -211,6 +213,35 @@ struct TermsOfServiceView: View {
             .padding(.horizontal, 20)
         }
         .background(Color.black)
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
+        .safeAreaInset(edge: .top) {
+            // Custom navigation bar
+            HStack {
+                // Back button with chevron.left
+                Button(action: {
+                    dismiss()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.white)
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                }
+                
+                Spacer()
+                
+                Text("Terms Of Service")
+                    .foregroundColor(.white)
+                    .font(.system(size: 17, weight: .semibold))
+                
+                Spacer()
+                
+                // Invisible spacer for balance
+                Color.clear
+                    .frame(width: 44, height: 44)
+            }
+            .padding(.horizontal, 16)
+            .frame(height: 44)
+            .background(Color.black)
+        }
     }
 }

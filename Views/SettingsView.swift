@@ -36,8 +36,8 @@ struct SettingsView: View {
                         DividerLine()
                         
                         SettingsSection(title: "Your activity") {
-                            SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumbnails: likedVideos, videoURLs: likedVideoURLs, likedVideoArray: likedVideoArray, selectedTab: $selectedTab))
-                            SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumbnails: savedVideos, videoURLs: savedVideoURLs, savedVideoArray: savedVideoArray, selectedTab: $selectedTab))
+                            SettingsRowLink(title: "Liked", icon: "heart", destination: LikedView(videoThumbnails: likedVideos, videoURLs: likedVideoURLs, likedVideoArray: likedVideoArray, selectedTab: $selectedTab, onLogout: onLogout))
+                            SettingsRowLink(title: "Saved", icon: "bookmark", destination: SavedView(videoThumbnails: savedVideos, videoURLs: savedVideoURLs, savedVideoArray: savedVideoArray, selectedTab: $selectedTab, onLogout: onLogout))
                         }
 
                         DividerLine()
@@ -52,7 +52,7 @@ struct SettingsView: View {
                         SettingsSection(title: "Information") {
                             SettingsRowLink(title: "About", destination: AboutView())
                             SettingsRowLink(title: "Privacy", destination: PrivacyPolicyView())
-                            SettingsRowLink(title: "TermsOfService", destination: TermsOfServiceView())
+                            SettingsRowLink(title: "Terms Of Service", destination: TermsOfServiceView())
                             SettingsRowLink(title: "Request a Feature", destination: RequestFeatureView())
                         }
 
@@ -70,12 +70,39 @@ struct SettingsView: View {
                     }
                     .padding(.horizontal, 16)
                 }
-                .padding(.top, 32)
                 .scrollIndicators(.hidden)
             }
             .background(Color.black.ignoresSafeArea())
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
+            .safeAreaInset(edge: .top) {
+                // Custom navigation bar
+                HStack {
+                    // Back button with chevron.left
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.white)
+                            .font(.system(size: 17, weight: .semibold))
+                            .frame(width: 44, height: 44)
+                    }
+                    
+                    Spacer()
+                    
+                    Text("Setting")
+                        .foregroundColor(.white)
+                        .font(.system(size: 17, weight: .semibold))
+                    
+                    Spacer()
+                    
+                    // Invisible spacer for balance
+                    Color.clear
+                        .frame(width: 44, height: 44)
+                }
+                .padding(.horizontal, 16)
+                .frame(height: 44)
+                .background(Color.black)
+            }
             .toolbar(.hidden, for: .tabBar)
             .alert("Are you sure you want to log out?", isPresented: $showLogoutAlert) {
                 Button("Log out", role: .destructive) {
@@ -337,9 +364,10 @@ struct LikedView: View {
     var videoURLs: [String]
     var likedVideoArray: [Video]
     @Binding var selectedTab: Int
+    let onLogout: () -> Void
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't liked any videos yet.", videoArray: likedVideoArray, selectedTab: $selectedTab, fromOtherUserProfile: true)
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't liked any videos yet.", videoArray: likedVideoArray, selectedTab: $selectedTab, fromOtherUserProfile: true, onLogout: onLogout)
         }
         .padding(.top, 20)
         .navigationTitle("Liked Videos")
@@ -351,9 +379,10 @@ struct SavedView: View {
     var videoURLs: [String]
     var savedVideoArray: [Video]
     @Binding var selectedTab: Int
+    let onLogout: () -> Void
     var body: some View {
         ScrollView {
-            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't saved any videos yet.", videoArray: savedVideoArray, selectedTab: $selectedTab, fromOtherUserProfile: true)
+            VideoGridSection(videoThumbnails: videoThumbnails, videoURLs: videoURLs, uploadingVideos: [], noVideosMessage: "You haven't saved any videos yet.", videoArray: savedVideoArray, selectedTab: $selectedTab, fromOtherUserProfile: true, onLogout: onLogout)
         }
         .padding(.top, 20)
         .navigationTitle("Saved Videos")

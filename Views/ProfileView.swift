@@ -16,11 +16,16 @@ struct ProfileView: View {
     @Binding var selectedTab: Int
     let onLogout: () -> Void
     
+    // Add this property to detect navigation context
+    let showBackButton: Bool
+    @Environment(\.dismiss) private var dismiss
+    
     @Environment(\.colorScheme) var colorScheme
 
-    init(userSession: UserSessionViewModel, onLogout: @escaping () -> Void = {}, selectedTab: Binding<Int>) {
+    init(userSession: UserSessionViewModel, onLogout: @escaping () -> Void = {}, selectedTab: Binding<Int>, showBackButton: Bool = false) {
         self.onLogout = onLogout
         self._selectedTab = selectedTab
+        self.showBackButton = showBackButton
         _userSession = StateObject(wrappedValue: userSession)
         _vm = StateObject(wrappedValue: ProfileViewModel(userSession: userSession))
         _viewModel = StateObject(wrappedValue: SavedWordViewModel(userSession: userSession))
@@ -41,7 +46,11 @@ struct ProfileView: View {
                             onLogout: onLogout,
                             showingFullScreenProfilePicture: $showingFullScreenProfilePicture,
                             fullScreenProfilePictureURL: $fullScreenProfilePictureURL,
-                            selectedTab: $selectedTab
+                            selectedTab: $selectedTab,
+                            showBackButton: showBackButton,
+                            onBackTapped: {
+                                dismiss()
+                            }
                         )
                         .padding(.top, -15)
                         
@@ -65,7 +74,8 @@ struct ProfileView: View {
                                 noVideosMessage: "No videos uploaded yet.",
                                 videoArray: vm.uploadedVideoArray.reversed(),
                                 selectedTab: $selectedTab,
-                                fromOtherUserProfile: false
+                                fromOtherUserProfile: false,
+                                onLogout: onLogout
                             )
                         }
                     }
@@ -183,6 +193,7 @@ struct ProfileView: View {
             )
             .animation(.easeInOut, value: showingFullScreenProfilePicture)
         }
+        .navigationBarBackButtonHidden(showBackButton) // Hide default back button when using custom one
     }
     
     @MainActor
@@ -226,53 +237,111 @@ struct ProfileHeaderView: View {
     @Binding var selectedTab: Int
     @StateObject private var proVM = ProStatusViewModel()
     @State private var shouldNavigateToEdit = false
-    
+    var showBackButton: Bool = false
+    var onBackTapped: () -> Void = { }
     var body: some View {
         VStack {
-            ZStack {
-                HStack(spacing: 0) {
-                    Text(userName)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.primary)
-
-                    if proVM.isPro {
-                        Image(systemName: "checkmark.seal.fill")
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, Color.appPrimaryColor)
-                            .font(.system(size: 16))
+            ZStack{
+                if(!showBackButton){
+                    ZStack {
+                        HStack(spacing: 0) {
+                            Text(userName)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.primary)
+                            
+                            if proVM.isPro {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(.white, Color.appPrimaryColor)
+                                    .font(.system(size: 16))
+                            }
+                        }
+                        .padding(.leading, 0)
+                        
+                        Spacer()
+                        
+                        HStack{
+                            Spacer()
+                            
+                            NavigationLink {
+                                SettingsView(
+                                    likedVideos: vm.likedVideoThumbnails,
+                                    likedVideoURLs: vm.likedVideoURLs,
+                                    savedVideos: vm.savedVideoThumbnails,
+                                    savedVideoURLs: vm.savedVideoURLs,
+                                    likedVideoArray: vm.likedVideoArray,
+                                    savedVideoArray: vm.savedVideoArray,
+                                    languages: vm.allLanguageNames,
+                                    uid: uid,
+                                    selectedNativeLanguages: Set([vm.nativeLanguage?.lowercased() ?? ""]),
+                                    selectedTab: $selectedTab,
+                                    onLogout: onLogout
+                                )
+                            } label: {
+                                Image(systemName: "gear")
+                                    .font(.system(size: 26, weight: .bold))
+                                    .padding(.trailing, 20)
+                                    .foregroundColor(.primary)
+                            }
+                        }
                     }
-                }
-                .padding(.leading, 0)
-
-                Spacer()
-                
-                HStack{
-                    Spacer()
-                    
-                    NavigationLink {
-                        SettingsView(
-                            likedVideos: vm.likedVideoThumbnails,
-                            likedVideoURLs: vm.likedVideoURLs,
-                            savedVideos: vm.savedVideoThumbnails,
-                            savedVideoURLs: vm.savedVideoURLs,
-                            likedVideoArray: vm.likedVideoArray,
-                            savedVideoArray: vm.savedVideoArray,
-                            languages: vm.allLanguageNames,
-                            uid: uid,
-                            selectedNativeLanguages: Set([vm.nativeLanguage?.lowercased() ?? ""]),
-                            selectedTab: $selectedTab,
-                            onLogout: onLogout
-                        )
-                    } label: {
-                        Image(systemName: "gear")
-                            .font(.system(size: 26, weight: .bold))
-                            .padding(.trailing, 20)
-                            .foregroundColor(.primary)
+                    .padding(.bottom, 10)
+                } else{
+                    HStack {
+                        Button {
+                            onBackTapped()
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.primary)
+                        }
+                        .padding(.leading, 20)
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 0) {
+                            Text(userName)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.primary)
+                            
+                            if proVM.isPro {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .symbolRenderingMode(.palette)
+                                    .foregroundStyle(.white, Color.appPrimaryColor)
+                                    .font(.system(size: 16))
+                            }
+                        }
+                        .padding(.leading, 20)
+                        
+                        Spacer()
+                        
+                        NavigationLink {
+                            SettingsView(
+                                likedVideos: vm.likedVideoThumbnails,
+                                likedVideoURLs: vm.likedVideoURLs,
+                                savedVideos: vm.savedVideoThumbnails,
+                                savedVideoURLs: vm.savedVideoURLs,
+                                likedVideoArray: vm.likedVideoArray,
+                                savedVideoArray: vm.savedVideoArray,
+                                languages: vm.allLanguageNames,
+                                uid: uid,
+                                selectedNativeLanguages: Set([vm.nativeLanguage?.lowercased() ?? ""]),
+                                selectedTab: $selectedTab,
+                                onLogout: onLogout
+                            )
+                        } label: {
+                            Image(systemName: "gear")
+                                .font(.system(size: 26, weight: .bold))
+                                .padding(.trailing, 20)
+                                .foregroundColor(.primary)
+                        }
                     }
+                    .padding(.bottom, 10)
                 }
+               
             }
             .padding(.bottom, 10)
-
+            
             Button {
                 if profilePictureURL != "" {
                     showingFullScreenProfilePicture = true
@@ -367,7 +436,7 @@ struct ProfileHeaderView: View {
         .hidden()
     }
 }
-
+// Rest of your structs remain the same...
 struct LevelDotsView: View {
     @Environment(\.colorScheme) var colorScheme
     let level: Int
@@ -475,6 +544,7 @@ struct VideoGridSection: View {
     @EnvironmentObject var uploadManager: UploadManager
     @EnvironmentObject var userSession: UserSessionViewModel
     let fromOtherUserProfile: Bool
+    let onLogout: () -> Void
 
     var body: some View {
         if videoThumbnails.isEmpty && uploadingVideos.isEmpty {
@@ -538,6 +608,7 @@ struct VideoGridSection: View {
                         index: index,
                         videoArray: videoArray,
                         allVideoURLs: videoURLs,
+                        onLogout: onLogout,
                         selectedTab: $selectedTab,
                         fromOtherUserProfile: fromOtherUserProfile
                     )
@@ -579,6 +650,7 @@ struct Videos: View {
     let allVideoURLs: [String]
     let gridItemWidth = (UIScreen.main.bounds.width - 5) / 3
     let thumbnailHeight = (UIScreen.main.bounds.width - 5) * 16 / 27
+    let onLogout: () -> Void
     
     @EnvironmentObject var userSession: UserSessionViewModel
     @Binding var selectedTab: Int
@@ -656,10 +728,11 @@ struct Videos: View {
                             startIndex: orderedVideos.firstIndex(where: { $0.id == video.id }) ?? 0,
                             selectedTab: $selectedTab,
                             fromProfile: fromOtherUserProfile,
-                            ownProfile: !fromOtherUserProfile
+                            ownProfile: !fromOtherUserProfile,
+                            onLogout: onLogout
                         )
                         .frame(width: geometry.size.width, height: geometry.size.height)
-                        .padding(.top, 60)
+                        .padding(.top, 50)
                         
                     }
                 }

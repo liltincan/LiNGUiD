@@ -14,11 +14,11 @@ struct MainTabView: View {
     var body: some View {
         print("deepLinkedVideoID: \(deepLinkedVideoID ?? "nil")")
         return TabView(selection: $selectedTab) {  // Changed from $selection to $selectedTab
-            VideoFeedView(userSession: userSession, startingVideoId: deepLinkedVideoID, selectedTab: $selectedTab)
+            VideoFeedView(userSession: userSession, startingVideoId: deepLinkedVideoID, selectedTab: $selectedTab, onLogout: onLogout)
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(0)
 
-            ChatListView(unreadChatCount: $unreadChatCount)
+            ChatListView(unreadChatCount: $unreadChatCount, onLogout: onLogout)
                 .tabItem { Label("Chats", systemImage: "bubble.left.and.bubble.right.fill")}
                 //the .badge will show a red notification bubble with the parameter inside being the number
                 .badge(unreadChatCount == 0 ? 0 : unreadChatCount)
