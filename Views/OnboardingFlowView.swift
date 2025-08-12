@@ -424,7 +424,7 @@ struct OnboardingFlowView: View {
                     VStack {
                         Spacer()
 
-                        GetProView()
+                        GetProView(onDone: { showGetProPopup = false })
                             .frame(width: UIScreen.main.bounds.width * 0.5, height: UIScreen.main.bounds.height * 0.5)
                             .padding(.horizontal, 20)
                             .background(

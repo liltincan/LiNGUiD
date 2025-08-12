@@ -15,6 +15,9 @@ struct ChatMessagesConvoView: View {
     let chatID: String
     @ObservedObject var viewModel: ChatListViewModel
     @StateObject private var audioMeter = AudioMeterObserver(recorder: nil)
+    @StateObject private var tap = TapTracker(maxPerDay: 20)
+    @Environment(\.scenePhase) private var scenePhase
+    
     //MARK: Closure function that allows user to go back to the main
     var onBack: () -> Void
     //MARK: Converation messages
@@ -30,6 +33,10 @@ struct ChatMessagesConvoView: View {
     @State private var audioRecorder: AVAudioRecorder?
     @State private var audioURL: URL?
     @State private var isRecording = false
+    
+    //MARK: Translating the message based on tapping
+    @State private var showTranslateMessage: Set<String> = []
+    @State private var showLimitAlert = false
     
     @Binding var path: [ChatRoute]
     @FocusState private var focusfield: FocusField?
@@ -53,10 +60,11 @@ struct ChatMessagesConvoView: View {
             VStack {
                 if let chat = viewModel.chats.first(where: { $0.id == chatID }) {
                     //this is for the profile,name, maybe active, and phone call (HEADER)
-                    HStack(spacing: 12) {
+                    HStack(spacing: 15) {
                         Button(action: onBack) {
                             Image(systemName: "chevron.left")
                                 .foregroundColor(.white)
+                                .font(.system(size: 20))
                         }
                         Button(action: {
                             if let currentUserID = Auth.auth().currentUser?.uid,
@@ -117,6 +125,8 @@ struct ChatMessagesConvoView: View {
                         }
                         .padding(.vertical, 8)
                     }
+                    //this dismisses the keyboard when user scrolls down
+                    .scrollDismissesKeyboard(.interactively)
                     .onChange(of: messages) { newMessages in
                         guard let last = newMessages.last else { return }
                         DispatchQueue.main.async {
@@ -141,7 +151,6 @@ struct ChatMessagesConvoView: View {
                     .padding(.top, 10)
             }
             .background(Color.black)
-            //.toolbar(.hidden, for: .navigationBar)
             .navigationBarBackButtonHidden(true)
             .padding(.bottom, 10)
             //when this view loads-> it will then load up the convos as they update using the listerner
@@ -149,14 +158,52 @@ struct ChatMessagesConvoView: View {
                 viewModel.listenToMessages(for: chatID) { msg in
                     self.messages = msg
                 }
+                showTranslateMessage = loadTranslatedSet(for: chatID)
+                
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                     viewModel.markMessagesAsRead(for: chatID)
                 }
+            }
+            //this will show whenever user taps so it is changing at that exact moment
+            .onChange(of: showTranslateMessage) { newVal in
+                saveTranslatedSet(newVal, for: chatID)
             }
             .onTapGesture {
                 //dismiss the keyboard hwen users touches the chat
                 focusfield = nil
             }
+            .onChange(of: scenePhase) { phase in
+                if phase == .active {
+                    tap.resetForNewDayIfNeeded()
+                }
+            }
+            .overlay(
+                ZStack {
+                    if (showLimitAlert) {
+                        Color.black.opacity(0.9)
+                            .ignoresSafeArea()
+                            .transition(.opacity)
+                            .onTapGesture {
+                                withAnimation {
+                                    showLimitAlert = false
+                                }
+                            }
+                        VStack {
+                            Spacer()
+                            GetProView()
+                                .frame(width: UIScreen.main.bounds.width * 0.5, height: UIScreen.main.bounds.height * 0.5)
+                                .padding(.horizontal, 20)
+                                .background(
+                                    Color(red: 22/255, green: 0/255, blue: 46/255)
+                                        .cornerRadius(24)
+                                )
+                            Spacer()
+                        }
+                        .transition(.slideUpFromBottom)
+                    }
+                }
+                .animation(.easeInOut, value: showLimitAlert)
+            )
         }
     }
     //MARK: - This is the main view where the messages will show up
@@ -218,7 +265,6 @@ struct ChatMessagesConvoView: View {
                             .multilineTextAlignment(.leading)
                             .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: 280, alignment: .trailing)
-                            //.padding(.vertical, 1)
                     }
                 }
             }
@@ -260,7 +306,7 @@ struct ChatMessagesConvoView: View {
                                     if (message.isLiked) {
                                         Image(systemName: "heart.fill")
                                             .foregroundColor(.white)
-                                        //the heart will be this size
+                                            //the heart will be this size
                                             .font(.system(size: 12))
                                             .padding(5)
                                             .background(Circle().fill(Color.linguidPurple))
@@ -277,12 +323,14 @@ struct ChatMessagesConvoView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(message.text)
                                 .foregroundColor(.black)
-                            if let translated = message.translatedText {
+                            //they both have to be true in order to go in the statement
+                            if showTranslateMessage.contains(message.id), let translated = message.translatedText {
                                 Divider().background(Color.gray.opacity(0.4)).padding(.vertical, 2)
                                 Text(translated)
                                     .font(.caption)
                                     .foregroundColor(.linguidPurple)
                             }
+                            
                         }
                         .padding(10)
                         .background(Color.white)
@@ -305,8 +353,21 @@ struct ChatMessagesConvoView: View {
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: 280, alignment: .leading)
-                        .onTapGesture(count: 2) {
-                            toggleLike(for: message)
+                        .simultaneousGesture(
+                            TapGesture(count: 2).onEnded {
+                                toggleLike(for: message)
+                            }
+                        )
+                        .onTapGesture {
+                            //will only add once and will not add removal so if not in the set then return
+                            guard !showTranslateMessage.contains(message.id) else { return }
+                            if(tap.tryConsume()) {
+                                showTranslateMessage.insert(message.id)
+                                saveTranslatedSet(showTranslateMessage, for: chatID)
+                            }
+                            else {
+                                showLimitAlert = true
+                            }
                         }
                         .padding(.vertical, 1)
                     }
@@ -523,7 +584,6 @@ struct ChatMessagesConvoView: View {
                 }
             }
         }
-
         self.audioURL = nil
         self.replyingTo = nil
     }
@@ -539,7 +599,8 @@ struct ChatMessagesConvoView: View {
             storageRef.downloadURL { url, error in
                 if let downloadURL = url {
                     completion(downloadURL.absoluteString)
-                } else {
+                }
+                else {
                     completion(nil)
                 }
             }
@@ -585,6 +646,19 @@ struct ChatMessagesConvoView: View {
     //function will call the isLiked and determine if it is true or not
     private func toggleLike(for message: ChatMessages) {
         viewModel.toggleLike(for: message, in: chatID)
+    }
+    //function will put the translation of the tap anywhere in the file
+    private func loadTranslatedSet(for chatID: String) -> Set<String> {
+        let key = "translated_\(chatID)"
+        guard let data = UserDefaults.standard.data(forKey: key),
+              let arr = try? JSONDecoder().decode([String].self, from: data) else { return [] }
+        return Set(arr)
+    }
+    //function will save the translation
+    private func saveTranslatedSet(_ set: Set<String>, for chatID: String) {
+        let key = "translated_\(chatID)"
+        let data = try? JSONEncoder().encode(Array(set))
+        UserDefaults.standard.set(data, forKey: key)
     }
 }
 //MARK: - This will be the UI of how the audio should look

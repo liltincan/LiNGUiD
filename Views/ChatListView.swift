@@ -109,7 +109,8 @@ struct ChatListView: View {
         }
         //this needs to be changes when changes are being made since it keeps track of the count
         .onChange(of: viewModel.conversations) { conversations in
-            unreadChatCount = conversations.filter { $0.hasUnreadMessages }.count
+            //checking for each convo of how many unreads messages they have, will start at 0 = 0 then get each convo
+            unreadChatCount = conversations.reduce(0) { $0 + $1.unreadCount }
             //check if we need to open a specific chat after conversations are loaded
             if let userId = pendingChatUserId,
                let conversation = conversations.first(where: { $0.friend.id == userId }) {
@@ -255,87 +256,101 @@ struct DiscoveryView: View {
                 //call the filter option so user can now filter what they want
                 NativeLanguageFilterView(selectedLanguages: $selectedLanguages, defaultLanguage: defaultLanguage, onFilterChanged: applyFilters)
                 Divider().background(Color.gray)
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(viewModel.discoverableUsers, id: \.id) { user in
-                            //check if the user already messaged them
-                            let hasMessaged = viewModel.chattedUserIDs.contains(user.id)
-                            //make the information of the profile all aligned by adding the vstack and padding (horizontal)
-                            VStack(spacing: 0) {
-                                HStack(spacing: 12) {
-                                    //the profile image should be overlayed with the flag and the active
-                                    ZStack(alignment: .bottomLeading) {
-                                        Button(action: {
-                                            print("Profile tapped for user id:", user.id)
-                                            onUserSelected(user.id)
-                                        }) {
-                                            ProfileImageView(imageUrl: user.profileimage)
+                //if the serach type is not empty but there are no users then call the struct and show the error message
+                if(!searchText.isEmpty && viewModel.discoverableUsers.isEmpty) {
+                    NoSearchResultsView(query: searchText)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                else {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(viewModel.discoverableUsers, id: \.id) { user in
+                                //check if the user already messaged them
+                                let hasMessaged = viewModel.chattedUserIDs.contains(user.id)
+                                //make the information of the profile all aligned by adding the vstack and padding (horizontal)
+                                VStack(spacing: 0) {
+                                    HStack(spacing: 12) {
+                                        //the profile image should be overlayed with the flag and the active
+                                        ZStack(alignment: .bottomLeading) {
+                                            Button(action: {
+                                                print("Profile tapped for user id:", user.id)
+                                                onUserSelected(user.id)
+                                            }) {
+                                                ProfileImageView(imageUrl: user.profileimage)
+                                            }
+                                            HStack(spacing: 4) {
+                                                Text(user.flag)
+                                            }
+                                            .padding(.bottom, -8)
                                         }
-                                        HStack(spacing: 4) {
-                                            Text(user.flag)
-                                        }
-                                        .padding(.bottom, -8)
-                                    }
-                                    //have the username and what they are learning aligned
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(user.username)
+                                        //have the username and what they are learning aligned
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(user.username)
+                                                .foregroundColor(.white)
+                                                .font(.headline.weight(.bold))
+                                            HStack(alignment: .top,spacing: 8) {
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    Text(user.nativeLanguage.uppercased())
+                                                    MiniProgressBarView()
+                                                        .frame(height: 4)
+                                                        .padding(.leading, -15)
+                                                }
+                                                Image(systemName: "chevron.right.2")
+                                                    .font(.subheadline.weight(.semibold))
+                                                    .padding(.top, 2)
+                                                    .padding(.leading, -15)
+                                                
+                                                VStack(alignment: .leading, spacing: 2) {
+                                                    Text(user.learningLanguage.uppercased())
+                                                    LevelDotsView(level: user.comprehensionLevel)
+                                                        .frame(height: 4)
+                                                        .padding(.leading, -15)
+                                                }
+                                            }
                                             .foregroundColor(.white)
-                                            .font(.headline.weight(.bold))
-                                        HStack {
-                                            Text(user.nativeLanguage.uppercased())
-                                            Image(systemName: "chevron.right.2")
-                                                .resizable()
-                                                .scaledToFit()
-                                                .frame(width: 15, height: 15)
-                                            Text(user.learningLanguage.uppercased())
-                                        }
-                                        .foregroundColor(.white)
-                                        .font(.subheadline)
-                                        LevelDotsView(level: user.comprehensionLevel)
-                                            .padding(.top,-15)
-                                            .padding(.leading, -16)
                                             .font(.subheadline)
-                                    }
-                                    Spacer()
-                                    Button(action: {
-                                        //checking if they already messaged user if yes open the chat
-                                        if(hasMessaged) {
-                                            //will have to directly open the chat screen
-                                            NotificationCenter.default.post(name: NSNotification.Name("StartChatWithUser"), object: nil, userInfo: [
-                                                "userId": user.id,
-                                                "username": user.username
-                                            ])
                                         }
-                                        else {
-                                            //star new chat with thier id and put the info with their id
-                                            viewModel.startChat(with: user.id)
+                                        Spacer()
+                                        Button(action: {
+                                            //checking if they already messaged user if yes open the chat
+                                            if(hasMessaged) {
+                                                //will have to directly open the chat screen
+                                                NotificationCenter.default.post(name: NSNotification.Name("StartChatWithUser"), object: nil, userInfo: [
+                                                    "userId": user.id,
+                                                    "username": user.username
+                                                ])
+                                            }
+                                            else {
+                                                //star new chat with thier id and put the info with their id
+                                                viewModel.startChat(with: user.id)
+                                            }
+                                        }) {
+                                            Text(hasMessaged ? "Messaged" : "Say Hi!")
+                                                .padding(.horizontal, 10)
+                                                .padding(.vertical, 8)
+                                                .background(hasMessaged ? Color.gray : Color.linguidPurple)
+                                                .foregroundColor(.white)
+                                                .cornerRadius(10)
                                         }
-                                    }) {
-                                        Text(hasMessaged ? "Messaged" : "Say Hi!")
-                                            .padding(.horizontal, 10)
-                                            .padding(.vertical, 8)
-                                            .background(hasMessaged ? Color.gray : Color.linguidPurple)
-                                            .foregroundColor(.white)
-                                            .cornerRadius(10)
                                     }
+                                    .padding(.vertical, 12)
+                                    Divider().background(Color.gray)
                                 }
-                                .padding(.vertical, 10)
-                                Divider().background(Color.gray)
+                                .padding(.horizontal)
                             }
-                            .padding(.horizontal)
                         }
                     }
-                }
-                //will load the users when this view appears right away
-                .onAppear {
-                    //have to check that it not the same as the target language and if not then append it to the selected languages
-                    if (!selectedLanguages.contains(defaultLanguage)) {
-                        selectedLanguages.append(defaultLanguage)
+                    //will load the users when this view appears right away
+                    .onAppear {
+                        //this will add the default langauge to the filter and will not be removed
+                        if (!selectedLanguages.contains(defaultLanguage)) {
+                            selectedLanguages.append(defaultLanguage)
+                        }
+                        applyFilters()
                     }
-                    applyFilters()
+                    //hide the scrollable on the side
+                    .scrollIndicators(.hidden)
                 }
-                //hide the scrollable on the side
-                .scrollIndicators(.hidden)
             }
             .padding(.top, 7)
         }
@@ -465,6 +480,29 @@ struct SearchByUsernameView: View {
         .onAppear {
             onSearchChanged()
         }
+    }
+}
+//MARK: Checks if the user exists if not then prompt the error
+//precondition: none
+//postcondition: will show up if there are no user
+struct NoSearchResultsView: View {
+    let query: String
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "magnifyingglass")
+                .resizable()
+                .scaledToFit()
+                .foregroundColor(.gray)
+                .frame(width: 50, height: 50)
+                .opacity(0.7)
+            Text("No Results for “\(query)”")
+                .foregroundColor(.white)
+                .font(.headline)
+            Text("Check the spelling or try a new search.")
+                .foregroundColor(.gray)
+                .font(.subheadline)
+        }
+        .padding()
     }
 }
 

@@ -16,6 +16,8 @@ class UploadManager: ObservableObject {
         let localIdentifier: String
         let thumbnail: UIImage
         var isUploading: Bool
+        var progress: Double = 0 // NEW
+        var filename: String = "" // optional
     }
     
     @Published var totalToUpload: Int = 0
@@ -27,6 +29,32 @@ class UploadManager: ObservableObject {
     var onUploadFinished: (() -> Void)?
 
     private var uploadTasks: [String: Task<Void, Never>] = [:]
+
+    init() {
+        NotificationCenter.default.addObserver(
+            forName: BackgroundUploader.progressNote,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard
+                let localId = note.userInfo?["localIdentifier"] as? String,
+                let progress = note.userInfo?["progress"] as? Double
+            else { return }
+
+            if let idx = self?.uploadingVideos.firstIndex(where: { $0.localIdentifier == localId }) {
+                self?.uploadingVideos[idx].progress = progress
+            }
+        }
+
+        NotificationCenter.default.addObserver(
+            forName: BackgroundUploader.finishedNote,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard let localId = note.userInfo?["localIdentifier"] as? String else { return }
+            self?.markUploaded(localId)
+        }
+    }
 
     func addUploadingVideos(_ assets: [PHAsset], thumbnails: [String: UIImage]) {
         totalToUpload = assets.count // <- set this once
@@ -78,6 +106,14 @@ class UploadManager: ObservableObject {
         uploadingVideos.removeAll()
         totalToUpload = 0
         completedCount = 0
+    }
+
+    @MainActor
+    func removeUploadingVideo(id: String) {
+        if let i = uploadingVideos.firstIndex(where: { $0.localIdentifier == id }) {
+            uploadingVideos.remove(at: i)
+            objectWillChange.send() // nudge any views bound to the array
+        }
     }
 
 }
