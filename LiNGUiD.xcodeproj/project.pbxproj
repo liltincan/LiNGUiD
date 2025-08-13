@@ -54,6 +54,7 @@
 		8177D3E62DF8D4B100FA6800 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E52DF8D4AC00FA6800 /* UploadView.swift */; };
 		8177D3E82DF8D69A00FA6800 /* VideoThumbnailSelectableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */; };
 		818F2EEA2E4AD12200DD9EBE /* ManageSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */; };
+		819A09FE2E4D572F00A58DDF /* Location Verifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 819A09FD2E4D572600A58DDF /* Location Verifier.swift */; };
 		81CC3AEF2E15B4000010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AEE2E15B4000010512B /* CropViewController */; };
 		81CC3AF12E15B4000010512B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF02E15B4000010512B /* TOCropViewController */; };
 		81CC3AF32E15B44A0010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF22E15B44A0010512B /* CropViewController */; };
@@ -174,6 +175,7 @@
 		8177D3E52DF8D4AC00FA6800 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
 		8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoThumbnailSelectableView.swift; sourceTree = "<group>"; };
 		818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageSubscriptionView.swift; sourceTree = "<group>"; };
+		819A09FD2E4D572600A58DDF /* Location Verifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Location Verifier.swift"; sourceTree = "<group>"; };
 		81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomProgessView.swift; sourceTree = "<group>"; };
 		81E960712E20350500EEE22D /* UploadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadManager.swift; sourceTree = "<group>"; };
 		81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageLevelSelectionView.swift; sourceTree = "<group>"; };
@@ -388,6 +390,7 @@
 		8F51F2202DE01C9C00397726 /* Coordinators */ = {
 			isa = PBXGroup;
 			children = (
+				819A09FD2E4D572600A58DDF /* Location Verifier.swift */,
 				8138F4092E480A7D00675DB6 /* BackgroundUploader.swift */,
 				81E960712E20350500EEE22D /* UploadManager.swift */,
 				8F51F23A2DE0249A00397726 /* VideoFeedCoordinatorView.swift */,
@@ -717,6 +720,7 @@
 				8FB929532DE02A650020AFCD /* AuthCoordinatorView.swift in Sources */,
 				7EF02A452E3494AC00148DBB /* AudioObserverViewModel.swift in Sources */,
 				60C7E5B82DE2B52600C1AAF2 /* AppSocialLoginButton.swift in Sources */,
+				819A09FE2E4D572F00A58DDF /* Location Verifier.swift in Sources */,
 				810707522E41247E00F9E709 /* ProStatusViewModel.swift in Sources */,
 				60F930802DE98E3100E37156 /* User.swift in Sources */,
 				138018E52DF0AD01003FC3D6 /* ChangePasswordView.swift in Sources */,
