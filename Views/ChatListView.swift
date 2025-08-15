@@ -175,9 +175,17 @@ struct ChatRowView: View {
             }
             //this is now the convo information
             VStack(alignment: .leading, spacing: 4) {
-                Text(chat.username)
-                    .font(.headline.weight(.bold))
-                    .foregroundColor(.white)
+                HStack(spacing: 0){
+                    Text(chat.username)
+                        .font(.headline.weight(.bold))
+                        .foregroundColor(.white)
+                    if (chat.isProUser) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, Color.appPrimaryColor)
+                            .font(.system(size: 16))
+                    }
+                }
                 HStack(spacing: 2) {
                     if(hasUnreadMessages) {
                         Circle()
@@ -234,6 +242,8 @@ struct DiscoveryView: View {
     var defaultLanguage: String
     @State private var searchText: String = ""
     @State private var selectedLanguages: [String] = []
+    @State private var previousDefaultLanague: String = ""
+    @State private var showProCheck = false
     
     var body: some View {
         ZStack {
@@ -254,7 +264,7 @@ struct DiscoveryView: View {
                 }
                 .padding()
                 //call the filter option so user can now filter what they want
-                NativeLanguageFilterView(selectedLanguages: $selectedLanguages, defaultLanguage: defaultLanguage, onFilterChanged: applyFilters)
+                NativeLanguageFilterView(selectedLanguages: $selectedLanguages, defaultLanguage: defaultLanguage, onFilterChanged: applyFilters, isPro: viewModel.isCurrentUserPro, showProCheck: $showProCheck)
                 Divider().background(Color.gray)
                 //if the serach type is not empty but there are no users then call the struct and show the error message
                 if(!searchText.isEmpty && viewModel.discoverableUsers.isEmpty) {
@@ -285,9 +295,17 @@ struct DiscoveryView: View {
                                         }
                                         //have the username and what they are learning aligned
                                         VStack(alignment: .leading, spacing: 4) {
-                                            Text(user.username)
-                                                .foregroundColor(.white)
-                                                .font(.headline.weight(.bold))
+                                            HStack(spacing: 0) {
+                                                Text(user.username)
+                                                    .foregroundColor(.white)
+                                                    .font(.headline.weight(.bold))
+                                                if (user.isProUser) {
+                                                    Image(systemName: "checkmark.seal.fill")
+                                                        .symbolRenderingMode(.palette)
+                                                        .foregroundStyle(.white, Color.appPrimaryColor)
+                                                        .font(.system(size: 16))
+                                                }
+                                            }
                                             HStack(alignment: .top,spacing: 8) {
                                                 VStack(alignment: .leading, spacing: 2) {
                                                     Text(user.nativeLanguage.uppercased())
@@ -346,7 +364,21 @@ struct DiscoveryView: View {
                         if (!selectedLanguages.contains(defaultLanguage)) {
                             selectedLanguages.append(defaultLanguage)
                         }
+                        previousDefaultLanague = defaultLanguage
                         applyFilters()
+                    }
+                    //will get the defaultLanguage updates from the listener
+                    .onChange(of: defaultLanguage) { newDefault in
+                        //removing the the old default chip if there is one
+                        if (!previousDefaultLanague.isEmpty) {
+                            selectedLanguages.removeAll { $0 == previousDefaultLanague }
+                        }
+                        //now adding the new default if missing
+                        if (!selectedLanguages.contains(newDefault)) {
+                            selectedLanguages.append(newDefault)
+                        }
+                        previousDefaultLanague = newDefault
+                        applyFilters() 
                     }
                     //hide the scrollable on the side
                     .scrollIndicators(.hidden)
@@ -354,7 +386,35 @@ struct DiscoveryView: View {
             }
             .padding(.top, 7)
         }
+        //TODO: add a refresh where if user changes thier target language that should show up now
         .navigationBarBackButtonHidden(true)
+        .overlay(
+            ZStack {
+                if (showProCheck) {
+                    Color.black.opacity(0.9)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation {
+                                showProCheck = false
+                            }
+                        }
+                    VStack {
+                        Spacer()
+                        GetProView()
+                            .frame(width: UIScreen.main.bounds.width * 0.5, height: UIScreen.main.bounds.height * 0.5)
+                            .padding(.horizontal, 20)
+                            .background(
+                                Color(red: 22/255, green: 0/255, blue: 46/255)
+                                    .cornerRadius(24)
+                            )
+                        Spacer()
+                    }
+                    .transition(.slideUpFromBottom)
+                }
+            }
+            .animation(.easeInOut, value: showProCheck)
+        )
     }
     //function will identify what the users see if its 'filter by username', 'filter by languages', or 'all users'
     private func applyFilters() {
@@ -375,6 +435,8 @@ struct NativeLanguageFilterView: View {
     var defaultLanguage: String
     //this closure function will help with what filter it is at
     var onFilterChanged:()-> Void
+    var isPro: Bool
+    @Binding var showProCheck: Bool
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -400,23 +462,39 @@ struct NativeLanguageFilterView: View {
                     .foregroundColor(.white)
                     .cornerRadius(16)
                 }
-                //menu picker for when users filters the options
-                Menu{
-                    ForEach(LanguageUtils.sortedLanguages.filter { !selectedLanguages.contains($0.code) }, id: \.code) { country in
-                        Button(action: {
-                            selectedLanguages.append(country.code)
-                            onFilterChanged()
-                        }) {
-                            Text(country.name)
+                //if pro then you must allow the user to filter
+                if(isPro) {
+                    //menu picker for when users filters the options
+                    Menu{
+                        ForEach(LanguageUtils.sortedLanguages.filter { !selectedLanguages.contains($0.code) }, id: \.code) { country in
+                            Button(action: {
+                                selectedLanguages.append(country.code)
+                                onFilterChanged()
+                            }) {
+                                Text(country.name)
+                            }
                         }
+                    } label: {
+                        Image(systemName: "plus")
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .padding(.horizontal)
+                            .background(Color.purple.opacity(0.2))
+                            .cornerRadius(20)
                     }
-                } label: {
-                    Image(systemName: "plus")
-                        .foregroundColor(.white)
-                        .padding(8)
-                        .padding(.horizontal)
-                        .background(Color.purple.opacity(0.2))
-                        .cornerRadius(20)
+                }
+                else {
+                    Button(action: {
+                        //activate the binding so it can show the get pro
+                        showProCheck = true
+                    }) {
+                        Image(systemName: "plus")
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .padding(.horizontal)
+                            .background(Color.purple.opacity(0.2))
+                            .cornerRadius(20)
+                    }
                 }
             }
             .padding(.horizontal)
@@ -524,6 +602,3 @@ struct ProfileImageView: View {
             .clipShape(Circle())
     }
 }
-
-
-

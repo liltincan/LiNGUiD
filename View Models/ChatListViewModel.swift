@@ -19,6 +19,7 @@ class ChatListViewModel: ObservableObject {
     @Published var chattedUserIDs: Set<String> = []
     @Published var isInitialLoadDone = false
     @Published var learningLanguage: String = ""
+    @Published var isCurrentUserPro = false
 
     //look at the database now
     private var db = Firestore.firestore()
@@ -26,6 +27,7 @@ class ChatListViewModel: ObservableObject {
     private var listener: ListenerRegistration?
     //this will be updating when changes are made in the user profile
     private var userListeners: [String: ListenerRegistration] = [:]
+    private var currentTargetLanguageListener: ListenerRegistration?
 
     //default constructor
     init(){
@@ -55,12 +57,12 @@ class ChatListViewModel: ObservableObject {
                     let data = doc.data()
                     let participants = data["participantIDs"] as? [String] ?? []
 
-                    // ==== NEW: soft-delete filter via hideSince cutoff ====
+                    //soft-delete filter through hideSince cutoff time
                     let lastMessageTimestamp = (data["lastMessageTimestamp"] as? Timestamp)?.dateValue()
                     let hideSinceMap = data["hideSince"] as? [String: Timestamp]
                     let hideCutoff = hideSinceMap?[currentUserID]?.dateValue()
                     if let cutoff = hideCutoff, let last = lastMessageTimestamp, last <= cutoff {
-                        // user archived this thread and no newer message has arrived
+                        //user archived this thread and no newer message has arrived
                         continue
                     }
 
@@ -83,6 +85,7 @@ class ChatListViewModel: ObservableObject {
                                 updatedChat.profileimage = userData["profilePhotoUrl"] as? String ?? "defaultProfile"
                                 updatedChat.isActive = userData["isActive"] as? Bool ?? false
                                 updatedChat.lastSeen = (userData["lastSeen"] as? Timestamp)?.dateValue()
+                                updatedChat.isProUser = userData["isPro"] as? Bool ?? false
                                 self.chats[index] = updatedChat
                                 if let convoIndex = self.conversations.firstIndex(where: { $0.friend.id == updatedChat.id }) {
                                     self.conversations[convoIndex].friend = updatedChat
@@ -98,6 +101,7 @@ class ChatListViewModel: ObservableObject {
                         let learningLangCode = userData?["targetLanguage"] as? String ?? ""
                         let languagesData = userData?["languagesData"] as? [String: [String: Any]] ?? [:]
                         let comprehensionLevel = (languagesData[learningLangCode]?["comprehensionLevel"] as? Int) ?? 0
+                        let isProUser = userData?["isPro"] as? Bool ?? false
                         
                         //will create chat instance with new fields
                         let chat = Chat(
@@ -113,7 +117,8 @@ class ChatListViewModel: ObservableObject {
                             lastMessageTimestamp: (data["lastMessageTimestamp"] as? Timestamp)?.dateValue(),
                             nativeLanguage: nativeLang,
                             learningLanguage: learningLangCode,
-                            comprehensionLevel: comprehensionLevel
+                            comprehensionLevel: comprehensionLevel,
+                            isProUser: isProUser
                         )
 
                         self.fetchMessages(for: doc.documentID) { messages in
@@ -123,7 +128,7 @@ class ChatListViewModel: ObservableObject {
                         }
                     }
                 }
-
+                //notify that everything is done then update ui
                 dispatchGroup.notify(queue: .main) {
                     let chatMap = Dictionary(uniqueKeysWithValues: newChats.map { ($0.id, $0) })
                     let sortedChats = newChats.sorted {
@@ -225,7 +230,6 @@ class ChatListViewModel: ObservableObject {
             //this will help keep track to clear the messges for the user that hides it
             let hideSince = data["hideSince"] as? [String: Timestamp]
             let resetTime = hideSince?[currentUserID]?.dateValue()
-            // ===================================
             
             //then we fetch the messages (helper function)
             self.fetchAllMessages(for: chatID, after: resetTime, completion: completion)
@@ -384,7 +388,8 @@ class ChatListViewModel: ObservableObject {
                 let learningLangCode = data["targetLanguage"] as? String ?? ""
                 let languagesData = data["languagesData"] as? [String: [String: Any]] ?? [:]
                 let comprehensionLevel = (languagesData[learningLangCode]?["comprehensionLevel"] as? Int) ?? 0
-
+                let isProUser = data["isPro"] as? Bool ?? false
+                
                 //returning the information of the Users so Chat will now carry what 'users' (collection) has
                 return Chat(
                     id: doc.documentID,
@@ -399,7 +404,8 @@ class ChatListViewModel: ObservableObject {
                     lastMessageTimestamp: nil,
                     nativeLanguage: nativeLang,
                     learningLanguage: learningLangCode,
-                    comprehensionLevel: comprehensionLevel
+                    comprehensionLevel: comprehensionLevel,
+                    isProUser: isProUser
                 )
             }
 
@@ -413,20 +419,21 @@ class ChatListViewModel: ObservableObject {
     //postcondition: gets the target language of what the uesr is learning and then set the learning language to that so it can show the filter
     func fetchCurrentUserLearningLanguage() {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-        //read the collection called 'users'
-        db.collection("users").document(currentUserID).getDocument { [weak self] snapshot, error in
-            guard let self = self,
-                  let data = snapshot?.data(),
-                  //get the targetLangauge from the users
-                  let targetLang = data["targetLanguage"] as? String else {
-                print("Failed to get current user's learning language.")
-                return
+        currentTargetLanguageListener?.remove()
+        currentTargetLanguageListener = db.collection("users")
+            .document(currentUserID)
+            .addSnapshotListener { [weak self] snap, _ in
+                guard let self = self, let data = snap?.data() else { return }
+                //get users information based on targetlangauge and if they are pro
+                let targetLang = data["targetLanguage"] as? String ?? ""
+                let pro = data["isPro"] as? Bool ?? false
+                
+                //run in the main thread
+                Task { @MainActor in
+                    self.learningLanguage = targetLang
+                    self.isCurrentUserPro = pro
+                }
             }
-            DispatchQueue.main.async {
-                //now set it to the published so it can update
-                self.learningLanguage = targetLang
-            }
-        }
     }
     //MARK: Will get users by country only
     //precondition: none
@@ -454,6 +461,7 @@ class ChatListViewModel: ObservableObject {
                     let learningLangCode = data["targetLanguage"] as? String ?? ""
                     let languagesData = data["languagesData"] as? [String: [String: Any]] ?? [:]
                     let comprehensionLevel = (languagesData[learningLangCode]?["comprehensionLevel"] as? Int) ?? 0
+                    let isProUser = data["isPro"] as? Bool ?? false
                     
                     //data we want to return with the users information
                     return Chat(
@@ -469,10 +477,11 @@ class ChatListViewModel: ObservableObject {
                         lastMessageTimestamp: nil,
                         nativeLanguage: nativeLang,
                         learningLanguage: learningLangCode,
-                        comprehensionLevel: comprehensionLevel
+                        comprehensionLevel: comprehensionLevel,
+                        isProUser: isProUser
                     )
                 }
-
+                //udpate for the ui thread
                 DispatchQueue.main.async {
                     self.discoverableUsers = result
                 }
@@ -497,7 +506,8 @@ class ChatListViewModel: ObservableObject {
                 let learningLangCode = data["targetLanguage"] as? String ?? ""
                 let languagesData = data["languagesData"] as? [String: [String: Any]] ?? [:]
                 let comprehensionLevel = (languagesData[learningLangCode]?["comprehensionLevel"] as? Int) ?? 0
-
+                let isProUser = data["isPro"] as? Bool ?? false
+                
                 return Chat(
                     id: doc.documentID,
                     participantIDs: [],
@@ -511,7 +521,8 @@ class ChatListViewModel: ObservableObject {
                     lastMessageTimestamp: nil,
                     nativeLanguage: nativeLang,
                     learningLanguage: learningLangCode,
-                    comprehensionLevel: comprehensionLevel
+                    comprehensionLevel: comprehensionLevel,
+                    isProUser: isProUser
                 )
             }
             DispatchQueue.main.async {
@@ -716,6 +727,7 @@ class ChatListViewModel: ObservableObject {
     deinit {
         listener?.remove()
         userListeners.values.forEach { $0.remove() }
+        currentTargetLanguageListener?.remove()
     }
 }
 

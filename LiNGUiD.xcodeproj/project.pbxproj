@@ -44,6 +44,7 @@
 		60F930802DE98E3100E37156 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F9307F2DE98E2A00E37156 /* User.swift */; };
 		60F930CE2DEA83F300E37156 /* SavedWordsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */; };
 		7E64AD152E4709B500857F53 /* TapTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E64AD142E4709A900857F53 /* TapTracker.swift */; };
+		7E64AE972E4B2A3F00857F53 /* AudioPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E64AE962E4B2A3800857F53 /* AudioPlayerView.swift */; };
 		7ED8BA4B2E32C7960048C37C /* ChatMessagesConvoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ED8BA4A2E32C7900048C37C /* ChatMessagesConvoView.swift */; };
 		7EE63CF72E1E415F005F5466 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 7EE63CF62E1E415F005F5466 /* Kingfisher */; };
 		7EF02A452E3494AC00148DBB /* AudioObserverViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EF02A442E3494A200148DBB /* AudioObserverViewModel.swift */; };
@@ -166,6 +167,7 @@
 		60F9307F2DE98E2A00E37156 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		60F930CD2DEA83E600E37156 /* SavedWordsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedWordsViewModel.swift; sourceTree = "<group>"; };
 		7E64AD142E4709A900857F53 /* TapTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TapTracker.swift; sourceTree = "<group>"; };
+		7E64AE962E4B2A3800857F53 /* AudioPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayerView.swift; sourceTree = "<group>"; };
 		7ED8BA4A2E32C7900048C37C /* ChatMessagesConvoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessagesConvoView.swift; sourceTree = "<group>"; };
 		7EF02A442E3494A200148DBB /* AudioObserverViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioObserverViewModel.swift; sourceTree = "<group>"; };
 		7EFDD81B2E0C8DB200154192 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
@@ -345,6 +347,7 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				7E64AE962E4B2A3800857F53 /* AudioPlayerView.swift */,
 				818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */,
 				81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */,
 				13D14A8B2E41A3F50012FDA0 /* RequestFeatureView.swift */,
@@ -667,6 +670,7 @@
 				7E64AD152E4709B500857F53 /* TapTracker.swift in Sources */,
 				13D14A8A2E4156F70012FDA0 /* PrivacyPolicyView.swift in Sources */,
 				132B93412E257D27003F6DA9 /* Comment.swift in Sources */,
+				7E64AE972E4B2A3F00857F53 /* AudioPlayerView.swift in Sources */,
 				81CCF3C62E453AB400FA495B /* CustomProgessView.swift in Sources */,
 				D62604692E2082FB00BA36FB /* DMVideoPreviewViewModel.swift in Sources */,
 				D626046B2E20831000BA36FB /* DMVideoPreview.swift in Sources */,
