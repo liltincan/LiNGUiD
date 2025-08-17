@@ -13,6 +13,7 @@ struct LiNGUiDApp: App {
     @StateObject private var uploadManager = UploadManager()
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var backgroundUploader = BackgroundUploader.shared
+    let locationVerifier = LocationVerifier()
 
     init() {
         _ = BackgroundUploader.shared
@@ -33,6 +34,7 @@ struct LiNGUiDApp: App {
                 }
                 .onAppear {
                     notificationService.setupNotifications()
+                    locationVerifier.verifyAndSaveLocation()
                 }
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .active {

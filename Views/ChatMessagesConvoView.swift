@@ -33,6 +33,12 @@ struct ChatMessagesConvoView: View {
     @State private var audioRecorder: AVAudioRecorder?
     @State private var audioURL: URL?
     @State private var isRecording = false
+    @State private var recordDragOffset: CGFloat = 0
+    @State private var showSlideToCancel = false
+    @State private var isInDeleteZone = false
+    @State private var didFireHaptic = false
+    private let cancelDistance: CGFloat = 120 // how far left to cancel
+
     
     //MARK: Translating the message based on tapping
     @State private var showTranslateMessage: Set<String> = []
@@ -77,9 +83,17 @@ struct ChatMessagesConvoView: View {
                             ProfileImageView(imageUrl: chat.profileimage)
                         }
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(chat.username)
-                                .font(.headline.weight(.bold))
-                                .foregroundColor(.white)
+                            HStack(spacing: 0) {
+                                Text(chat.username)
+                                    .font(.headline.weight(.bold))
+                                    .foregroundColor(.white)
+                                if (chat.isProUser) {
+                                    Image(systemName: "checkmark.seal.fill")
+                                        .symbolRenderingMode(.palette)
+                                        .foregroundStyle(.white, Color.appPrimaryColor)
+                                        .font(.system(size: 16))
+                                }
+                            }
                         }
                         Spacer()
                         Button(action: {
@@ -144,17 +158,24 @@ struct ChatMessagesConvoView: View {
                         }
                     }
                 }
-                //call the function where it shows the replying when users replies
-                replyBanner()
-                //call the function where users shows keyboard to send message
-                messageInputField()
-                    .padding(.top, 10)
             }
-            .background(Color.black)
             .navigationBarBackButtonHidden(true)
+            .background(Color.black)
+            .safeAreaInset(edge: .bottom) {
+                VStack(spacing: 0) {
+                    replyBanner()
+                    messageInputField()
+                        .padding(.top, 10)
+                }
+            }
             .padding(.bottom, 10)
             //when this view loads-> it will then load up the convos as they update using the listerner
             .onAppear {
+                //this will grab the data right away and set it to messages
+                if let cached = viewModel.conversations.first(where: { $0.friend.id == chatID })?.messages {
+                    self.messages = cached
+                }
+                //right after just listen to what we send 
                 viewModel.listenToMessages(for: chatID) { msg in
                     self.messages = msg
                 }
@@ -475,15 +496,25 @@ struct ChatMessagesConvoView: View {
     private func messageInputField() -> some View {
         //message preview over the text field
         ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color.white)
-                .frame(height: 50)
             if (sendMessage.isEmpty) {
                 //if recording is going to be send then show this else show the message
                 if(isRecording) {
-                    RecordingWaveformView(audioMeter: audioMeter)
-                        .padding(.horizontal)
-                        .transition(.opacity)
+                    HStack(spacing: 10) {
+                        //trash icon appears only if showSlideToCancel is true
+                        if (showSlideToCancel) {
+                            Image(systemName: isInDeleteZone ? "trash.fill" : "trash")
+                                .font(.system(size: 20))
+                                .foregroundColor(.white)
+                                .padding(.horizontal)
+                                .background(isInDeleteZone ? Color.red : Color.gray.opacity(0.6))
+                                .clipShape(Circle())
+                                .scaleEffect(isInDeleteZone ? 1.15 : 1.0)
+                                .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isInDeleteZone)
+                        }
+                        RecordingWaveformView(audioMeter: audioMeter)
+                            .padding(.horizontal)
+                            .transition(.opacity)
+                    }
                 }
                 else {
                     Text("Message...")
@@ -491,17 +522,22 @@ struct ChatMessagesConvoView: View {
                         .padding(.horizontal)
                 }
             }
-            TextField("", text: $sendMessage)
+            TextField("", text: $sendMessage, axis: .vertical)
                 .foregroundColor(.black)
                 .padding(.horizontal)
+                .padding(.vertical, 10)
                 .focused($focusfield, equals: .sendMessage)
                 .submitLabel(.send)
-                .onSubmit {
-                    send()
-                    focusfield = nil
+                .onChange(of: sendMessage) { value in
+                    //since using the return in the axis we nust remove that newline and let it send messages
+                    if value.last == "\n" {
+                        sendMessage = String(value.dropLast())
+                        send()
+                    }
                 }
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
+                //.disabled(isRecording)
             HStack {
                 Spacer()
                 //only show mic if text messsage is empty
@@ -511,20 +547,63 @@ struct ChatMessagesConvoView: View {
                         .foregroundColor(isRecording ? .red : .black)
                         .gesture(
                             LongPressGesture(minimumDuration: 0.2)
-                                .onEnded { _ in
-                                    startRecording()
+                                .sequenced(before: DragGesture(minimumDistance: 0))
+                                .onChanged { value in
+                                    switch value {
+                                    case .first(true):
+                                        //long-press began: start recording & show HUD
+                                        if (!isRecording) {
+                                            startRecording()
+                                        }
+                                        showSlideToCancel = true
+                                        recordDragOffset = 0
+                                        isInDeleteZone = false
+
+                                    case .second(true, let drag?):
+                                        //tracking the drag to the LEFT
+                                        let dx = drag.translation.width
+                                        recordDragOffset = min(0, dx)
+                                        let overTrash = dx < -cancelDistance
+                                        if overTrash != isInDeleteZone {
+                                            isInDeleteZone = overTrash
+                                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                        }
+                                    default:
+                                        break
+                                    }
                                 }
-                                .simultaneously(with: DragGesture(minimumDistance: 0)
-                                    .onEnded { _ in
+                                .onEnded { value in
+                                    showSlideToCancel = false
+                                    let shouldCancel: Bool
+                                    if case .second(true, let drag?) = value {
+                                        shouldCancel = drag.translation.width < -cancelDistance
+                                    }
+                                    else {
+                                        shouldCancel = false
+                                    }
+                                    //if this remainds true then call the cancel recording function
+                                    if (shouldCancel) {
+                                        cancelRecording()
+                                    }
+                                    else {
+                                        //user released without crossing threshold → send
                                         stopRecordingAndSend()
                                     }
-                                )
+
+                                    //resets HUD state
+                                    recordDragOffset = 0
+                                    isInDeleteZone = false
+                                }
                         )
                 }
-                
             }
             .padding(.horizontal)
         }
+        .frame(minHeight: 36, alignment: .top)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.white)
+        )
         .padding(.horizontal)
     }
     //function will start the recording when user is holding aka long press
@@ -586,6 +665,30 @@ struct ChatMessagesConvoView: View {
         }
         self.audioURL = nil
         self.replyingTo = nil
+    }
+    //function will cancel the recording and not let user send it
+    private func cancelRecording() {
+        audioRecorder?.stop()
+        audioMeter.stop()
+        isRecording = false
+
+        //reset session to playback so AVPlayer keeps working
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .default)
+            try session.setActive(true)
+        } catch {
+            print("Failed to set AVAudioSession for playback after cancel: \(error)")
+        }
+
+        //delete the temporary audio file if it exists
+        if let fileURL = audioURL {
+            try? FileManager.default.removeItem(at: fileURL)
+        }
+
+        // Clear state
+        audioURL = nil
+        replyingTo = nil
     }
     //function will now upload the audo to the file and now this is where i call the states to update
     private func uploadAudioFile(_ fileURL: URL, completion: @escaping (String?) -> Void) {
@@ -659,189 +762,5 @@ struct ChatMessagesConvoView: View {
         let key = "translated_\(chatID)"
         let data = try? JSONEncoder().encode(Array(set))
         UserDefaults.standard.set(data, forKey: key)
-    }
-}
-//MARK: - This will be the UI of how the audio should look
-//precondition: call the WaveformView struct that will show the wave
-//postcondition: this will now display the UI of how the voice message is going to look
-struct AudioPlayerView: View {
-    let audioURL: String
-    @State private var player: AVPlayer?
-    @State private var isPlaying = false
-    @State private var playerObserver: Any?
-    @State private var currentTime: Double = 0
-    @State private var duration: Double = 1
-    @State private var isInitialized = false
-    @State private var amplitudes: [CGFloat] = []
-    
-    var body: some View {
-        //the option 'play' and 'pause' will be first then the waveform
-        HStack(spacing: 12) {
-            Button(action: {
-                //run this and now call the setUpPlayer() and intialize it back to true to get out of the statement
-                if (!isInitialized) {
-                    setupPlayer()
-                    isInitialized = true
-                }
-                //call the function to now show it
-                togglePlayback()
-            }) {
-                Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .resizable()
-                    .frame(width: 28, height: 28)
-                    .foregroundColor(.purple)
-            }
-            //call the struct that shows the audio
-            WaveformView(amplitudes: amplitudes.isEmpty ? Array(repeating: 10, count: 30) : amplitudes,
-                         progress: currentTime / duration)
-                .frame(height: 30)
-                .animation(.easeInOut(duration: 0.2), value: currentTime)
-            Spacer()
-        }
-        //once everything is done , call the function to clear the audios
-        .onDisappear {
-            cleanup()
-        }
-    }
-    //function will set upt the ui for wehn the audio is sent
-    private func setupPlayer() {
-        //this will get the URL from the DB
-        guard let url = URL(string: audioURL) else { return }
-        let asset = AVAsset(url: url)
-        self.duration = CMTimeGetSeconds(asset.duration)
-        //this will now read the audios amplitudes from file
-        AudioWaveformExtractor.shared.extractAmplitudes(from: asset, barCount: 30) { bars in
-            self.amplitudes = bars
-        }
-        let playerItem = AVPlayerItem(asset: asset)
-        player = AVPlayer(playerItem: playerItem)
-        playerObserver = player?.addPeriodicTimeObserver(
-            forInterval: CMTime(seconds: 0.3, preferredTimescale: 600),
-            queue: .main
-        ) { time in
-            self.currentTime = CMTimeGetSeconds(time)
-        }
-        //this now detects when audio finishes and if it does we have to reset it
-        NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: playerItem, queue: .main) { _ in
-            self.isPlaying = false
-            self.currentTime = 0
-            self.player?.seek(to: .zero)
-        }
-    }
-    //function will check if the video is playing if yes then play if pause then pause and show the pause
-    private func togglePlayback() {
-        guard let player = player else { return }
-        //if its playing then show the pause button else show the play
-        if (isPlaying) {
-            player.pause()
-        }
-        else {
-            player.play()
-        }
-        isPlaying.toggle()
-    }
-    //function will determine the time of the video
-    private func cleanup() {
-        player?.pause()
-        if let observer = playerObserver {
-            player?.removeTimeObserver(observer)
-            playerObserver = nil
-        }
-        NotificationCenter.default.removeObserver(self)
-        player = nil
-        isInitialized = false
-    }
-}
-//MARK: - This will now show the waving
-//precondition: none
-//postcondition: takes in the WaveformBar() view then shows the progress
-struct WaveformView: View {
-    let amplitudes: [CGFloat]
-    let progress: Double
-    var body: some View {
-        HStack(spacing: 2) {
-            ForEach(amplitudes.indices, id: \.self) { i in
-                let isActive = (Double(i) / Double(amplitudes.count)) < progress
-                //call the bar which is just a rounded rectangle
-                WaveformBar(height: amplitudes[i], isActive: isActive)
-            }
-        }
-    }
-}
-//MARK: - This will be the start of the wave
-//precondition: none
-//postcondition: will take two variables that has the height and the active
-struct WaveformBar: View {
-    var height: CGFloat
-    var isActive: Bool
-    var body: some View {
-        RoundedRectangle(cornerRadius: 2)
-            .fill(isActive ? Color.white : Color.gray.opacity(0.5))
-            .frame(width: 3, height: height)
-    }
-}
-//MARK: - This will be showing while user is recording the audio
-//precondition: none
-//postcondition: going to indicate when the audio is being recorded then show the wavelength
-struct RecordingWaveformView: View {
-    //just observed since we are calling it in the view
-    @ObservedObject var audioMeter: AudioMeterObserver
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(0..<audioMeter.levels.count, id: \.self) { i in
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.red)
-                    .frame(width: 3, height: audioMeter.levels[i])
-            }
-        }
-        .frame(height: 30)
-    }
-}
-//MARK: - This class will extract the real audio wave
-class AudioWaveformExtractor {
-    static let shared = AudioWaveformExtractor()
-    //this function will attract the voice message by how loud it is
-    func extractAmplitudes(from asset: AVAsset, barCount: Int, completion: @escaping ([CGFloat]) -> Void) {
-        DispatchQueue.global(qos: .userInitiated).async {
-            guard let reader = try? AVAssetReader(asset: asset),
-                  let track = asset.tracks(withMediaType: .audio).first else {
-                DispatchQueue.main.async { completion([]) }
-                return
-            }
-            let outputSettings: [String: Any] = [
-                AVFormatIDKey: Int(kAudioFormatLinearPCM),
-                AVLinearPCMIsBigEndianKey: false,
-                AVLinearPCMIsFloatKey: false,
-                AVLinearPCMBitDepthKey: 16
-            ]
-            let output = AVAssetReaderTrackOutput(track: track, outputSettings: outputSettings)
-            reader.add(output)
-            reader.startReading()
-            var samples: [Int16] = []
-            while let buffer = output.copyNextSampleBuffer(),
-                  let block = CMSampleBufferGetDataBuffer(buffer) {
-                let length = CMBlockBufferGetDataLength(block)
-                var data = [Int16](repeating: 0, count: length / 2)
-                CMBlockBufferCopyDataBytes(block, atOffset: 0, dataLength: length, destination: &data)
-                samples.append(contentsOf: data)
-            }
-
-            let samplesPerBar = max(samples.count / barCount, 1)
-            var amplitudes: [CGFloat] = []
-            for i in 0..<barCount {
-                let start = i * samplesPerBar
-                let end = min((i + 1) * samplesPerBar, samples.count)
-                if (start < end) {
-                    let slice = samples[start..<end]
-                    let maxAmp = slice.map { abs(Int($0)) }.max() ?? 0
-                    let normalized = CGFloat(maxAmp) / CGFloat(Int16.max)
-                    amplitudes.append(max(5, normalized * 30))
-                }
-            }
-
-            DispatchQueue.main.async {
-                completion(amplitudes)
-            }
-        }
     }
 }

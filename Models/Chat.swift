@@ -23,6 +23,7 @@ struct Chat: Identifiable {
     var nativeLanguage: String
     var learningLanguage: String
     var comprehensionLevel: Int
+    var isProUser: Bool
     
     //this will then be used in the view to get the flag emoji (computed property that will be used in view)
     var flag: String {
