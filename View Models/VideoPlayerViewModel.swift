@@ -19,15 +19,16 @@ class VideoPlayerViewModel: ObservableObject {
     @Published var word: String?
 
     
-    func saveUnknownWord(to userId: String, targetLanguage: String, savedWord:String, languagesData: [String: LanguagesData]) {
+    func saveUnknownWord(to userId: String, targetLanguage: String, savedWord:String, languagesData: [String: LanguagesData], nativeText: String) {
         isSavingWord = true
         word = savedWord
         wordSaved = false
 
-        firestoreService.addUnknownWord(
+        firestoreService.addUnknownWordDelta(
             forUserId: userId,
             targetLanguage: targetLanguage,
-            languagesData: languagesData
+            wordTarget: savedWord,
+            wordNative: nativeText
         ) { result in
             DispatchQueue.main.async {
                 self.isSavingWord = false

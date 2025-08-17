@@ -772,28 +772,31 @@ struct VideoPlayerView: View {
                 Divider()
                     .frame(height: 2)
                     .background(Color.white)
-                Button(action: {
+                let lang = userSession.currentUser?.targetLanguage ?? ""
+                let w = word ?? ""
+
+                Button {
                     guard let userID = Auth.auth().currentUser?.uid else { return }
-                    addUnknownWordInUserSession(word: word ?? "", userId: userID)
-                }) {
+                    if isWordSavedAnywhere(w, language: lang) {
+                        // open practice flow
+                        NotificationCenter.default.post(
+                            name: .init("OpenPracticeFromPopup"),
+                            object: ["word": w, "language": lang]
+                        )
+                    } else {
+                        addUnknownWordInUserSession(word: w, userId: userID)
+                    }
+                } label: {
                     HStack {
-                        Image(systemName: "bookmark.fill")
-                        if videoPlayerViewModel.isSavingWord {
-                            ProgressView()
-                        } else {
-                            let videoPlayerWord = videoPlayerViewModel.word ?? ""
-                            if videoPlayerViewModel.wordSaved && videoPlayerWord == word {
-                                Text("Word Saved!")
-                                    .transition(.opacity)
-                                    .animation(.easeInOut(duration: 0.3), value: videoPlayerViewModel.wordSaved)
-                            } else {
-                                Text("Save")
-                            }
-                        }
+                        Image(systemName: isWordSavedAnywhere(w, language: lang)
+                              ? "rectangle.and.pencil.and.ellipsis"
+                              : "bookmark.fill")
+                        Text(isWordSavedAnywhere(w, language: lang) ? "Practice" : "Save")
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+
                 Divider()
                     .background(Color.white)
                 Button(action: {}) {
@@ -815,17 +818,24 @@ struct VideoPlayerView: View {
 
     func addUnknownWordInUserSession(word: String, userId: String) {
         guard let language = userSession.currentUser?.targetLanguage else { return }
+        guard var currentUser = userSession.currentUser else { return }
+
+        // ✅ Block duplicates across BOTH known & unknown and flip UI to “Practice”
+        if isWordSavedAnywhere(word, language: language) {
+            // Optional: light feedback so the user sees something happened
+            videoPlayerViewModel.word = word
+            videoPlayerViewModel.wordSaved = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                videoPlayerViewModel.wordSaved = false
+            }
+            return
+        }
+
         let newWord = WordPair(target: word, native: translatedText ?? "")
 
-        guard var currentUser = userSession.currentUser else { return }
         var languagesData = currentUser.languagesData ?? [:]
-
-        var langData =
-            languagesData[language]
-            ?? LanguagesData(savedWords: WordLists(knownWords: [], unknownWords: []))
-
-        var savedWords =
-            langData.savedWords ?? WordLists(knownWords: [], unknownWords: [])
+        var langData = languagesData[language] ?? LanguagesData(savedWords: WordLists(knownWords: [], unknownWords: []))
+        var savedWords = langData.savedWords ?? WordLists(knownWords: [], unknownWords: [])
 
         savedWords.unknownWords.append(newWord)
         langData.savedWords = savedWords
@@ -837,9 +847,31 @@ struct VideoPlayerView: View {
             to: userId,
             targetLanguage: language,
             savedWord: word,
-            languagesData: languagesData
+            languagesData: languagesData,
+            nativeText: translatedText ?? ""
         )
     }
+    
+    private func normalize(_ s: String) -> String {
+        var t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        t = t.trimmingCharacters(in: .punctuationCharacters)
+        t = t.precomposedStringWithCompatibilityMapping
+             .folding(options: .diacriticInsensitive, locale: .current)
+             .lowercased()
+        return t
+    }
+
+    private func isWordSavedAnywhere(_ word: String, language: String) -> Bool {
+        let key = normalize(word)
+        guard let saved = userSession.currentUser?.languagesData?[language]?.savedWords else {
+            return false
+        }
+        let inUnknown = saved.unknownWords.contains { normalize($0.target) == key }
+        let inKnown   = saved.knownWords.contains   { normalize($0.target) == key }
+        return inUnknown || inKnown
+    }
+
+
 
     struct Triangle: Shape {
         func path(in rect: CGRect) -> Path {

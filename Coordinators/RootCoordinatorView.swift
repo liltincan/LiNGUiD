@@ -24,7 +24,7 @@ struct RootCoordinatorView: View {
     var body: some View {
         ZStack {
             if !hasCheckedOnboarding {
-                ProgressView().tint(.white)
+                ProgressView().tint(.clear)
             } else {
                 mainContent
             }

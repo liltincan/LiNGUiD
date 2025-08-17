@@ -784,6 +784,73 @@ extension FirestoreService {
     }
 }
 
+
+extension FirestoreService {
+    func addUnknownWordDelta(
+        forUserId uid: String,
+        targetLanguage: String,
+        wordTarget: String,
+        wordNative: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+        let db = Firestore.firestore()
+        let ref = db.collection("users").document(uid)
+
+        func normalize(_ s: String) -> String {
+            var t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+            t = t.trimmingCharacters(in: .punctuationCharacters)
+            t = t.precomposedStringWithCompatibilityMapping
+                 .folding(options: .diacriticInsensitive, locale: .current)
+                 .lowercased()
+            return t
+        }
+
+        db.runTransaction({ (txn, errorPointer) -> Any? in
+            // 1) Read document (catch throws; DO NOT rethrow)
+            let snap: DocumentSnapshot
+            do {
+                snap = try txn.getDocument(ref)
+            } catch let err as NSError {
+                errorPointer?.pointee = err
+                return nil
+            }
+
+            // 2) Extract arrays
+            let root = snap.data() ?? [:]
+            let languages = root["languagesData"] as? [String: Any] ?? [:]
+            let langNode = languages[targetLanguage] as? [String: Any] ?? [:]
+            let saved = langNode["savedWords"] as? [String: Any] ?? [:]
+
+            var unknown = saved["unknownWords"] as? [[String: Any]] ?? []
+            let known  = saved["knownWords"]  as? [[String: Any]] ?? []
+
+            // 3) De-dupe across BOTH lists
+            let key = normalize(wordTarget)
+            let existsInUnknown = unknown.contains { normalize(($0["target"] as? String) ?? "") == key }
+            let existsInKnown   = known.contains   { normalize(($0["target"] as? String) ?? "") == key }
+
+            guard !existsInUnknown && !existsInKnown else {
+                // Already saved somewhere; nothing to do
+                return nil
+            }
+
+            // 4) Append and write back ONLY the branch we changed
+            unknown.append(["target": wordTarget, "native": wordNative])
+
+            txn.updateData(
+                ["languagesData.\(targetLanguage).savedWords.unknownWords": unknown],
+                forDocument: ref
+            )
+            return nil
+        }, completion: { _, err in
+            if let err = err { completion(.failure(err)) }
+            else { completion(.success(())) }
+        })
+    }
+}
+
+
+
 // MARK: - Custom Error Types for User Data Deletion
 enum UserDataDeletionError: LocalizedError {
     case notAuthenticated
