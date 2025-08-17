@@ -19,6 +19,7 @@ struct OtherUserProfileView: View {
     @State private var showingFullScreenProfilePicture: Bool = false
     @State private var fullScreenProfilePictureURL: String?
     @State private var hasTaskExecuted = false
+    @State private var showingReportConfirmation = false // <-- Add this state
     
     let userId: String
     @Binding var selectedTab: Int
@@ -66,7 +67,11 @@ struct OtherUserProfileView: View {
                             onBackTapped: {
                                 dismiss()
                             },
-                            country: vm.country ?? "ERROR"
+                            country: vm.country ?? "ERROR",
+                            onReportProfile: {
+                                showingReportConfirmation = true
+                            },
+                            userSession: userSession // <-- Pass userSession here
                         )
                         .padding(.top, 2.5)
                         
@@ -172,6 +177,11 @@ struct OtherUserProfileView: View {
                 await loadData()
             }
         }
+        .alert("Report Submitted", isPresented: $showingReportConfirmation) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Thank you for your report. We'll review this profile.")
+        }
     }
     
     @MainActor
@@ -199,7 +209,11 @@ struct OtherUserProfileHeaderView: View {
     @Binding var fullScreenProfilePictureURL: String?
     let onBackTapped: () -> Void
     let country: String
-    
+    var onReportProfile: (() -> Void)? = nil
+    let userSession: UserSessionViewModel // <-- Add this property
+
+    @State private var showingReportSheet = false
+
     @ViewBuilder
     private var targetLanguageLevelsView: some View {
         HStack(spacing: -20) {
@@ -246,13 +260,28 @@ struct OtherUserProfileHeaderView: View {
                 Spacer()
                 
                 Button {
-                    //Here
+                    showingReportSheet = true
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.primary)
                 }
                 .padding(.trailing, 20)
+                .confirmationDialog("", isPresented: $showingReportSheet, titleVisibility: .hidden) {
+                    Button("Report Profile", role: .destructive) {
+                        onReportProfile?()
+                        if let reporterUid = Auth.auth().currentUser?.uid,
+                           let reporterUsername = userSession.currentUser?.userName {
+                            reportProfile(
+                                reportedUserId: vm.user?.id ?? "",
+                                reporterUid: reporterUid,
+                                reporterUsername: reporterUsername,
+                                posterUsername: userName
+                            )
+                        }
+                    }
+                    Button("Cancel", role: .cancel) {}
+                }
             }
             .padding(.bottom, 10)
             
@@ -388,3 +417,29 @@ struct OtherUserProfileActionButtons: View {
         }
     }
 }
+
+func reportProfile(reportedUserId: String, reporterUid: String, reporterUsername: String, posterUsername: String) {
+    guard let url = URL(string: "https://makechicken.onrender.com/api/reportProfile") else { return }
+    
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    
+    let body: [String: Any] = [
+        "reportedUserId": reportedUserId,
+        "reporterUid": reporterUid,
+        "reporterUsername": reporterUsername,
+        "posterUsername": posterUsername
+    ]
+    
+    request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+    
+    URLSession.shared.dataTask(with: request) { data, response, error in
+        if let error = error {
+            print("Profile report failed:", error)
+            return
+        }
+        print("Profile report sent successfully")
+    }.resume()
+}
+
