@@ -23,7 +23,11 @@ struct RootCoordinatorView: View {
 
     var body: some View {
         ZStack {
-            mainContent
+            if !hasCheckedOnboarding {
+                ProgressView().tint(.white)
+            } else {
+                mainContent
+            }
         }
         .task {
             await checkInitialState()
@@ -49,6 +53,12 @@ struct RootCoordinatorView: View {
 
             // Reset the notification id so this handler can fire again next time
             notificationService.notificationVideoId = nil
+        }
+        .onChange(of: appState.isSignedIn) { _, signedIn in
+            if signedIn {
+                hasCheckedOnboarding = false
+                Task { await checkInitialState() }
+            }
         }
         .fullScreenCover(isPresented: $showingProfileSheet, onDismiss: {
             // Ensure we clean up state when dismissed
