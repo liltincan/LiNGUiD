@@ -11,6 +11,8 @@ struct RootCoordinatorView: View {
     @State private var navigationPath = NavigationPath()
     
     @State private var startingVideoId: String? = nil
+    @State private var deepLinkedProfileId: String? = nil
+    @State private var showingProfileSheet = false
     @State private var logoShow = true
     
     @EnvironmentObject var notificationService: NotificationService
@@ -21,36 +23,54 @@ struct RootCoordinatorView: View {
 
     var body: some View {
         ZStack {
-            //if !hasCheckedOnboarding {
-            //    ProgressView()
-            //} else {
-                mainContent
-            //}
+            mainContent
         }
         .task {
             await checkInitialState()
         }
         .onChange(of: deepLinkCoordinator.deepLinkVideoID) { _, newId in
-            handleDeepLinkChange(newId)
+            handleDeepLinkVideoChange(newId)
+        }
+        .onChange(of: deepLinkCoordinator.deepLinkProfileID) { _, newId in
+            handleDeepLinkProfileChange(newId)
         }
         .onChange(of: notificationService.notificationVideoId) { _, newId in
             guard let id = newId else { return }
-
-            print("Opening video from notification: \(id)")
+            print("🔔 Opening video from notification: \(id)")
             
-            // Step 1: reset startingVideoId to nil to force a reload
+            // Reset startingVideoId to nil to force a reload
             startingVideoId = nil
             
-            // Step 2: small delay, then assign the new video id
+            // Small delay, then assign the new video id
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 startingVideoId = id
                 selectedTab = 0
             }
 
-            // Step 3: reset the notification id so this handler can fire again next time
+            // Reset the notification id so this handler can fire again next time
             notificationService.notificationVideoId = nil
         }
-
+        .fullScreenCover(isPresented: $showingProfileSheet, onDismiss: {
+            // Ensure we clean up state when dismissed
+            print("🔗 Profile sheet dismissed, cleaning up state")
+            deepLinkedProfileId = nil
+            deepLinkCoordinator.deepLinkProfileID = nil
+        }) {
+            if let profileId = deepLinkedProfileId {
+                // Remove NavigationView wrapper to prevent extra padding
+                OtherUserProfileView(
+                    userId: profileId,
+                    selectedTab: $selectedTab,
+                    onLogout: logout
+                )
+                .environmentObject(userSession)
+                .onAppear{
+                    print("🔗 Opening \(profileId) from deeplink")
+                }
+                // Force a new instance each time by using a unique ID
+                .id(UUID())
+            }
+        }
     }
     
     @ViewBuilder
@@ -58,23 +78,21 @@ struct RootCoordinatorView: View {
         ZStack {
             Color(red: 22/255, green: 1/255, blue: 46/255)
                 .edgesIgnoringSafeArea(.all)
-            if(logoShow) {
+            
+            if logoShow {
                 Image("ApplogoWallpaper")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 200, height: 200)
                     .transition(.opacity)
                     .onAppear {
-                        //this will delay before it shows the login
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                             withAnimation {
-                                //flag it back to false so it can show the login thing
                                 logoShow = false
                             }
                         }
                     }
-            }
-            else if !appState.isSignedIn {
+            } else if !appState.isSignedIn {
                 authView
             } else if appState.needsOnboarding {
                 onboardingView
@@ -153,14 +171,58 @@ struct RootCoordinatorView: View {
         }
     }
     
-    private func handleDeepLinkChange(_ newId: String?) {
+    private func handleDeepLinkVideoChange(_ newId: String?) {
         guard let videoId = newId else { return }
 
+        print("🔗 Processing video deep link: \(videoId)")
         startingVideoId = nil // Reset to trigger reload
         selectedTab = 0
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        // Increased delay to ensure proper state transition
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            print("🔗 Setting video ID in tab view: \(videoId)")
             startingVideoId = videoId
+        }
+    }
+    
+    private func handleDeepLinkProfileChange(_ newId: String?) {
+        guard let profileId = newId else { return }
+        
+        print("🔗 Processing profile deep link: \(profileId)")
+        
+        // Only show profile if user is signed in and past onboarding
+        guard appState.isSignedIn && !appState.needsOnboarding else {
+            print("🔗 Profile deep link received but user not ready - will process when ready")
+            return
+        }
+
+        // Prevent double-presentation if already showing the same profile
+        if showingProfileSheet && deepLinkedProfileId == profileId {
+            print("🔗 Profile sheet already showing for this profile, skipping re-presentation")
+            return
+        }
+
+        // Dismiss if already showing, then present after a short delay
+        if showingProfileSheet {
+            print("🔗 Profile sheet already showing, dismissing first")
+            showingProfileSheet = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                print("🔗 Setting new profile ID after dismissal: \(profileId)")
+                self.deepLinkedProfileId = profileId
+                // Clear the deep link state to prevent re-trigger
+                self.deepLinkCoordinator.deepLinkProfileID = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    self.showingProfileSheet = true
+                }
+            }
+        } else {
+            print("🔗 Setting profile ID directly: \(profileId)")
+            deepLinkedProfileId = profileId
+            // Clear the deep link state to prevent re-trigger
+            deepLinkCoordinator.deepLinkProfileID = nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.showingProfileSheet = true
+            }
         }
     }
 
@@ -178,6 +240,15 @@ struct RootCoordinatorView: View {
                             case .success(let completed):
                                 appState.needsOnboarding = !completed
                                 UserDefaults.standard.set(completed, forKey: "didCompleteOnboarding")
+                                
+                                // Check if we have a pending profile deep link
+                                if !appState.needsOnboarding, let profileId = deepLinkCoordinator.deepLinkProfileID {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                        deepLinkedProfileId = profileId
+                                        showingProfileSheet = true
+                                    }
+                                }
+                                
                             case .failure:
                                 appState.needsOnboarding = true
                             }
@@ -198,10 +269,13 @@ struct RootCoordinatorView: View {
             appState.isSignedIn = false
             appState.needsOnboarding = UserDefaults.standard.bool(forKey: "didCompleteOnboarding") == false
             navigationPath = NavigationPath()
+            // Clear any pending deep links
+            deepLinkedProfileId = nil
+            showingProfileSheet = false
+            startingVideoId = nil
             print("Logout successful - navigating to login")
         } else {
             print("Logout failed")
         }
     }
 }
-

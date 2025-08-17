@@ -108,7 +108,21 @@ class OtherUserProfileViewModel: ObservableObject {
 
     // MARK: - Data Fetching
     func fetchUserData(userSession: UserSessionViewModel) async {
+        // Reset all state variables first
+        await MainActor.run {
+            self.dataReady = false
+            self.user = nil
+            self.videoThumbnails = []
+            self.videoURLs = []
+            self.uploadedVideoArray = []
+            self.isFollowing = false
+            self.errorMessage = nil
+        }
+        
+        print("🔄 Fetching user data for ID: \(userId)")
+        
         do {
+            // First, quickly load basic user data to show profile header
             let document = try await db.collection("users").document(userId).getDocument()
             
             guard document.exists else {
@@ -128,16 +142,26 @@ class OtherUserProfileViewModel: ObservableObject {
                 self.country = fetchedUser.country?.capitalized
                 self.isPro = isPro
                 self.errorMessage = nil
-            }
-            
-            // Fetch both thumbnail data and complete video objects
-            await fetchVideoThumbnails()
-            await fetchUploadedVideoObjects()
-            await checkIfFollowing(userSession: userSession)
-            
-            await MainActor.run {
+                
+                // Set dataReady to true after basic user data is loaded
+                // This allows the UI to show the profile header while videos load
                 self.dataReady = true
             }
+            
+            print("✅ Basic user data loaded for ID: \(userId)")
+            
+            // Load following status in parallel with video data
+            async let followingTask = checkIfFollowing(userSession: userSession)
+            
+            // Load video data in parallel tasks
+            async let thumbnailsTask = fetchVideoThumbnails()
+            async let videosTask = fetchUploadedVideoObjects()
+            
+            // Wait for all tasks to complete
+            _ = await (followingTask, thumbnailsTask, videosTask)
+            
+            print("✅ All user data loaded for ID: \(userId)")
+
             
         } catch {
             await MainActor.run {

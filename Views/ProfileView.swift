@@ -551,8 +551,15 @@ struct ProfileActionButtons: View {
     let onUploadComplete: () async -> Void
     @EnvironmentObject var backgroundUploader: BackgroundUploader
     
+    @State private var showingShareSheet = false
+    
     private var isUploading: Bool {
         backgroundUploader.totalToUpload > 0 && !backgroundUploader.isUploadComplete
+    }
+    
+    private var shareURL: URL? {
+        // Create the profile share URL using the username or user ID
+        URL(string: "https://learnwithlinguid.com/profiles/\(Auth.auth().currentUser!.uid)")
     }
     
     var body: some View {
@@ -576,8 +583,34 @@ struct ProfileActionButtons: View {
             .disabled(isUploading)
             .animation(isUploading ? .easeInOut.delay(1) : .easeInOut, value: isUploading)
             
-            Buttons(text: "share")
+            Button {
+                showingShareSheet = true
+            } label: {
+                Buttons(text: "share")
+            }
         }
+        .sheet(isPresented: $showingShareSheet) {
+            if let shareURL = shareURL {
+                ShareSheet(activityItems: [shareURL])
+            }
+        }
+    }
+}
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let applicationActivities: [UIActivity]? = nil
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(
+            activityItems: activityItems,
+            applicationActivities: applicationActivities
+        )
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
+        // No update needed
     }
 }
 

@@ -8,6 +8,7 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
+import UIKit
 
 struct OtherUserProfileView: View {
     @StateObject private var vm: OtherUserProfileViewModel
@@ -33,59 +34,81 @@ struct OtherUserProfileView: View {
     
     var body: some View {
         ZStack {
-            VStack {
+            // Background color to prevent black screen
+            Color(.systemBackground)
+                .ignoresSafeArea()
+            
+            if !vm.dataReady {
+                // Loading state
                 VStack {
-                    OtherUserProfileHeaderView(
-                        userName: vm.userName,
-                        profilePictureURL: vm.profilePictureURL,
-                        languageDisplay: vm.formattedLanguagesDisplay,
-                        vm: vm,
-                        showingFullScreenProfilePicture: $showingFullScreenProfilePicture,
-                        fullScreenProfilePictureURL: $fullScreenProfilePictureURL,
-                        onBackTapped: {
-                            dismiss()
-                        },
-                        country: vm.country ?? "ERROR"
-                    )
-                    .padding(.top, 2.5)
-                    
-                    ProfileStatsView(
-                        videoCount: vm.videoCount,
-                        inputAmount: vm.inputAmount,
-                        followerCount: vm.followerCount,
-                        onFollowersTapped: {
-                            print("Followers tapped")
-                        }
-                    )
-                    .padding(.top, -10)
-                    
-                    OtherUserProfileActionButtons(
-                        userId: userId,
-                        username: vm.userName,
-                        isFollowing: vm.isFollowing,
-                        selectedTab: $selectedTab,
-                        vm: vm
-                    )
-                    .padding(.bottom, 10)
-                    ScrollView{
-                        VideoGridSection(
-                            videoThumbnails: vm.videoThumbnails.reversed(),
-                            videoURLs: vm.videoURLs.reversed(),
-                            uploadingVideos: [],
-                            noVideosMessage: "The user hasn't uploaded any videos yet.",
-                            videoArray: vm.uploadedVideoArray.reversed(),
-                            selectedTab: $selectedTab,
-                            fromOtherUserProfile: true,
-                            onLogout: onLogout
-                        )
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .padding()
+                    Text("Loading profile...")
+                        .foregroundColor(.secondary)
+                }
+                .onAppear {
+                    hasTaskExecuted = false
+                    Task {
+                        await loadData()
                     }
-                    .scrollIndicators(.hidden)
+                }
+            } else {
+                VStack {
+                    VStack {
+                        OtherUserProfileHeaderView(
+                            userName: vm.userName,
+                            profilePictureURL: vm.profilePictureURL,
+                            languageDisplay: vm.formattedLanguagesDisplay,
+                            vm: vm,
+                            showingFullScreenProfilePicture: $showingFullScreenProfilePicture,
+                            fullScreenProfilePictureURL: $fullScreenProfilePictureURL,
+                            onBackTapped: {
+                                dismiss()
+                            },
+                            country: vm.country ?? "ERROR"
+                        )
+                        .padding(.top, 2.5)
+                        
+                        ProfileStatsView(
+                            videoCount: vm.videoCount,
+                            inputAmount: vm.inputAmount,
+                            followerCount: vm.followerCount,
+                            onFollowersTapped: {
+                                print("Followers tapped")
+                            }
+                        )
+                        .padding(.top, -10)
+                        
+                        OtherUserProfileActionButtons(
+                            userId: userId,
+                            username: vm.userName,
+                            isFollowing: vm.isFollowing,
+                            selectedTab: $selectedTab,
+                            vm: vm
+                        )
+                        .padding(.bottom, 10)
+                        ScrollView{
+                            VideoGridSection(
+                                videoThumbnails: vm.videoThumbnails.reversed(),
+                                videoURLs: vm.videoURLs.reversed(),
+                                uploadingVideos: [],
+                                noVideosMessage: "The user hasn't uploaded any videos yet.",
+                                videoArray: vm.uploadedVideoArray.reversed(),
+                                selectedTab: $selectedTab,
+                                fromOtherUserProfile: true,
+                                onLogout: onLogout
+                            )
+                        }
+                        .scrollIndicators(.hidden)
+                    }
                 }
             }
         }
-        .safeAreaInset(edge: .top) {
-            Color.clear.frame(height: 60) // Allows pull-to-refresh spinner to show
-        }
+        // Remove the safeAreaInset that was causing extra top spacing
+        // .safeAreaInset(edge: .top) {
+        //     Color.clear.frame(height: 60) // Allows pull-to-refresh spinner to show
+        // }
         .refreshable {
             await refreshData()
         }
@@ -142,13 +165,21 @@ struct OtherUserProfileView: View {
                     }
                 }
         )
+        .onAppear {
+            // Reset task execution flag and load data when view appears
+            hasTaskExecuted = false
+            Task {
+                await loadData()
+            }
+        }
     }
     
     @MainActor
     private func loadData() async {
-        guard !hasTaskExecuted else { return }
-        hasTaskExecuted = true
         print("Loading data for user: \(userId)")
+        // Reset dataReady to false to show loading state
+        vm.dataReady = false
+        hasTaskExecuted = true
         await vm.fetchUserData(userSession: userSession)
     }
     
@@ -284,6 +315,12 @@ struct OtherUserProfileActionButtons: View {
     let isFollowing: Bool
     @Binding var selectedTab: Int
     @StateObject var vm: OtherUserProfileViewModel
+    @State private var showingShareSheet = false
+    
+    private var shareURL: URL? {
+        // Create the profile share URL using the user ID
+        URL(string: "https://learnwithlinguid.com/profiles/\(userId)")
+    }
     
     var body: some View {
         HStack(spacing: 12.5) {
@@ -333,7 +370,7 @@ struct OtherUserProfileActionButtons: View {
             }
             
             Button {
-                // Share profile functionality
+                showingShareSheet = true
             } label: {
                 Text("Share")
                     .foregroundColor(.white)
@@ -342,6 +379,11 @@ struct OtherUserProfileActionButtons: View {
                     .frame(width: 80, height: 32, alignment: .center)
                     .background(Color.appPrimaryColor)
                     .cornerRadius(8)
+            }
+        }
+        .sheet(isPresented: $showingShareSheet) {
+            if let shareURL = shareURL {
+                ShareSheet(activityItems: [shareURL])
             }
         }
     }

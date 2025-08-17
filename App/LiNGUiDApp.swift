@@ -34,7 +34,25 @@ struct LiNGUiDApp: App {
                 .onAppear {
                     notificationService.setupNotifications()
                 }
+                .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .active {
+                        // App became active, check if there's a pending deep link to handle
+                        if let videoId = deepLinkCoordinator.deepLinkVideoID {
+                            // Re-trigger the deep link handling to ensure proper navigation
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                deepLinkCoordinator.deepLinkToVideo(with: videoId)
+                            }
+                        }
+                        // --- Add this block for profile deep links ---
+                        if let profileId = deepLinkCoordinator.deepLinkProfileID {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                deepLinkCoordinator.deepLinkToProfile(with: profileId)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
-}
+
 

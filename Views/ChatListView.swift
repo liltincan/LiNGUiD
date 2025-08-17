@@ -100,7 +100,6 @@ struct ChatListView: View {
                         
                     case .profile(let id):
                         OtherUserProfileView(userId: id, selectedTab: $selectedTab, onLogout: onLogout)
-                            .padding(.top, -60)
                     }
                 }
             }

@@ -170,7 +170,6 @@ struct VideoPlayerView: View {
                                             )
                                         } else {
                                             OtherUserProfileView(userId: uploaderId, selectedTab: $selectedTab, onLogout: onLogout)
-                                                .padding(.top, -62.5)
                                         }
                                     }
                                 }
