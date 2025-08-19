@@ -104,6 +104,9 @@ struct VideoPlayerView: View {
     @State private var currentPieceIndex: Int = 0
     @State private var highlightedWord: String? = nil
 
+    @State private var arrowOffsetX: CGFloat = 0
+    private let popupWidth: CGFloat = 200
+    @State private var popupOffsetX: CGFloat = 0
     
     var body: some View {
         NavigationStack {
@@ -439,9 +442,19 @@ struct VideoPlayerView: View {
                                                 let cleaned = w.trimmingCharacters(in: .punctuationCharacters)
                                                 selectedWord = cleaned
                                                 showWordPopup = true
+                                                updatePopupPlacement(screenWidth: screenWidth)
                                                 actionFunction(word: cleaned)
                                             }
                                         }
+                                        .background(
+                                          GeometryReader { g in
+                                            Color.clear
+                                              .onAppear { wordFrames[w] = g.frame(in: .named("Overlay")) }
+                                              .onChange(of: currentPieceIndex) { _ in
+                                                wordFrames[w] = g.frame(in: .named("Overlay"))
+                                              }
+                                          }
+                                        )
                                 }
                             }
                             .lineLimit(1)
@@ -457,6 +470,7 @@ struct VideoPlayerView: View {
                         .padding(.bottom, showingInFullScreen ? 90 : max(safeAreaBottom + 50, 50))
                         .padding(.horizontal, 0)
                         .padding(.trailing, 0)
+                        .coordinateSpace(name: "Overlay")
                         .zIndex(2)
                     }
 
@@ -479,11 +493,20 @@ struct VideoPlayerView: View {
                                 from: userSession.currentUser?.targetLanguage ?? "",
                                 to: userSession.currentUser?.nativeLanguage ?? ""
                             )
-                            .padding(.bottom, 200)
+                            Triangle()
+                                .fill(Color.appPrimaryColor)
+                                .frame(width: 40, height: 20)
+                                .rotationEffect(.degrees(180))
+                                .offset(x: arrowOffsetX, y: -1) // relative to popup center
+                                .allowsHitTesting(false)
+                                .padding(.top, -10)
                         }
+                        .offset(x: popupOffsetX)        // shift the whole popup left/right
+                        .padding(.bottom, 185)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                         .zIndex(3)
                     }
+
                 }
                 .onChange(of: showPracticeSheet) { isShowing in
                     if isShowing {
@@ -572,6 +595,24 @@ struct VideoPlayerView: View {
         //        )
     }
 
+    private func updatePopupPlacement(screenWidth: CGFloat) {
+        guard let selected = selectedWord,
+              let rect = wordFrames[selected] else {
+            popupOffsetX = 0
+            arrowOffsetX = 0
+            return
+        }
+
+        let edge: CGFloat = 16
+        let half = popupWidth / 2
+
+        let desiredCenterX = min(max(rect.midX, edge + half),
+                                 screenWidth - edge - half)
+
+        popupOffsetX = desiredCenterX - (screenWidth / 2)
+        arrowOffsetX = rect.midX - desiredCenterX
+    }
+    
     private func clearHighlightAndPopup() {
         withAnimation {
             highlightedWord = nil
