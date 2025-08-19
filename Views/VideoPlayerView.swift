@@ -102,6 +102,8 @@ struct VideoPlayerView: View {
     
     @State private var sentencePieces: [String] = []
     @State private var currentPieceIndex: Int = 0
+    @State private var highlightedWord: String? = nil
+
     
     var body: some View {
         NavigationStack {
@@ -399,6 +401,15 @@ struct VideoPlayerView: View {
                         .padding(.leading, 20)
                     }
                     
+                    // Transparent tap-catcher: active only when a word is highlighted / popup shown
+                    if !showWordPopup && (highlightedWord != nil) {
+                        Color.clear
+                            .ignoresSafeArea()
+                            .contentShape(Rectangle())
+                            .onTapGesture { clearHighlightAndPopup() } // outside caption & popup => clear both
+                            .zIndex(1) // caption and popup will sit above this, so taps on them are NOT intercepted
+                    }
+
                     // Captions overlay (single line)
                     if isCaptionVisible && !sentencePieces.isEmpty {
                         let line = sentencePieces[currentPieceIndex]
@@ -408,16 +419,28 @@ struct VideoPlayerView: View {
                             Spacer()
                             HStack(spacing: 5) {
                                 ForEach(lineWords, id: \.self) { w in
+                                    let isSelected = (highlightedWord == w)
                                     Text(w)
                                         .font(.system(size: 16))
                                         .foregroundColor(.white)
                                         .fixedSize()
                                         .contentShape(Rectangle())
+                                        .background(
+                                            isSelected ? Color.gray.opacity(0.6) : Color.clear
+                                        )
                                         .onTapGesture {
                                             guard isActive else { return }
                                             if isPlaying { togglePlayPause() }
-                                            let cleaned = w.trimmingCharacters(in: .punctuationCharacters)
-                                            actionFunction(word: cleaned)
+
+                                            if highlightedWord == w && showWordPopup {
+                                                clearHighlightAndPopup()
+                                            } else {
+                                                highlightedWord = w
+                                                let cleaned = w.trimmingCharacters(in: .punctuationCharacters)
+                                                selectedWord = cleaned
+                                                showWordPopup = true
+                                                actionFunction(word: cleaned)
+                                            }
                                         }
                                 }
                             }
@@ -434,6 +457,7 @@ struct VideoPlayerView: View {
                         .padding(.bottom, showingInFullScreen ? 90 : max(safeAreaBottom + 50, 50))
                         .padding(.horizontal, 0)
                         .padding(.trailing, 0)
+                        .zIndex(2)
                     }
 
 
@@ -444,9 +468,7 @@ struct VideoPlayerView: View {
                             .ignoresSafeArea()
                             .onTapGesture {
                                 withAnimation {
-                                    selectedWord = nil
-                                    translatedText = nil
-                                    showWordPopup = false
+                                    clearHighlightAndPopup()
                                 }
                             }
                         
@@ -460,6 +482,7 @@ struct VideoPlayerView: View {
                             .padding(.bottom, 200)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                        .zIndex(3)
                     }
                 }
                 .onChange(of: showPracticeSheet) { isShowing in
@@ -549,6 +572,15 @@ struct VideoPlayerView: View {
         //        )
     }
 
+    private func clearHighlightAndPopup() {
+        withAnimation {
+            highlightedWord = nil
+            selectedWord = nil
+            translatedText = nil
+            showWordPopup = false
+        }
+    }
+    
     private func splitIntoSentences(_ text: String) -> [String] {
         let cleaned = text.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
         let parts = cleaned.split(whereSeparator: { ".!?".contains($0) })
@@ -853,11 +885,7 @@ struct VideoPlayerView: View {
 
                     if alreadySaved {
                         // Close popup and present Practice as a sheet
-                        withAnimation {
-                            selectedWord = nil
-                            translatedText = nil
-                            showWordPopup = false
-                        }
+                        clearHighlightAndPopup()
                         showPracticeSheet = true
                     } else {
                         // Save only — do NOT navigate
