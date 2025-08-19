@@ -14,7 +14,6 @@ struct DashboardView: View {
     @State private var selectedWord: WordPair? = nil
     @State private var translatedText: String? = nil
     @State private var isTranslating = false
-    @State private var openPractice = false
     
     // Computed property to control which users are displayed in leaderboard
     private var displayedLeaderboardUsers: [LeaderboardUser] {
@@ -132,17 +131,7 @@ struct DashboardView: View {
                         )
                         .zIndex(10)
                     }
-                    NavigationLink("", isActive: $openPractice) {
-                        PracticeWordView(
-                            userSession: userSession,
-                            savedWordsViewModel: savedWordsViewModel
-                        )
-                    }
-                    .hidden()
                 }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .init("OpenPracticeFromPopup"))) { _ in
-                openPractice = true
             }
             .navigationTitle("DASHBOARD")
             .navigationBarTitleDisplayMode(.inline)

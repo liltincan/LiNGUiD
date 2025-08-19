@@ -97,6 +97,8 @@ struct VideoPlayerView: View {
     @State private var uploaderUsername: String? = nil
     @Environment(\.dismiss) private var dismiss
     
+    @State private var showPracticeSheet = false
+    @State private var justSavedFlash = false
     
     
     var body: some View {
@@ -469,6 +471,17 @@ struct VideoPlayerView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     }
                 }
+                .onChange(of: showPracticeSheet) { isShowing in
+                    if isShowing {
+                        player.pause()
+                        isPlaying = false
+                        stopWatchTimer()
+                    }
+                }
+                .fullScreenCover(isPresented: $showPracticeSheet) {
+                    PracticeFullScreen(userSession: userSession, isPresented: $showPracticeSheet)
+                }
+
                 .ignoresSafeArea(edges: .top)
                 .navigationBarBackButtonHidden(true)
             }
@@ -789,31 +802,44 @@ struct VideoPlayerView: View {
                     let alreadySaved = isWordSavedAnywhere(w, language: lang)
 
                     if alreadySaved {
-                        // Close popup and jump to Practice
+                        // Close popup and present Practice as a sheet
                         withAnimation {
                             selectedWord = nil
                             translatedText = nil
                             showWordPopup = false
                         }
-                        NotificationCenter.default.post(
-                            name: .init("OpenPracticeFromPopup"),
-                            object: ["word": w, "language": lang]
-                        )
+                        showPracticeSheet = true
                     } else {
-                        // Save only — no navigation
-                        addUnknownWordInUserSession(word: w, userId: userID)
+                        // Save only — do NOT navigate
+                        
+                        withAnimation { justSavedFlash = true }
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            addUnknownWordInUserSession(word: w, userId: userID)
+                            withAnimation { justSavedFlash = false }
+                        }
                     }
                 } label: {
+                    let saved = isWordSavedAnywhere((word ?? ""), language: userSession.currentUser?.targetLanguage ?? "")
                     HStack {
-                        Image(systemName: isWordSavedAnywhere((word ?? ""), language: userSession.currentUser?.targetLanguage ?? "")
-                              ? "rectangle.and.pencil.and.ellipsis"
-                              : "bookmark.fill")
-                        Text(isWordSavedAnywhere((word ?? ""), language: userSession.currentUser?.targetLanguage ?? "")
-                             ? "Practice" : "Save")
+                        if saved {
+                            // your custom asset before "Practice"
+                            Image("Vector")
+                                .resizable()
+                                .frame(width: 18, height: 18)
+                            Text("Practice")
+                        } else if justSavedFlash {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Word saved!")
+                        } else {
+                            Image(systemName: "bookmark.fill")
+                            Text("Save")
+                        }
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+
 
 
                 Divider()
@@ -1149,3 +1175,26 @@ struct TransparentNavigationBar: ViewModifier {
     }
 }
 
+struct PracticeFullScreen: View {
+    @ObservedObject var userSession: UserSessionViewModel
+    @Binding var isPresented: Bool
+    @Environment(\.dismiss) private var dismiss  // correct presenter-level dismiss
+
+    var body: some View {
+        NavigationStack {
+            PracticeView(userSession: userSession)
+                .padding(.top, -50)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            isPresented = false
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.appPrimaryColor)
+                        }
+                    }
+                }
+        }
+    }
+}
