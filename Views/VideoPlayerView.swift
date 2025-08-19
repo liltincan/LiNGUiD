@@ -100,6 +100,8 @@ struct VideoPlayerView: View {
     @State private var showPracticeSheet = false
     @State private var justSavedFlash = false
     
+    @State private var sentencePieces: [String] = []
+    @State private var currentPieceIndex: Int = 0
     
     var body: some View {
         NavigationStack {
@@ -397,55 +399,44 @@ struct VideoPlayerView: View {
                         .padding(.leading, 20)
                     }
                     
-                    // Captions overlay
-                    if isCaptionVisible && !words.isEmpty {
+                    // Captions overlay (single line)
+                    if isCaptionVisible && !sentencePieces.isEmpty {
+                        let line = sentencePieces[currentPieceIndex]
+                        let lineWords = line.split(separator: " ").map(String.init)
+
                         VStack {
                             Spacer()
-                            Flow(.vertical, alignment: .leading, spacing: 0) {
-                                ForEach(words, id: \.self) { word in
-                                    Text(word)
-                                        .font(.system(size: 20))
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 4)
+                            HStack(spacing: 5) {
+                                ForEach(lineWords, id: \.self) { w in
+                                    Text(w)
+                                        .font(.system(size: 16))
                                         .foregroundColor(.white)
-                                        .fixedSize(horizontal: true, vertical: false)
-                                        .background(
-                                            GeometryReader { geo in
-                                                Color.clear
-                                                    .onAppear {
-                                                        let frame = geo.frame(in: .global)
-                                                        // Only store valid frames
-                                                        if frame.width > 0 && frame.height > 0 &&
-                                                           frame.width.isFinite && frame.height.isFinite {
-                                                            wordFrames[word] = frame
-                                                        }
-                                                    }
-                                            }
-                                        )
+                                        .fixedSize()
+                                        .contentShape(Rectangle())
                                         .onTapGesture {
-                                            if isActive{
-                                                if isPlaying {
-                                                    togglePlayPause()
-                                                }
-                                                let cleanedWord = word
-                                                            .trimmingCharacters(in: .punctuationCharacters)
-
-                                                actionFunction(word: cleanedWord)
-                                            }
+                                            guard isActive else { return }
+                                            if isPlaying { togglePlayPause() }
+                                            let cleaned = w.trimmingCharacters(in: .punctuationCharacters)
+                                            actionFunction(word: cleaned)
                                         }
                                 }
                             }
+                            .lineLimit(1)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
                             .background(Color.black.opacity(0.6))
                             .cornerRadius(8)
                             .padding(.horizontal, 20)
-                            .padding(.trailing, 80) // Space for action buttons
+                            .padding(.trailing, 0)
                             .padding(.bottom, showingInFullScreen ? 60 : max(safeAreaBottom + 100, 60))
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                        .padding(.bottom, showingInFullScreen ? 200 : max(safeAreaBottom + 200, 200))
-                        .padding(.horizontal, 20)
-                        .padding(.trailing, 80) // Space for action buttons
+                        .padding(.bottom, showingInFullScreen ? 90 : max(safeAreaBottom + 50, 50))
+                        .padding(.horizontal, 0)
+                        .padding(.trailing, 0)
                     }
+
+
                     
                     // Word popup overlay
                     if showWordPopup, let word = selectedWord {
@@ -558,6 +549,55 @@ struct VideoPlayerView: View {
         //        )
     }
 
+    private func splitIntoSentences(_ text: String) -> [String] {
+        let cleaned = text.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+        let parts = cleaned.split(whereSeparator: { ".!?".contains($0) })
+            .map { String($0).trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        return parts.isEmpty ? (cleaned.isEmpty ? [] : [cleaned]) : parts
+    }
+
+    private func chunkToOneLinePieces(sentence: String, maxWidth: CGFloat, font: UIFont = .systemFont(ofSize: 20)) -> [String] {
+        guard !sentence.isEmpty else { return [] }
+        var pieces: [String] = []
+        var current = ""
+
+        func width(of s: String) -> CGFloat {
+            let attr: [NSAttributedString.Key: Any] = [.font: font]
+            let rect = (s as NSString).boundingRect(
+                with: CGSize(width: .greatestFiniteMagnitude, height: font.lineHeight),
+                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                attributes: attr,
+                context: nil
+            )
+            return ceil(rect.width)
+        }
+
+        for word in sentence.split(separator: " ") {
+            let candidate = current.isEmpty ? String(word) : current + " " + word
+            if width(of: candidate) <= maxWidth {
+                current = candidate
+            } else {
+                if !current.isEmpty { pieces.append(current) }
+                // If a single very-long word doesn't fit, hard-split it.
+                if width(of: String(word)) > maxWidth {
+                    var chunk = ""
+                    for ch in String(word) {
+                        let cand = chunk + String(ch)
+                        if width(of: cand) <= maxWidth { chunk = cand }
+                        else { if !chunk.isEmpty { pieces.append(chunk) }; chunk = String(ch) }
+                    }
+                    if !chunk.isEmpty { pieces.append(chunk) }
+                    current = ""
+                } else {
+                    current = String(word)
+                }
+            }
+        }
+        if !current.isEmpty { pieces.append(current) }
+        return pieces
+    }
+
     private func setupPlayer() {
         configureAudioSession()
 
@@ -577,23 +617,40 @@ struct VideoPlayerView: View {
         ) { time in
             let seconds = CMTimeGetSeconds(time)
 
-            if let caption = captions?.first(where: {
-                $0.start <= seconds && seconds <= $0.end
-            }) {
+            if let caption = captions?.first(where: { $0.start <= seconds && seconds <= $0.end }) {
                 currentCaptionText = caption.text
 
-                if isCaptionVisible && !currentCaptionText.isEmpty {
-                    words =
-                        currentCaptionText
-                        .replacingOccurrences(of: "\n", with: " ")
-                        .components(separatedBy: .whitespaces)
-//                        .map{ $0.trimmingCharacters(in: .punctuationCharacters) }
-                        .filter { !$0.isEmpty }
-                }
+                let baseWidth = (containerWidth ?? UIScreen.main.bounds.width)
+                let horizontalPadding: CGFloat = 20 + 80 + 20
+                let maxTextWidth = max(baseWidth - horizontalPadding, 100)
+
+                //Split into sentences
+                let sentences = splitIntoSentences(currentCaptionText)
+
+                //Decide which sentence based on proportional time within this caption
+                let capDuration = max(caption.end - caption.start, 0.1)
+                let elapsed = seconds - caption.start
+                let sIndex = min(Int((elapsed / capDuration) * Double(max(sentences.count, 1))), max(sentences.count - 1, 0))
+                let sentence = sentences.isEmpty ? "" : sentences[sIndex]
+
+                //Break that sentence into one-line pieces that fit width
+                let pieces = chunkToOneLinePieces(sentence: sentence, maxWidth: maxTextWidth)
+
+                sentencePieces = pieces.isEmpty ? [""] : pieces
+
+                //Pick current piece based on time within this sentence slice
+                let sliceDuration = capDuration / Double(max(sentences.count, 1))
+                let sliceElapsed = elapsed - (Double(sIndex) * sliceDuration)
+                let pieceIdx = min(Int((sliceElapsed / sliceDuration) * Double(max(pieces.count, 1))), max(pieces.count - 1, 0))
+                currentPieceIndex = max(0, pieceIdx)
+
             } else {
                 currentCaptionText = ""
+                sentencePieces = []
+                currentPieceIndex = 0
             }
         }
+
 
         player.currentItem?.preferredForwardBufferDuration = 0
         player.automaticallyWaitsToMinimizeStalling = false
