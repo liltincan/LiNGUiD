@@ -514,6 +514,9 @@ struct VideoPlayerView: View {
                     .padding(.bottom, 25)
                     .padding(.bottom, showingInFullScreen ? 17 : 38)
                     .zIndex(2.1)
+                    .allowsHitTesting(!showWordPopup)
+                    .opacity(showWordPopup ? 0.0 : 1)
+                    .animation(.easeInOut(duration: 0.15), value: showWordPopup)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
 
                     
