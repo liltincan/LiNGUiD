@@ -114,6 +114,11 @@ struct VideoPlayerView: View {
     @State private var isScrubbing = false
     @State private var wasPlayingBeforeScrub = false
     
+    private var hasMeaning: Bool {
+        let m = (translatedText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return !m.isEmpty
+    }
+    
     var body: some View {
         NavigationStack {
             GeometryReader { proxy in
@@ -986,16 +991,19 @@ struct VideoPlayerView: View {
                     let alreadySaved = isWordSavedAnywhere(w, language: lang)
 
                     if alreadySaved {
-                        // Close popup and present Practice as a sheet
                         clearHighlightAndPopup()
                         showPracticeSheet = true
                     } else {
-                        // Save only — do NOT navigate
-                        
+                        //block saving until meaning exists
+                        let meaning = (translatedText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !meaning.isEmpty else {
+                            UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                            return
+                        }
+
                         withAnimation { justSavedFlash = true }
-                        
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            addUnknownWordInUserSession(word: w, userId: userID)
+                            addUnknownWordInUserSession(word: w, meaning: meaning, userId: userID)
                             withAnimation { justSavedFlash = false }
                         }
                     }
@@ -1003,7 +1011,6 @@ struct VideoPlayerView: View {
                     let saved = isWordSavedAnywhere((word ?? ""), language: userSession.currentUser?.targetLanguage ?? "")
                     HStack {
                         if saved {
-                            // your custom asset before "Practice"
                             Image("Vector")
                                 .resizable()
                                 .frame(width: 18, height: 18)
@@ -1019,8 +1026,8 @@ struct VideoPlayerView: View {
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-
-
+                .disabled(isTranslatingCaption || !hasMeaning)
+                .opacity((isTranslatingCaption || !hasMeaning) ? 0.6 : 1.0)
 
                 Divider()
                     .background(Color.white)
@@ -1041,13 +1048,15 @@ struct VideoPlayerView: View {
         }
     }
 
-    func addUnknownWordInUserSession(word: String, userId: String) {
+    func addUnknownWordInUserSession(word: String, meaning: String, userId: String) {
         guard let language = userSession.currentUser?.targetLanguage else { return }
         guard var currentUser = userSession.currentUser else { return }
 
-        // ✅ Block duplicates across BOTH known & unknown and flip UI to “Practice”
+        //do not save without meaning
+        let meaningTrimmed = meaning.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !meaningTrimmed.isEmpty else { return }
+
         if isWordSavedAnywhere(word, language: language) {
-            // Optional: light feedback so the user sees something happened
             videoPlayerViewModel.word = word
             videoPlayerViewModel.wordSaved = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -1056,7 +1065,7 @@ struct VideoPlayerView: View {
             return
         }
 
-        let newWord = WordPair(target: word, native: translatedText ?? "")
+        let newWord = WordPair(target: word, native: meaningTrimmed)
 
         var languagesData = currentUser.languagesData ?? [:]
         var langData = languagesData[language] ?? LanguagesData(savedWords: WordLists(knownWords: [], unknownWords: []))
@@ -1073,9 +1082,10 @@ struct VideoPlayerView: View {
             targetLanguage: language,
             savedWord: word,
             languagesData: languagesData,
-            nativeText: translatedText ?? ""
+            nativeText: meaningTrimmed
         )
     }
+
     
     private func normalize(_ s: String) -> String {
         let extraWS = CharacterSet(charactersIn: "\u{00A0}\u{202F}") // NBSP, NNBSP
