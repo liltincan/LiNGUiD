@@ -1,6 +1,7 @@
 import AVKit
 import SwiftUI
 import Foundation
+import FirebaseAuth
 
 struct VideoFeedView: View {
     @StateObject private var vm = VideoFeedViewModel()
@@ -11,6 +12,7 @@ struct VideoFeedView: View {
     let startingVideoId: String?
     
     @State private var hasScrolledToInitialVideo = false
+    @State private var showChangeLevelFlow = false
     
     let onLogout: () -> Void
     
@@ -34,10 +36,26 @@ struct VideoFeedView: View {
                     .multilineTextAlignment(.center)
                     .padding()
             } else if vm.videos.isEmpty {
-                Text("No videos found.")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.gray)
+                VStack{
+                    Text("Update Language Level\nto Watch More Videos")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                    Button {
+                        showChangeLevelFlow = true
+                    } label: {
+                        Text("Change Level")
+                            .font(.headline)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.appPrimaryColor)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                    .padding(.horizontal, 35)
+                }
+                .padding(.horizontal, 24)
             } else {
                 VerticalVideoFeed(
                     videos: vm.videos,
@@ -47,11 +65,34 @@ struct VideoFeedView: View {
                     startingVideoId: startingVideoId,
                     hasScrolledToInitialVideo: $hasScrolledToInitialVideo,
                     selectedTab: $selectedTab,
+                    showChangeLevelFlow: $showChangeLevelFlow,
                     onLogout: onLogout
                 )
             }
         }
         .ignoresSafeArea()
+        .fullScreenCover(isPresented: $showChangeLevelFlow, onDismiss: {
+            Task { @MainActor in
+                // reset scroll state and reload feed
+                currentIndex = 0
+                hasScrolledToInitialVideo = false
+                await vm.fetchInitialVideos()
+            }
+        }) {
+            Group {
+                if let uid = Auth.auth().currentUser?.uid {
+                    ChangeLanguageLevelFlow(uid: uid)
+                        .ignoresSafeArea()
+                        .padding(.top, 25)
+                } else {
+                    ZStack {
+                        Color.black.ignoresSafeArea()
+                        Text("Please sign in to change your level.")
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+        }
         .task(id: startingVideoId) {
             hasScrolledToInitialVideo = false
             if let id = startingVideoId {
@@ -86,6 +127,7 @@ struct VerticalVideoFeed: View {
     @Binding var hasScrolledToInitialVideo: Bool
     @Binding var selectedTab: Int
     
+    @Binding var showChangeLevelFlow: Bool
     let onLogout: () -> Void
     
     var body: some View {
@@ -123,6 +165,18 @@ struct VerticalVideoFeed: View {
                                 }
                             )
                         }
+                        EndOfFeedCell(isLoading: vm.isLoading, showChangeLevelFlow: $showChangeLevelFlow)
+                            .frame(width: screenWidth, height: screenHeight)
+                            .id("end-of-feed")
+                            .background(
+                                GeometryReader { itemGeo in
+                                    Color.clear
+                                        .onAppear { updateActiveForEndCell(itemGeo, screenHeight) }
+                                        .onChange(of: itemGeo.frame(in: .global)) { _, _ in
+                                            updateActiveForEndCell(itemGeo, screenHeight)
+                                        }
+                                }
+                            )
                     }
                 }
                 .scrollTargetBehavior(.paging)
@@ -187,6 +241,15 @@ struct VerticalVideoFeed: View {
             hasScrolledToInitialVideo = true
         }
     }
+    
+    private func updateActiveForEndCell(_ geometry: GeometryProxy, _ screenHeight: CGFloat) {
+        let frame = geometry.frame(in: .global)
+        let center = screenHeight / 2
+        if abs(frame.midY - center) < screenHeight / 4 {
+            if currentIndex != -1 { currentIndex = -1 }
+        }
+    }
+
 }
 
 struct FeedVideoPage: View {
@@ -235,6 +298,44 @@ struct FeedVideoPage: View {
                     print("Error fetching uploader profile picture: \(error.localizedDescription)")
                     uploaderPfp = nil
                 }
+            }
+        }
+    }
+}
+
+struct EndOfFeedCell: View {
+    let isLoading: Bool
+    @Binding var showChangeLevelFlow: Bool
+
+    var body: some View {
+        ZStack {
+            Color.black
+            if isLoading {
+                ProgressView()
+                    .tint(.white)
+                    .scaleEffect(1.1)
+            } else {
+                VStack(spacing: 16) {
+                    Text("You have reached the\nend of the feed")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+
+                    Button {
+                        showChangeLevelFlow = true
+                    } label: {
+                        Text("Change Level")
+                            .font(.headline)
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.appPrimaryColor)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                    .padding(.horizontal, 35)
+                }
+                .padding(.horizontal, 24)
             }
         }
     }
