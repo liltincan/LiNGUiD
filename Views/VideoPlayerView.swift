@@ -524,6 +524,14 @@ struct VideoPlayerView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .init("OpenPracticeFromPopup"))) { _ in
+            // If this video is inside a sheet/fullScreenCover, close it.
+            if showingInFullScreen {
+                dismiss()
+            }
+            // Switch to the tab that hosts Dashboard/Practice.
+            selectedTab = 3 // ← use your actual index for Dashboard/Practice
+        }
         .alert("Report Submitted", isPresented: $showingReportConfirmation) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -772,30 +780,45 @@ struct VideoPlayerView: View {
                 Divider()
                     .frame(height: 2)
                     .background(Color.white)
-                let lang = userSession.currentUser?.targetLanguage ?? ""
-                let w = word ?? ""
 
                 Button {
                     guard let userID = Auth.auth().currentUser?.uid else { return }
-                    if isWordSavedAnywhere(w, language: lang) {
-                        // open practice flow
+                    let lang = userSession.currentUser?.targetLanguage ?? ""
+                    let w = (word ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !w.isEmpty else { return }
+
+                    let alreadySaved = isWordSavedAnywhere(w, language: lang)
+
+                    if alreadySaved {
+                        // Close popup and jump to Practice
+                        withAnimation {
+                            selectedWord = nil
+                            translatedText = nil
+                            showWordPopup = false
+                        }
                         NotificationCenter.default.post(
                             name: .init("OpenPracticeFromPopup"),
                             object: ["word": w, "language": lang]
                         )
                     } else {
+                        // Save only — no navigation
                         addUnknownWordInUserSession(word: w, userId: userID)
+                        // Option: keep popup open so the button flips to “Practice”
+                        // or close it if you prefer:
+                        // withAnimation { showWordPopup = false }
                     }
                 } label: {
                     HStack {
-                        Image(systemName: isWordSavedAnywhere(w, language: lang)
+                        Image(systemName: isWordSavedAnywhere((word ?? ""), language: userSession.currentUser?.targetLanguage ?? "")
                               ? "rectangle.and.pencil.and.ellipsis"
                               : "bookmark.fill")
-                        Text(isWordSavedAnywhere(w, language: lang) ? "Practice" : "Save")
+                        Text(isWordSavedAnywhere((word ?? ""), language: userSession.currentUser?.targetLanguage ?? "")
+                             ? "Practice" : "Save")
                     }
                     .padding()
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+
 
                 Divider()
                     .background(Color.white)
