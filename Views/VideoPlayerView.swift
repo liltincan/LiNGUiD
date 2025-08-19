@@ -537,13 +537,6 @@ struct VideoPlayerView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        .onReceive(NotificationCenter.default.publisher(for: .init("OpenPracticeFromPopup"))) { _ in
-            // If this video is inside a sheet/fullScreenCover, close it.
-            if showingInFullScreen {
-                dismiss()
-            }
-            selectedTab = 3 // index for Practice
-        }
         .alert("Report Submitted", isPresented: $showingReportConfirmation) {
             Button("OK", role: .cancel) {}
         } message: {
