@@ -40,7 +40,6 @@ struct ChatListView: View {
                                 .background(Color.linguidPurple)
                                 .foregroundColor(.white)
                                 .cornerRadius(20)
-                            
                         }
                     }
                     .padding()
@@ -100,6 +99,7 @@ struct ChatListView: View {
                         
                     case .profile(let id):
                         OtherUserProfileView(userId: id, selectedTab: $selectedTab, onLogout: onLogout)
+                            .padding(.top, 20)
                     }
                 }
             }
@@ -117,7 +117,7 @@ struct ChatListView: View {
                 pendingChatUserId = nil
             }
         }
-        //this will now let the app know that a conversationg is being checked
+        //this will now let the app know that a conversation is being checked
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("StartChatWithUser"))) { notification in
             if let userInfo = notification.userInfo,
                let userId = userInfo["userId"] as? String,
@@ -241,7 +241,7 @@ struct DiscoveryView: View {
     var defaultLanguage: String
     @State private var searchText: String = ""
     @State private var selectedLanguages: [String] = []
-    @State private var previousDefaultLanague: String = ""
+    @State private var previousDefaultLanguage: String = ""
     @State private var showProCheck = false
     
     var body: some View {
@@ -253,6 +253,7 @@ struct DiscoveryView: View {
                     Button(action: onBack) {
                         Image(systemName: "chevron.left")
                             .foregroundColor(.white)
+                            .font(.system(size: 20))
                     }
                     Text("Discover")
                         .foregroundColor(.white)
@@ -363,21 +364,21 @@ struct DiscoveryView: View {
                         if (!selectedLanguages.contains(defaultLanguage)) {
                             selectedLanguages.append(defaultLanguage)
                         }
-                        previousDefaultLanague = defaultLanguage
+                        previousDefaultLanguage = defaultLanguage
                         applyFilters()
                     }
-                    //will get the defaultLanguage updates from the listener
+                    //will get the defaultLanguage updates from the listener (when learningLanguage in vm changes it will detect)
                     .onChange(of: defaultLanguage) { newDefault in
                         //removing the the old default chip if there is one
-                        if (!previousDefaultLanague.isEmpty) {
-                            selectedLanguages.removeAll { $0 == previousDefaultLanague }
+                        if (!previousDefaultLanguage.isEmpty) {
+                            selectedLanguages.removeAll { $0 == previousDefaultLanguage }
                         }
                         //now adding the new default if missing
                         if (!selectedLanguages.contains(newDefault)) {
                             selectedLanguages.append(newDefault)
                         }
-                        previousDefaultLanague = newDefault
-                        applyFilters() 
+                        previousDefaultLanguage = newDefault
+                        applyFilters()
                     }
                     //hide the scrollable on the side
                     .scrollIndicators(.hidden)

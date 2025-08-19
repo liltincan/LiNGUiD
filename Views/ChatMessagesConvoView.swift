@@ -9,6 +9,7 @@ import SwiftUI
 import FirebaseAuth
 import AVFoundation
 import FirebaseStorage
+import Combine
 
 //MARK: - Conversation View (use in ChatListView)
 struct ChatMessagesConvoView: View {
@@ -37,7 +38,7 @@ struct ChatMessagesConvoView: View {
     @State private var showSlideToCancel = false
     @State private var isInDeleteZone = false
     @State private var didFireHaptic = false
-    private let cancelDistance: CGFloat = 120 // how far left to cancel
+    private let cancelDistance: CGFloat = 120
 
     
     //MARK: Translating the message based on tapping
@@ -196,6 +197,17 @@ struct ChatMessagesConvoView: View {
             .onChange(of: scenePhase) { phase in
                 if phase == .active {
                     tap.resetForNewDayIfNeeded()
+                }
+            }
+            //this will make sure that TapTracker knows the current pro state
+            .onAppear {
+                tap.isPro = viewModel.isCurrentUserPro
+            }
+            //if users ends up buying isPro then notify this since it changed
+            .onChange(of: viewModel.isCurrentUserPro) { isPro in
+                tap.isPro = isPro
+                if(isPro) {
+                    showLimitAlert = false
                 }
             }
             .overlay(
@@ -529,15 +541,14 @@ struct ChatMessagesConvoView: View {
                 .focused($focusfield, equals: .sendMessage)
                 .submitLabel(.send)
                 .onChange(of: sendMessage) { value in
-                    //since using the return in the axis we nust remove that newline and let it send messages
-                    if value.last == "\n" {
+                    //since using the return in the axis we must remove that newline and let it send messages
+                    if (value.last == "\n") {
                         sendMessage = String(value.dropLast())
                         send()
                     }
                 }
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
-                //.disabled(isRecording)
             HStack {
                 Spacer()
                 //only show mic if text messsage is empty

@@ -17,9 +17,9 @@ class ChatListViewModel: ObservableObject {
     @Published var discoverableUsers: [Chat] = []
     @Published var conversations : [ChatConversation] = []
     @Published var chattedUserIDs: Set<String> = []
-    @Published var isInitialLoadDone = false
+    @Published var isInitialLoadDone: Bool = false
     @Published var learningLanguage: String = ""
-    @Published var isCurrentUserPro = false
+    @Published var isCurrentUserPro: Bool = false
 
     //look at the database now
     private var db = Firestore.firestore()
@@ -45,10 +45,14 @@ class ChatListViewModel: ObservableObject {
         listener = db.collection("chat")
             .whereField("participantIDs", arrayContains: currentUserID)
             .addSnapshotListener { [weak self] snapshot, error in
-                guard let self = self, let documents = snapshot?.documents else {
+                guard let self = self, let snap = snapshot else {
                     print("Error fetching chats \(error?.localizedDescription ?? "Unknown Error")")
                     return
                 }
+                if snap.metadata.hasPendingWrites { return }
+                let documents = snap.documents
+
+                
                 var newChats: [Chat] = []
                 var userIDs: Set<String> = []
                 let dispatchGroup = DispatchGroup()
@@ -61,15 +65,16 @@ class ChatListViewModel: ObservableObject {
                     let lastMessageTimestamp = (data["lastMessageTimestamp"] as? Timestamp)?.dateValue()
                     let hideSinceMap = data["hideSince"] as? [String: Timestamp]
                     let hideCutoff = hideSinceMap?[currentUserID]?.dateValue()
-                    if let cutoff = hideCutoff, let last = lastMessageTimestamp, last <= cutoff {
-                        //user archived this thread and no newer message has arrived
-                        continue
+                    if let cutoff = hideCutoff {
+                        // If no last message, or last ≤ cutoff, keep it hidden
+                        if lastMessageTimestamp == nil || lastMessageTimestamp! <= cutoff {
+                            continue
+                        }
                     }
 
                     guard let otherUserID = participants.first(where: { $0 != currentUserID }) else {
                         continue
                     }
-
                     userIDs.insert(otherUserID)
                     dispatchGroup.enter()
 
@@ -227,7 +232,7 @@ class ChatListViewModel: ObservableObject {
                 completion([])
                 return
             }
-            //this will help keep track to clear the messges for the user that hides it
+            //this will help keep track to clear the messages for the user that hides it
             let hideSince = data["hideSince"] as? [String: Timestamp]
             let resetTime = hideSince?[currentUserID]?.dateValue()
             
@@ -236,8 +241,8 @@ class ChatListViewModel: ObservableObject {
         }
     }
     //private function that will help retrieve the messages based on reseting (who deleted the chat)
-    private func fetchAllMessages(for chatID: String, after resetTime: Date?, completion: @escaping ([ChatMessages]) -> Void) {
-        //get the messages and now going to order it by timestamp
+    func fetchAllMessages(for chatID: String, after resetTime: Date?, completion: @escaping ([ChatMessages]) -> Void) {
+        //going to get all the messages in 'chat' with their chatId and will be in order by timestamp of messages
         var query: Query = db.collection("chat")
             .document(chatID)
             .collection("messages")
@@ -246,41 +251,91 @@ class ChatListViewModel: ObservableObject {
             query = query.whereField("timestamp", isGreaterThan: resetTime)
         }
 
-        query.getDocuments { snapshot, error in
-            guard let documents = snapshot?.documents else {
-                print("Error fetching messages: \(error?.localizedDescription ?? "Unknown")")
-                completion([])
-                return
+        //getting the current user & partner languages up front (same as listenToMessages)
+        guard let currentUserID = Auth.auth().currentUser?.uid else { completion([]); return }
+        let chatDoc = db.collection("chat").document(chatID)
+        chatDoc.getDocument { [weak self] chatSnap, _ in
+            guard let self = self,
+                  let chatData = chatSnap?.data(),
+                  let participants = chatData["participantIDs"] as? [String],
+                  let otherUserID = participants.first(where: { $0 != currentUserID }) else {
+                completion([]); return
             }
-            let messages = documents.compactMap { doc -> ChatMessages? in
-                let data = doc.data()
-                guard let text = data["text"] as? String,
-                      let senderID = data["senderID"] as? String else { return nil }
-                let isRead = data["isRead"] as? Bool ?? false
-                let serverTimestamp = (data["timestamp"] as? Timestamp)?.dateValue()
-                let localFallback = (data["localTimestamp"] as? Timestamp)?.dateValue()
-                let timestamp = serverTimestamp ?? localFallback ?? Date()
-                let repliedToText = data["repliedToText"] as? String
-                let isLiked = data["isLiked"] as? Bool ?? false
-                return ChatMessages(
-                    text: text,
-                    isFromCurrentUser: senderID == Auth.auth().currentUser?.uid,
-                    isRead: isRead,
-                    timestamp: timestamp,
-                    repliedToText: repliedToText,
-                    isLiked: isLiked,
-                    documentID: doc.documentID
-                )
+            //here we have to look into the users (current) nativeLanguage and then other user nativeLanguage
+            self.db.collection("users").document(currentUserID).getDocument { userSnap, _ in
+                let currentLang = userSnap?.data()?["nativeLanguage"] as? String ?? "en"
+                self.db.collection("users").document(otherUserID).getDocument { partnerSnap, _ in
+                    let partnerLang = partnerSnap?.data()?["nativeLanguage"] as? String ?? "en"
+
+                    query.getDocuments { snapshot, error in
+                        guard let documents = snapshot?.documents else {
+                            completion([]); return
+                        }
+                        //have multiple threads running at the same time
+                        let group = DispatchGroup()
+                        var messages: [ChatMessages] = []
+                        messages.reserveCapacity(documents.count)
+
+                        for doc in documents {
+                            let data = doc.data()
+                            let text = data["text"] as? String ?? ""
+                            let senderID = data["senderID"] as? String ?? ""
+                            let isFromCurrentUser = senderID == currentUserID
+                            let isRead = data["isRead"] as? Bool ?? false
+                            let serverTimestamp = (data["timestamp"] as? Timestamp)?.dateValue()
+                            let localFallback = (data["localTimestamp"] as? Timestamp)?.dateValue()
+                            let timestamp = serverTimestamp ?? localFallback ?? Date.distantPast
+                            let repliedToText = data["repliedToText"] as? String
+                            let isLiked = data["isLiked"] as? Bool ?? false
+                            let documentID = doc.documentID
+
+                           //this will then check if the user does not match the nativeLanguage of the other user
+                            if (!isFromCurrentUser && partnerLang != currentLang) {
+                                group.enter()
+                                translateTextV2(text: text, sourceLang: partnerLang, targetLang: currentLang) { translated in
+                                    messages.append(ChatMessages(
+                                        text: text,
+                                        isFromCurrentUser: isFromCurrentUser,
+                                        isRead: isRead,
+                                        timestamp: timestamp,
+                                        repliedToText: repliedToText,
+                                        isLiked: isLiked,
+                                        documentID: documentID,
+                                        translatedText: translated
+                                    ))
+                                    group.leave()
+                                }
+                            }
+                            else {
+                                messages.append(ChatMessages(
+                                    text: text,
+                                    isFromCurrentUser: isFromCurrentUser,
+                                    isRead: isRead,
+                                    timestamp: timestamp,
+                                    repliedToText: repliedToText,
+                                    isLiked: isLiked,
+                                    documentID: documentID,
+                                    translatedText: nil
+                                ))
+                            }
+                        }
+
+                        //now notify that they are all finished
+                        group.notify(queue: .main) {
+                            let sorted = messages.sorted { ($0.timestamp ?? .distantPast) < ($1.timestamp ?? .distantPast) }
+                            completion(sorted)
+                        }
+                    }
+                }
             }
-            completion(messages)
         }
     }
+
     //MARK: - Send Message
     //precondition: none
     //postcondition: this is the message when user sends a message to another user
     func sendMessage(_ text: String, to chatID: String, replyingTo: ChatMessages? = nil) {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-
         let chatRef = db.collection("chat").document(chatID)
 
         //getting the chat to determine who is the user
@@ -358,6 +413,10 @@ class ChatListViewModel: ObservableObject {
     //postcondition: this will hide (pretend it deletes) a chat from user until they both delete it
     func softDeleteChatForCurrentUser(chatID: String) {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        //delete the conversationg rigth away for the UI
+        self.conversations.removeAll { $0.friend.id == chatID }
+        self.chats.removeAll { $0.id == chatID }
+        
         let chatRef = db.collection("chat").document(chatID)
         chatRef.updateData([
             "hideSince.\(currentUserID)": FieldValue.serverTimestamp()

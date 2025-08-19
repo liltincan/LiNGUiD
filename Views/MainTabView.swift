@@ -7,7 +7,6 @@ struct MainTabView: View {
     @State private var unreadChatCount: Int = 0
 
     @StateObject var userSession = UserSessionViewModel()
-    
     // Add logout closure parameter
     let onLogout: () -> Void
 

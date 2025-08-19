@@ -11,28 +11,42 @@ import Combine
 final class TapTracker: ObservableObject {
     //setter that will allow to use the getter
     @Published private(set) var used: Int = 0
-    let max: Int
+    @Published var isPro: Bool = false
+    private let maxPerDay: Int
     private var currentKey: String = TapTracker.todayKey()
     private var midnightTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
     
+    //this will show how many taps the users has
+    var remaining: Int {
+          isPro ? .max : max(0, maxPerDay - used)
+    }
+    
     //constructor
     init(maxPerDay: Int = 20) {
-        self.max = maxPerDay
+        self.maxPerDay = maxPerDay
         self.used = Self.readUsed(for: currentKey)
         scheduleMidnightTimer()
         observeDayChangeNotifications()
     }
     //destructor that will prevent memory leaks
-    deinit { midnightTimer?.invalidate() }
-    
-    var remaining: Int { max - used }
+    deinit {
+        midnightTimer?.invalidate()
+    }
     
     //MARK: - Will check if it has reached the max over 20
     @discardableResult
     func tryConsume() -> Bool {
-        guard used < max else { return false }
+        //if user has pro then they have unlimited taps
+        if(isPro) {
+            print("USER IS PRO")
+            return true
+        }
+        guard used < maxPerDay else { return false }
         used += 1
+        //DUBUGGING
+        print("USER IS NOT PRO")
+        print("The total is now: \(used)")
         Self.writeUsed(used, for: currentKey)
         return true
     }
