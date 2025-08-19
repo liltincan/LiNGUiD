@@ -442,7 +442,7 @@ struct VideoPlayerView: View {
                                                 let cleaned = w.trimmingCharacters(in: .punctuationCharacters)
                                                 selectedWord = cleaned
                                                 showWordPopup = true
-                                                updatePopupPlacement(screenWidth: screenWidth)
+                                                updatePopupPlacement(for: w, screenWidth: screenWidth)
                                                 actionFunction(word: cleaned)
                                             }
                                         }
@@ -595,9 +595,8 @@ struct VideoPlayerView: View {
         //        )
     }
 
-    private func updatePopupPlacement(screenWidth: CGFloat) {
-        guard let selected = selectedWord,
-              let rect = wordFrames[selected] else {
+    private func updatePopupPlacement(for token: String, screenWidth: CGFloat) {
+        guard let rect = wordFrames[token] else {
             popupOffsetX = 0
             arrowOffsetX = 0
             return
@@ -612,6 +611,7 @@ struct VideoPlayerView: View {
         popupOffsetX = desiredCenterX - (screenWidth / 2)
         arrowOffsetX = rect.midX - desiredCenterX
     }
+
     
     private func clearHighlightAndPopup() {
         withAnimation {
