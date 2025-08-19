@@ -108,6 +108,12 @@ struct VideoPlayerView: View {
     private let popupWidth: CGFloat = 200
     @State private var popupOffsetX: CGFloat = 0
     
+    //Video Slider States
+    @State private var duration: Double = 0
+    @State private var playbackTime: Double = 0
+    @State private var isScrubbing = false
+    @State private var wasPlayingBeforeScrub = false
+    
     var body: some View {
         NavigationStack {
             GeometryReader { proxy in
@@ -474,6 +480,41 @@ struct VideoPlayerView: View {
                         .zIndex(2)
                     }
 
+                    // Scrub slider
+                    VStack(spacing: 6) {
+                        SlimScrubber(
+                            value: $playbackTime,
+                            range: 0...max(duration, 0.1),
+                            onScrubBegan: {
+                                if !isScrubbing {
+                                    isScrubbing = true
+                                    wasPlayingBeforeScrub = isPlaying
+                                    player.pause()
+                                }
+                            },
+                            onScrubChanged: { t in
+                                player.currentItem?.cancelPendingSeeks()
+                                let target = CMTime(seconds: t, preferredTimescale: 600)
+                                player.seek(
+                                    to: target,
+                                    toleranceBefore: CMTime(seconds: 0.03, preferredTimescale: 600),
+                                    toleranceAfter: CMTime(seconds: 0.03, preferredTimescale: 600)
+                                )
+                            },
+                            onScrubEnded: { t in
+                                isScrubbing = false
+                                let target = CMTime(seconds: t, preferredTimescale: 600)
+                                player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero) { _ in
+                                    if wasPlayingBeforeScrub { setPlayerSpeed(speedArray[currentSpeedIndex]) }
+                                }
+                            }
+                        )
+                    }
+                    .padding(.horizontal, 0)
+                    .padding(.bottom, 25)
+                    .padding(.bottom, showingInFullScreen ? 17 : 38)
+                    .zIndex(2.1)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
 
                     
                     // Word popup overlay
@@ -595,6 +636,16 @@ struct VideoPlayerView: View {
         //        )
     }
 
+    private func formatTime(_ t: Double) -> String {
+        guard t.isFinite else { return "0:00" }
+        let total = Int(t.rounded())
+        let s = total % 60
+        let m = (total / 60) % 60
+        let h = total / 3600
+        return h > 0 ? "\(h):" + String(format:"%02d:%02d", m, s)
+                     : "\(m):" + String(format:"%02d", s)
+    }
+    
     private func updatePopupPlacement(for token: String, screenWidth: CGFloat) {
         guard let rect = wordFrames[token] else {
             popupOffsetX = 0
@@ -689,6 +740,15 @@ struct VideoPlayerView: View {
             queue: .main
         ) { time in
             let seconds = CMTimeGetSeconds(time)
+            let item = player.currentItem
+            let dur = CMTimeGetSeconds(item?.duration ?? .invalid)
+            
+            if dur.isFinite && dur > 0 {
+                duration = dur
+            }
+            if !isScrubbing {
+                playbackTime = seconds.clamped(to: 0...max(duration, 0))
+            }
 
             if let caption = captions?.first(where: { $0.start <= seconds && seconds <= $0.end }) {
                 currentCaptionText = caption.text
@@ -1312,5 +1372,75 @@ struct PracticeFullScreen: View {
                     }
                 }
         }
+    }
+}
+
+struct SlimScrubber: View {
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let onScrubBegan: () -> Void
+    let onScrubChanged: (Double) -> Void
+    let onScrubEnded: (Double) -> Void
+    var captureHeight: CGFloat = 44
+    var barHeightInactive: CGFloat = 4
+    var barHeightActive: CGFloat = 7
+
+    @State private var dragging = false
+    @State private var didHaptic = false
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = max(1, geo.size.width)
+            let progress = CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound))
+                .clamped(to: 0...1)
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.clear)
+                    .frame(height: dragging ? barHeightActive : barHeightInactive)
+
+                Capsule()
+                    .fill(Color.white)
+                    .frame(width: max(4, progress * w), height: dragging ? barHeightActive : barHeightInactive)
+                    .shadow(color: Color.white.opacity(dragging ? 0.35 : 0), radius: dragging ? 6 : 0)
+                    .scaleEffect(dragging ? 1.02 : 1.0)
+                    .animation(.spring(response: 0.18, dampingFraction: 0.8), value: dragging)
+            }
+            .frame(height: captureHeight, alignment: .center)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { g in
+                        if !dragging {
+                            dragging = true
+                            onScrubBegan()
+                            if !didHaptic {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                didHaptic = true
+                            }
+                        }
+                        let x = min(max(0, g.location.x), w)
+                        let newVal = Double(x / w) * (range.upperBound - range.lowerBound) + range.lowerBound
+                        value = newVal
+                        onScrubChanged(newVal)
+                    }
+                    .onEnded { g in
+                        dragging = false
+                        didHaptic = false
+                        let x = min(max(0, g.location.x), w)
+                        let newVal = Double(x / w) * (range.upperBound - range.lowerBound) + range.lowerBound
+                        value = newVal
+                        onScrubEnded(newVal)
+                    }
+            )
+        }
+        .frame(height: 44)
+    }
+}
+
+
+extension Comparable {
+    func clamped(to range: ClosedRange<Self>) -> Self {
+        min(max(self, range.lowerBound), range.upperBound)
     }
 }
