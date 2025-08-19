@@ -99,7 +99,7 @@ struct PracticeWordView: View {
         //        .background(Color.black)
         .onAppear {
             flashcardCache =
-                savedWordsViewModel.savedWords?.unknownWords ?? []
+                Array((savedWordsViewModel.savedWords?.unknownWords ?? []).reversed())
 
             totalUnknownWords =
                 savedWordsViewModel.savedWords?.unknownWords.count ?? 0

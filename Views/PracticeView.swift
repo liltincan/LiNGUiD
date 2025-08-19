@@ -22,11 +22,11 @@ struct PracticeView: View {
     @Environment(\.colorScheme) var colorScheme
 
     var unKnownWords: [WordPair] {
-        viewModel.savedWords?.unknownWords ?? []
+        Array((viewModel.savedWords?.unknownWords ?? []).reversed())
     }
 
     var knownWords: [WordPair] {
-        viewModel.savedWords?.knownWords ?? []
+        Array((viewModel.savedWords?.knownWords ?? []).reversed())
     }
 
     var body: some View {
