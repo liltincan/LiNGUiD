@@ -255,9 +255,7 @@ struct PracticeView: View {
     }
 
     private func getWords() -> [WordPair] {
-        return selectedSegment == 0
-            ? viewModel.savedWords?.knownWords ?? []
-            : viewModel.savedWords?.unknownWords ?? []
+        return selectedSegment == 0 ? knownWords : unKnownWords
     }
 }
 
