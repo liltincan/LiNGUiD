@@ -529,8 +529,7 @@ struct VideoPlayerView: View {
             if showingInFullScreen {
                 dismiss()
             }
-            // Switch to the tab that hosts Dashboard/Practice.
-            selectedTab = 3 // ← use your actual index for Dashboard/Practice
+            selectedTab = 3 // index for Practice
         }
         .alert("Report Submitted", isPresented: $showingReportConfirmation) {
             Button("OK", role: .cancel) {}
@@ -803,9 +802,6 @@ struct VideoPlayerView: View {
                     } else {
                         // Save only — no navigation
                         addUnknownWordInUserSession(word: w, userId: userID)
-                        // Option: keep popup open so the button flips to “Practice”
-                        // or close it if you prefer:
-                        // withAnimation { showWordPopup = false }
                     }
                 } label: {
                     HStack {

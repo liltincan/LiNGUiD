@@ -142,7 +142,6 @@ struct DashboardView: View {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .init("OpenPracticeFromPopup"))) { _ in
-                // Optionally: preload words here if needed
                 openPractice = true
             }
             .navigationTitle("DASHBOARD")
