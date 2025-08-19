@@ -884,8 +884,6 @@ struct VideoPlayerView: View {
                     translatedText = result
                 }
             }
-            selectedWord = word
-            showWordPopup = true
         }
     }
 
@@ -1017,13 +1015,12 @@ struct VideoPlayerView: View {
     }
     
     private func normalize(_ s: String) -> String {
-        var t = s.trimmingCharacters(in: .whitespacesAndNewlines)
-        t = t.trimmingCharacters(in: .punctuationCharacters)
-        t = t.precomposedStringWithCompatibilityMapping
-             .folding(options: .diacriticInsensitive, locale: .current)
-             .lowercased()
-        return t
+        let extraWS = CharacterSet(charactersIn: "\u{00A0}\u{202F}") // NBSP, NNBSP
+        let ws = CharacterSet.whitespacesAndNewlines.union(extraWS)
+        return s.trimmingCharacters(in: ws.union(.punctuationCharacters))
     }
+
+
 
     private func isWordSavedAnywhere(_ word: String, language: String) -> Bool {
         let key = normalize(word)
