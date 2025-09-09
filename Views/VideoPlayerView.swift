@@ -114,6 +114,13 @@ struct VideoPlayerView: View {
     @State private var isScrubbing = false
     @State private var wasPlayingBeforeScrub = false
     
+    //showing the pop up
+    @State private var showLimitAlert = false
+    @ObservedObject var tap = TapTracker(maxPerDay: 20)
+    @ObservedObject var viewModel = ChatListViewModel()
+    @Environment(\.scenePhase) private var scenePhase
+    
+    
     private var hasMeaning: Bool {
         let m = (translatedText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return !m.isEmpty
@@ -629,6 +636,50 @@ struct VideoPlayerView: View {
             Text("Thank you for your report. We'll review this content.")
         }
         .modifier(TransparentNavigationBar(opacity: 0.0))
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                tap.resetForNewDayIfNeeded()
+            }
+        }
+        //TODO: Check if the user is a pro or not
+        .onAppear {
+            tap.isPro = viewModel.isCurrentUserPro
+        }
+        //if user buys it then update
+        .onChange(of: viewModel.isCurrentUserPro) { isPro in
+            tap.isPro = isPro
+            if(isPro) {
+                //flag it back to false
+                showLimitAlert = false
+            }
+        }
+        .overlay(
+            ZStack {
+                if (showLimitAlert) {
+                    Color.black.opacity(0.9)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation {
+                                showLimitAlert = false
+                            }
+                        }
+                    VStack {
+                        Spacer()
+                        GetProView()
+                            .frame(width: UIScreen.main.bounds.width * 0.5, height: UIScreen.main.bounds.height * 0.5)
+                            .padding(.horizontal, 20)
+                            .background(
+                                Color(red: 22/255, green: 0/255, blue: 46/255)
+                                    .cornerRadius(24)
+                            )
+                        Spacer()
+                    }
+                    .transition(.slideUpFromBottom)
+                }
+            }
+            .animation(.easeInOut, value: showLimitAlert)
+        )
 
         //        .overlay(
         //            Group {
@@ -938,8 +989,13 @@ struct VideoPlayerView: View {
         
         showingReportConfirmation = true
     }
-
+    //MARK: -Here is where user taps to translate the word
     func actionFunction(word: String) {
+        //have to check if the user is pro and if not then
+        guard tap.tryConsume() else {
+            showLimitAlert = true
+            return
+        }
         isTranslatingCaption = true
         withAnimation {
             translateTextV2(
@@ -976,6 +1032,7 @@ struct VideoPlayerView: View {
                     Text(translated)
                         .font(.system(size: 24, weight: .semibold))
                         .padding(.top)
+                    
                 }
                 Spacer().frame(height: 10)
                 Divider()
@@ -1046,6 +1103,10 @@ struct VideoPlayerView: View {
             .shadow(radius: 8)
             .frame(width: 200)
         }
+        .onAppear{
+            //TODO: Check if the user is pro or not
+        }
+        //TODO: create a .onChange(of: viewModel.isCurrentUserPro) {is Pro in and set the tap to isPro then if true then don't show the alert}
     }
 
     func addUnknownWordInUserSession(word: String, meaning: String, userId: String) {

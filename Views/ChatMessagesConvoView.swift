@@ -60,6 +60,7 @@ struct ChatMessagesConvoView: View {
             return lDate < rDate
         }
     }
+    
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
@@ -261,7 +262,7 @@ struct ChatMessagesConvoView: View {
                             .overlay(
                                 Group {
                                     if (message.isLiked) {
-                                        Image(systemName: "heart.fill")
+                                        Text("❤️")
                                             .foregroundColor(.white)
                                             //the heart will be this size
                                             .font(.system(size: 12))
@@ -284,7 +285,7 @@ struct ChatMessagesConvoView: View {
                             .overlay(
                                 Group {
                                     if (message.isLiked) {
-                                        Image(systemName: "heart.fill")
+                                        Text("❤️")
                                             .foregroundColor(.white)
                                             //the heart will be this size
                                             .font(.system(size: 12))
@@ -337,7 +338,7 @@ struct ChatMessagesConvoView: View {
                             .overlay(
                                 Group {
                                     if (message.isLiked) {
-                                        Image(systemName: "heart.fill")
+                                        Text("❤️")
                                             .foregroundColor(.white)
                                             //the heart will be this size
                                             .font(.system(size: 12))
@@ -371,7 +372,7 @@ struct ChatMessagesConvoView: View {
                         .overlay(
                             Group {
                                 if (message.isLiked) {
-                                    Image(systemName: "heart.fill")
+                                    Text("❤️")
                                         .foregroundColor(.white)
                                         //the heart will be this size
                                         .font(.system(size: 12))
@@ -386,23 +387,25 @@ struct ChatMessagesConvoView: View {
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: 280, alignment: .leading)
-                        .simultaneousGesture(
-                            TapGesture(count: 2).onEnded {
-                                toggleLike(for: message)
-                            }
+                        //this will allow more than one gesture to be combined
+                        .gesture(
+                            TapGesture(count: 2)
+                                .onEnded {
+                                    toggleLike(for: message)
+                                }
+                                //this means it will go second (the second option if user does not double tap)
+                                .exclusively(before: TapGesture(count: 1).onEnded {
+                                    //will only add once and will not add removal so if not in the set then return
+                                    guard !showTranslateMessage.contains(message.id) else { return }
+                                    if(tap.tryConsume()) {
+                                        showTranslateMessage.insert(message.id)
+                                        saveTranslatedSet(showTranslateMessage, for: chatID)
+                                    }
+                                    else {
+                                        showLimitAlert = true
+                                    }
+                                })
                         )
-                        .onTapGesture {
-                            //will only add once and will not add removal so if not in the set then return
-                            guard !showTranslateMessage.contains(message.id) else { return }
-                            if(tap.tryConsume()) {
-                                showTranslateMessage.insert(message.id)
-                                saveTranslatedSet(showTranslateMessage, for: chatID)
-                            }
-                            else {
-                                showLimitAlert = true
-                            }
-                        }
-                        .padding(.vertical, 1)
                     }
                 }
                 .offset(x: isDraggingMessage ? dragOffset : 0)

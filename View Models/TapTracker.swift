@@ -42,7 +42,10 @@ final class TapTracker: ObservableObject {
             print("USER IS PRO")
             return true
         }
-        guard used < maxPerDay else { return false }
+        guard used < maxPerDay else {
+            print("YOU ARE OUT OF TAPS")
+            return false
+        }
         used += 1
         //DUBUGGING
         print("USER IS NOT PRO")
