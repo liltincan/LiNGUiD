@@ -51,6 +51,8 @@
 		7EFDD81C2E0C8DB400154192 /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81B2E0C8DB200154192 /* Chat.swift */; };
 		7EFDD81E2E0C8DD600154192 /* ChatListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */; };
 		810707522E41247E00F9E709 /* ProStatusViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810707512E41247200F9E709 /* ProStatusViewModel.swift */; };
+		81166EC62E710DF700AEFF90 /* StoreKit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 81166EC52E710DF700AEFF90 /* StoreKit.storekit */; };
+		81166EC82E711B7500AEFF90 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81166EC72E711B7200AEFF90 /* StoreKitManager.swift */; };
 		8138F40A2E480A8900675DB6 /* BackgroundUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8138F4092E480A7D00675DB6 /* BackgroundUploader.swift */; };
 		8177D3E62DF8D4B100FA6800 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E52DF8D4AC00FA6800 /* UploadView.swift */; };
 		8177D3E82DF8D69A00FA6800 /* VideoThumbnailSelectableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */; };
@@ -173,6 +175,8 @@
 		7EFDD81B2E0C8DB200154192 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
 		7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListViewModel.swift; sourceTree = "<group>"; };
 		810707512E41247200F9E709 /* ProStatusViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProStatusViewModel.swift; sourceTree = "<group>"; };
+		81166EC52E710DF700AEFF90 /* StoreKit.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = StoreKit.storekit; sourceTree = "<group>"; };
+		81166EC72E711B7200AEFF90 /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		8138F4092E480A7D00675DB6 /* BackgroundUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundUploader.swift; sourceTree = "<group>"; };
 		8177D3E52DF8D4AC00FA6800 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
 		8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoThumbnailSelectableView.swift; sourceTree = "<group>"; };
@@ -312,6 +316,7 @@
 		8F51F2192DE01C2C00397726 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				81166EC72E711B7200AEFF90 /* StoreKitManager.swift */,
 				047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */,
 				8F51F2332DE023DF00397726 /* FirestoreVideoRepository.swift */,
 				8F51F2322DE023C300397726 /* VideoRepository.swift */,
@@ -433,6 +438,7 @@
 		8F823B432DD987F8007B6E5E = {
 			isa = PBXGroup;
 			children = (
+				81166EC52E710DF700AEFF90 /* StoreKit.storekit */,
 				60C7E5902DE1AA2000C1AAF2 /* Fonts */,
 				8F823B4D2DD987F8007B6E5E /* Products */,
 				8F51F2202DE01C9C00397726 /* Coordinators */,
@@ -618,6 +624,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8F51F2142DE01A2800397726 /* .gitignore in Resources */,
+				81166EC62E710DF700AEFF90 /* StoreKit.storekit in Resources */,
 				60E0B8F52DF268230065B772 /* GoogleService-Info.plist in Resources */,
 				8F51F2122DE01A1C00397726 /* .README in Resources */,
 				8F51F2052DE0183300397726 /* Assets.xcassets in Resources */,
@@ -697,6 +704,7 @@
 				60DAC59C2DE2F770002C5410 /* ProfileViewModel.swift in Sources */,
 				81F436452DF2831D00DA9BDA /* OnboardingFlowView.swift in Sources */,
 				8FB929562DE02A790020AFCD /* VideoRepository.swift in Sources */,
+				81166EC82E711B7500AEFF90 /* StoreKitManager.swift in Sources */,
 				8FB929572DE02A790020AFCD /* FirebaseAuthService.swift in Sources */,
 				60974D862DE79BE70075CAAE /* AppTitleText.swift in Sources */,
 				13D14A8C2E41A3F50012FDA0 /* RequestFeatureView.swift in Sources */,

@@ -35,9 +35,11 @@ struct LiNGUiDApp: App {
                 .onAppear {
                     notificationService.setupNotifications()
                     locationVerifier.verifyAndSaveLocation()
+                    StoreKitManager.shared.start()
                 }
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .active {
+                        StoreKitManager.shared.refreshNow()
                         // App became active, check if there's a pending deep link to handle
                         if let videoId = deepLinkCoordinator.deepLinkVideoID {
                             // Re-trigger the deep link handling to ensure proper navigation

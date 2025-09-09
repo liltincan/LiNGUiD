@@ -8,9 +8,16 @@ struct GetProView: View {
     @State private var purchaseError: String?
     @State private var showSuccess = false
     @State private var products: [Product] = []
+
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
+
     var onDone: (() -> Void)? = nil
     var fromSettings: Bool = false
+
+    private let productID = "LiNGUiD.Pro"
+    @State private var proProduct: Product?
+    @State private var isRestoring = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -21,7 +28,7 @@ struct GetProView: View {
                 .frame(width: 280, height: 160)
                 .padding(.top, 10)
 
-            Text("for just $12.99 / mo")
+            Text(displayPriceLine())
                 .font(.title3)
                 .foregroundColor(.white.opacity(0.85))
 
@@ -36,14 +43,7 @@ struct GetProView: View {
 
             // Purchase Button
             Button(action: {
-                //purchasePro()
-                Task {
-                    await updateProStatusInFirebase()
-                    onDone?()
-                    if(fromSettings){
-                        dismiss()
-                    }
-                }
+                Task { await purchasePro() }
             }) {
                 Text(isPurchasing ? "Processing..." : "Go Pro")
                     .font(.system(size: 20, weight: .bold))
@@ -54,9 +54,23 @@ struct GetProView: View {
                     .cornerRadius(16)
             }
             .padding(.horizontal)
+            .disabled(isPurchasing || proProduct == nil)
+
+//            // Restore purchases
+//            Button {
+//                Task { await restorePurchases() }
+//            } label: {
+//                Text(isRestoring ? "Restoring..." : "Restore Purchases")
+//                    .font(.system(size: 15, weight: .semibold))
+//                    .foregroundColor(.white.opacity(0.9))
+//            }
+//            .disabled(isRestoring)
 
             if let error = purchaseError {
-                Text(error).foregroundColor(.red)
+                Text(error)
+                    .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
             }
 
             if showSuccess {
@@ -71,6 +85,17 @@ struct GetProView: View {
                 .cornerRadius(24)
         )
         .frame(maxHeight: .infinity, alignment: .top)
+
+        .task {
+            await loadProducts()
+            StoreKitManager.shared.refreshNow()
+        }
+
+        .onChange(of: scenePhase) { phase in
+            if phase == .active {
+                StoreKitManager.shared.refreshNow()
+            }
+        }
     }
 
     func feature(icon: String, text: String) -> some View {
@@ -84,55 +109,118 @@ struct GetProView: View {
         }
     }
 
+    private func displayPriceLine() -> String {
+        if let p = proProduct, let sub = p.subscription {
+            return "\(p.displayPrice) / \(sub.subscriptionPeriod.unit.displayName)"
+        }
+        return "for just $12.99 / mo"
+    }
+
     func loadProducts() async {
         do {
-            let storeProducts = try await Product.products(for: ["LiNGUiD.Pro"])
+            let storeProducts = try await Product.products(for: [productID])
             await MainActor.run {
                 self.products = storeProducts
+                self.proProduct = storeProducts.first(where: { $0.id == productID })
+                if products.isEmpty {
+                    self.purchaseError = "Couldn't find product \(productID). Check App Store Connect or StoreKit config."
+                }
             }
         } catch {
-            await MainActor.run {
-                self.purchaseError = "Failed to load products."
-            }
+            await MainActor.run { self.purchaseError = "Failed to load products: \(error.localizedDescription)" }
         }
     }
 
-    func purchasePro() {
-        guard let product = products.first(where: { $0.id == "LiNGUiD.Pro" }) else {
-            purchaseError = "Pro product not found."
+    func purchasePro() async {
+        guard let product = proProduct else {
+            await MainActor.run { purchaseError = "Pro product not found." }
             return
         }
 
-        isPurchasing = true
-        purchaseError = nil
-
-        Task {
-            do {
-                let result = try await product.purchase()
-                switch result {
-                case .success(_):
-                    showSuccess = true
-                    await updateProStatusInFirebase()
-                case .userCancelled, .pending:
-                    purchaseError = "Purchase cancelled or pending."
-                default:
-                    purchaseError = "Purchase failed."
-                }
-            } catch {
-                purchaseError = error.localizedDescription
-            }
-
-            isPurchasing = false
+        await MainActor.run {
+            isPurchasing = true
+            purchaseError = nil
+            showSuccess = false
         }
+
+        do {
+            let result = try await product.purchase()
+            switch result {
+            case .success(let verification):
+                let transaction: StoreKit.Transaction = try checkVerified(verification)
+
+                await transaction.finish()
+                StoreKitManager.shared.refreshNow()
+
+                await MainActor.run {
+                    showSuccess = true
+                    onDone?()
+                    if fromSettings { dismiss() }
+                }
+
+            case .userCancelled:
+                await MainActor.run { purchaseError = "Purchase cancelled." }
+
+            case .pending:
+                await MainActor.run { purchaseError = "Purchase pending. You'll be notified when it completes." }
+
+            default:
+                await MainActor.run { purchaseError = "Purchase failed." }
+            }
+        } catch {
+            await MainActor.run { purchaseError = error.localizedDescription }
+        }
+
+        await MainActor.run { isPurchasing = false }
     }
 
-    func updateProStatusInFirebase() async {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        let db = Firestore.firestore()
-        do {
-            try await db.collection("users").document(uid).updateData(["isPro": true])
-        } catch {
-            purchaseError = "Failed to update Pro status."
+//    func restorePurchases() async {
+//        await MainActor.run {
+//            isRestoring = true
+//            purchaseError = nil
+//        }
+//        do {
+//            try? await AppStore.sync()
+//
+//            var restored = false
+//            for await result in StoreKit.Transaction.currentEntitlements {
+//                let t: StoreKit.Transaction = try checkVerified(result)
+//                if t.productID == productID {
+//                    restored = true
+//                }
+//            }
+//
+//            StoreKitManager.shared.refreshNow()
+//
+//            if !restored {
+//                await MainActor.run { purchaseError = "No active subscription found to restore." }
+//            } else {
+//                await MainActor.run { showSuccess = true }
+//            }
+//        } catch {
+//            await MainActor.run { purchaseError = "Restore failed: \(error.localizedDescription)" }
+//        }
+//        await MainActor.run { isRestoring = false }
+//    }
+
+    func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+        switch result {
+        case .unverified(_, let err):
+            throw err
+        case .verified(let signed):
+            return signed
+        }
+    }
+}
+
+private extension Product.SubscriptionPeriod.Unit {
+    var displayName: String {
+        switch self {
+        case .day: return "day"
+        case .week: return "week"
+        case .month: return "month"
+        case .year: return "year"
+        @unknown default: return "period"
         }
     }
 }
