@@ -23,6 +23,9 @@ final class StoreKitManager: ObservableObject {
     private var proLockUntil: Date?
     private var falseDebounceStart: Date?
     private let falseDebounceWindow: TimeInterval = 5
+    
+    @Published private(set) var expirationDate: Date?
+    @Published private(set) var willAutoRenew: Bool?
 
     func start() {
         guard !started else { return }
@@ -137,6 +140,11 @@ final class StoreKitManager: ObservableObject {
                 } else if willAutoRenew {
                     pendingLapseAt = nil
                 }
+                
+                await MainActor.run {
+                  self.expirationDate = exp
+                  self.willAutoRenew = willAutoRenew
+                }
 
                 let effectiveActive = isActiveFlag || (pendingLapseAt != nil && pendingLapseAt! > now)
 
@@ -164,10 +172,21 @@ final class StoreKitManager: ObservableObject {
             if let t = latest {
                 let active = isActive(t)
                 let effectiveActive = active || (pendingLapseAt != nil && pendingLapseAt! > now)
+                
+                await MainActor.run {
+                    self.expirationDate = t.expirationDate
+                    self.willAutoRenew  = true
+                }
+                
                 debug("currentEntitlement → active=\(active) → effective=\(effectiveActive), exp=\(String(describing: t.expirationDate)), pendingLapseAt=\(String(describing: pendingLapseAt))")
                 await setPro(effectiveActive, reason: "currentEntitlements")
                 scheduleExpiryCheck(for: effectiveActive ? t.expirationDate : nil, willAutoRenew: true)
             } else {
+                await MainActor.run {
+                    self.expirationDate = nil
+                    self.willAutoRenew  = nil
+                }
+                
                 if let until = pendingLapseAt, until > now {
                     debug("no entitlement present, but pendingLapseAt=\(until) in future → keep Pro true")
                     await setPro(true, reason: "noEntitlement/locked")
@@ -255,7 +274,6 @@ final class StoreKitManager: ObservableObject {
         await updateProStatusInFirebase(isPro: value)
     }
 
-    @MainActor
     private func updateProStatusInFirebase(isPro: Bool) async {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         if lastUid == uid, lastIsProWritten == isPro { return }

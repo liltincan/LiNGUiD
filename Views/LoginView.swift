@@ -1,10 +1,16 @@
 import SwiftUI
 import _AuthenticationServices_SwiftUI
 
+private enum LegalSheet: Identifiable {
+    case terms, privacy
+    var id: Int { hashValue }
+}
+
 struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
     
     @EnvironmentObject var appState: AppState
+    @State private var legalSheet: LegalSheet?
     
     let onSuccess: () -> Void
 
@@ -135,20 +141,35 @@ struct LoginView: View {
 
 
                 VStack {
-                    (
-                        Text("By clicking continue, you agree to our ")
-                            .foregroundColor(.white.opacity(0.5)) +
-                        Text("Terms of Service")
-                            .foregroundColor(.white)
-                            .fontWeight(.medium) +
-                        Text(" and ")
-                            .foregroundColor(.white.opacity(0.5)) +
-                        Text("Privacy Policy")
+                    HStack(spacing: 6) {
+                        Text("By clicking continue, you agree to our")
+                            .foregroundColor(.white.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                        Button("Terms of Service") { legalSheet = .terms }
+                            .buttonStyle(.plain)
                             .foregroundColor(.white)
                             .fontWeight(.medium)
-                    )
+                    }
                     .multilineTextAlignment(.center)
-                    .padding(.vertical, 10)
+
+                    HStack(spacing: 6) {
+                        Text("and")
+                            .foregroundColor(.white.opacity(0.6))
+
+                        Button("Privacy Policy") { legalSheet = .privacy }
+                            .buttonStyle(.plain)
+                            .foregroundColor(.white)
+                            .fontWeight(.medium)
+                    }
+                    .multilineTextAlignment(.center)
+                }
+                .fullScreenCover(item: $legalSheet) { which in
+                    switch which {
+                    case .terms:
+                        TermsOfServiceView()
+                    case .privacy:
+                        PrivacyPolicyView()
+                    }
                 }
             }
             .padding()

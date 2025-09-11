@@ -3,6 +3,11 @@ import StoreKit
 import FirebaseAuth
 import FirebaseFirestore
 
+private enum LegalSheet: Identifiable {
+    case terms, privacy
+    var id: Int { hashValue }
+}
+
 struct GetProView: View {
     @State private var isPurchasing = false
     @State private var purchaseError: String?
@@ -18,6 +23,7 @@ struct GetProView: View {
     private let productID = "LiNGUiD.Pro"
     @State private var proProduct: Product?
     @State private var isRestoring = false
+    @State private var legalSheet: LegalSheet?
 
     var body: some View {
         VStack(spacing: 24) {
@@ -34,7 +40,7 @@ struct GetProView: View {
 
             // Feature List
             VStack(alignment: .leading, spacing: 18) {
-                feature(icon: "globe", text: "Unlimited Target Languages")
+                feature(icon: "globe", text: "Up to 3 Target Languages")
                 feature(icon: "infinity", text: "Infinite Translations Every Day")
                 feature(icon: "nosign", text: "Ad-Free")
                 feature(icon: "checkmark.seal.fill", text: "Account Verification")
@@ -56,32 +62,87 @@ struct GetProView: View {
             .padding(.horizontal)
             .disabled(isPurchasing || proProduct == nil)
 
-//            // Restore purchases
-//            Button {
-//                Task { await restorePurchases() }
-//            } label: {
-//                Text(isRestoring ? "Restoring..." : "Restore Purchases")
-//                    .font(.system(size: 15, weight: .semibold))
-//                    .foregroundColor(.white.opacity(0.9))
-//            }
-//            .disabled(isRestoring)
+            // Restore purchases
+            Button {
+                Task { await restorePurchases() }
+            } label: {
+                Text(isRestoring ? "Restoring..." : "Restore Purchases")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.9))
+            }
+            .disabled(isRestoring)
 
             if let error = purchaseError {
                 Text(error)
                     .foregroundColor(.red)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
+                    .transition(.opacity)
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                            withAnimation { purchaseError = nil }
+                        }
+                    }
             }
 
             if showSuccess {
-                Text("Purchase successful!").foregroundColor(.green)
+                Text("Purchase successful!")
+                    .foregroundColor(.green)
+                    .transition(.opacity)
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                            withAnimation { showSuccess = false }
+                        }
+                    }
             }
 
             Spacer()
+            
+            VStack(spacing: 6) {
+                  Text("Payment will be charged to your Apple ID. Subscription auto-renews unless canceled at least 24 hours before the end of the current period. You can manage or cancel your subscription in the App Store.")
+                        .font(.footnote)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                  HStack(spacing: 16) {
+                      Button {
+                          legalSheet = .terms
+                      } label: {
+                          Text("Terms of Service")
+                              .fontWeight(.medium)
+                              .underline(true, color: .white)
+                              .foregroundColor(.white)
+                      }
+                      .buttonStyle(.plain)
+
+                      Text("|")
+                          .foregroundColor(.gray)
+                      
+                      Button {
+                          legalSheet = .privacy
+                      } label: {
+                          Text("Privacy Policy")
+                              .fontWeight(.medium)
+                              .underline(true, color: .white)
+                              .foregroundColor(.white)
+                      }
+                      .buttonStyle(.plain)
+                  }
+                  .font(.footnote)
+                  .multilineTextAlignment(.center)
+            }
+            .padding(.top, -20)
+            .fullScreenCover(item: $legalSheet) { which in
+                switch which {
+                case .terms:
+                    TermsOfServiceView()
+                case .privacy:
+                    PrivacyPolicyView()
+                }
+            }
         }
         .padding()
         .background(
-            Color(red: 22/255, green: 0/255, blue: 46/255)
+            Color(Color.appSecondaryColor)
                 .cornerRadius(24)
         )
         .frame(maxHeight: .infinity, alignment: .top)
@@ -113,7 +174,7 @@ struct GetProView: View {
         if let p = proProduct, let sub = p.subscription {
             return "\(p.displayPrice) / \(sub.subscriptionPeriod.unit.displayName)"
         }
-        return "for just $12.99 / mo"
+        return "Loading price..."
     }
 
     func loadProducts() async {
@@ -174,34 +235,34 @@ struct GetProView: View {
         await MainActor.run { isPurchasing = false }
     }
 
-//    func restorePurchases() async {
-//        await MainActor.run {
-//            isRestoring = true
-//            purchaseError = nil
-//        }
-//        do {
-//            try? await AppStore.sync()
-//
-//            var restored = false
-//            for await result in StoreKit.Transaction.currentEntitlements {
-//                let t: StoreKit.Transaction = try checkVerified(result)
-//                if t.productID == productID {
-//                    restored = true
-//                }
-//            }
-//
-//            StoreKitManager.shared.refreshNow()
-//
-//            if !restored {
-//                await MainActor.run { purchaseError = "No active subscription found to restore." }
-//            } else {
-//                await MainActor.run { showSuccess = true }
-//            }
-//        } catch {
-//            await MainActor.run { purchaseError = "Restore failed: \(error.localizedDescription)" }
-//        }
-//        await MainActor.run { isRestoring = false }
-//    }
+    func restorePurchases() async {
+        await MainActor.run {
+            isRestoring = true
+            purchaseError = nil
+        }
+        do {
+            try? await AppStore.sync()
+
+            var restored = false
+            for await result in StoreKit.Transaction.currentEntitlements {
+                let t: StoreKit.Transaction = try checkVerified(result)
+                if t.productID == productID {
+                    restored = true
+                }
+            }
+
+            StoreKitManager.shared.refreshNow()
+
+            if !restored {
+                await MainActor.run { purchaseError = "No active subscription found to restore." }
+            } else {
+                await MainActor.run { showSuccess = true }
+            }
+        } catch {
+            await MainActor.run { purchaseError = "Restore failed: \(error.localizedDescription)" }
+        }
+        await MainActor.run { isRestoring = false }
+    }
 
     func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
@@ -216,11 +277,11 @@ struct GetProView: View {
 private extension Product.SubscriptionPeriod.Unit {
     var displayName: String {
         switch self {
-        case .day: return "day"
-        case .week: return "week"
-        case .month: return "month"
-        case .year: return "year"
-        @unknown default: return "period"
+        case .day: return "Day"
+        case .week: return "Week"
+        case .month: return "Mo"
+        case .year: return "Year"
+        @unknown default: return "Period"
         }
     }
 }
