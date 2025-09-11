@@ -59,6 +59,7 @@
 		818F2EEA2E4AD12200DD9EBE /* ManageSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */; };
 		819A09FE2E4D572F00A58DDF /* Location Verifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 819A09FD2E4D572600A58DDF /* Location Verifier.swift */; };
 		81BD48522E7276EC001362B5 /* FollowersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81BD48512E7276E4001362B5 /* FollowersView.swift */; };
+		81BD48792E7662F6001362B5 /* PushManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81BD48782E7662F1001362B5 /* PushManager.swift */; };
 		81CC3AEF2E15B4000010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AEE2E15B4000010512B /* CropViewController */; };
 		81CC3AF12E15B4000010512B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF02E15B4000010512B /* TOCropViewController */; };
 		81CC3AF32E15B44A0010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF22E15B44A0010512B /* CropViewController */; };
@@ -184,6 +185,7 @@
 		818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageSubscriptionView.swift; sourceTree = "<group>"; };
 		819A09FD2E4D572600A58DDF /* Location Verifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Location Verifier.swift"; sourceTree = "<group>"; };
 		81BD48512E7276E4001362B5 /* FollowersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowersView.swift; sourceTree = "<group>"; };
+		81BD48782E7662F1001362B5 /* PushManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushManager.swift; sourceTree = "<group>"; };
 		81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomProgessView.swift; sourceTree = "<group>"; };
 		81E960712E20350500EEE22D /* UploadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadManager.swift; sourceTree = "<group>"; };
 		81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageLevelSelectionView.swift; sourceTree = "<group>"; };
@@ -318,6 +320,7 @@
 		8F51F2192DE01C2C00397726 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				81BD48782E7662F1001362B5 /* PushManager.swift */,
 				81166EC72E711B7200AEFF90 /* StoreKitManager.swift */,
 				047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */,
 				8F51F2332DE023DF00397726 /* FirestoreVideoRepository.swift */,
@@ -727,6 +730,7 @@
 				60974D5F2DE6561A0075CAAE /* AppDelegate.swift in Sources */,
 				8FB929512DE02A590020AFCD /* LoginViewModel.swift in Sources */,
 				8FB929712DE116D20020AFCD /* ProfileView.swift in Sources */,
+				81BD48792E7662F6001362B5 /* PushManager.swift in Sources */,
 				D6BA59E62DF3682000E6E137 /* ShareSheetView.swift in Sources */,
 				139ABECE2DF2271100EB45FD /* ChangePasswordViewModel.swift in Sources */,
 				D69E51D42DE66EF600329D64 /* VideoPlayerView.swift in Sources */,

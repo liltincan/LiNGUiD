@@ -15,6 +15,9 @@ import FirebaseFirestore
 
 class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     var window: UIWindow?
+    private var authListener: AuthStateDidChangeListenerHandle?
+    private var userSnapListener: ListenerRegistration?
+    
     // Keep the completion handler the system gives us until the session says "I'm done".
     var backgroundSessionCompletionHandler: (() -> Void)?
 
@@ -47,12 +50,64 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             }
         }
 
+        startAdminSubscriptionWatcher()
+        
         //log out user on first install
         LaunchManager.shared.checkFirstLaunchAndLogoutIfNeeded()
         
         return true
     }
 
+    private func startAdminSubscriptionWatcher() {
+        // Tear down old listeners if any
+        if let h = authListener { Auth.auth().removeStateDidChangeListener(h) }
+        userSnapListener?.remove()
+        userSnapListener = nil
+
+        authListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            // Stop any previous user doc listener
+            self?.userSnapListener?.remove()
+            self?.userSnapListener = nil
+
+            guard let self, let user = user else {
+                // ensure we’re not on the admins topic
+                Messaging.messaging().unsubscribe(fromTopic: "admins") { _ in
+                    print("[Push] unsubscribed from admins (no user)")
+                }
+                return
+            }
+
+            // Ensure we have an FCM token
+            Messaging.messaging().token { token, err in
+                print("[Push] current FCM token =", token ?? "nil", "err:", String(describing: err))
+            }
+
+            // Listen to the user doc so we react if isAdmin flips later
+            let docRef = Firestore.firestore().collection("users").document(user.uid)
+            self.userSnapListener = docRef.addSnapshotListener { snap, err in
+                if let err = err {
+                    print("[Push] user snapshot error:", err)
+                    return
+                }
+                let isAdmin = (snap?.data()?["isAdmin"] as? Bool) == true
+                self.updateAdminTopic(isAdmin: isAdmin)
+            }
+        }
+    }
+
+    private func updateAdminTopic(isAdmin: Bool) {
+        if isAdmin {
+            Messaging.messaging().subscribe(toTopic: "admins") { err in
+                if let err = err { print("[Push] subscribe failed:", err) }
+                else { print("[Push] ✅ subscribed to admins") }
+            }
+        } else {
+            Messaging.messaging().unsubscribe(fromTopic: "admins") { _ in
+                print("[Push] unsubscribed from admins")
+            }
+        }
+    }
+    
     func application(_ application: UIApplication,
                      didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         Messaging.messaging().apnsToken = deviceToken
@@ -67,13 +122,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
 
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         print("Firebase registration token: \(fcmToken ?? "")")
-        if let token = fcmToken,
-           let userID = Auth.auth().currentUser?.uid {
+        guard let token = fcmToken else { return }
+
+        if let uid = Auth.auth().currentUser?.uid {
             let db = Firestore.firestore()
-            db.collection("users").document(userID).setData(["fcmToken": token], merge: true)
-            print("Saved FCM token for user \(userID): \(token)")
+            db.collection("users").document(uid).setData(["fcmToken": token], merge: true)
+            db.collection("users").document(uid).getDocument { snap, _ in
+                let isAdmin = (snap?.data()?["isAdmin"] as? Bool) == true
+                if isAdmin {
+                    Messaging.messaging().subscribe(toTopic: "admins") { err in
+                        if let err = err { print("[Push] subscribe failed:", err) }
+                        else { print("[Push] ✅ subscribed to admins") }
+                    }
+                } else {
+                    Messaging.messaging().unsubscribe(fromTopic: "admins") { _ in
+                        print("[Push] unsubscribed from admins")
+                    }
+                }
+            }
         }
     }
+
 
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 didReceive response: UNNotificationResponse,
