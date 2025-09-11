@@ -5,11 +5,10 @@ import FirebaseFirestore
 import UIKit
 import Combine
 
-
 final class StoreKitManager: ObservableObject {
     static let shared = StoreKitManager()
     private init() {}
-
+    
     private let productID = "LiNGUiD.Pro"
 
     @Published private(set) var isSubscribed: Bool = false
@@ -20,6 +19,10 @@ final class StoreKitManager: ObservableObject {
     private var lastUid: String?
     private var activeTicker: AnyCancellable?
     private var expiryTask: Task<Void, Never>?
+    private var pendingLapseAt: Date?
+    private var proLockUntil: Date?
+    private var falseDebounceStart: Date?
+    private let falseDebounceWindow: TimeInterval = 5
 
     func start() {
         guard !started else { return }
@@ -55,9 +58,9 @@ final class StoreKitManager: ObservableObject {
                 guard t.productID == productID else { continue }
 
                 let active = isActive(t)
-                debug("Transaction.update → active=\(active), expires=\(String(describing: t.expirationDate)), revoked=\(t.revocationDate != nil)")
-                await setPro(active)
-                scheduleExpiryCheck(for: active ? t.expirationDate : nil, willAutoRenew: true) // we don't know willAutoRenew from this path; keep true to avoid premature schedule
+                debug("tx.update → active=\(active), exp=\(String(describing: t.expirationDate)), revoked=\(t.revocationDate != nil)")
+                await setPro(active, reason: "tx.update")
+                scheduleExpiryCheck(for: active ? t.expirationDate : nil, willAutoRenew: true)
                 await t.finish()
             } catch {
                 debug("update verify error: \(error.localizedDescription)")
@@ -97,11 +100,13 @@ final class StoreKitManager: ObservableObject {
     }
 
     func refreshEntitlement() async {
+        let now = Date()
+
         if let product = proProduct, let sub = product.subscription {
             do {
                 let rawStatuses = try await sub.status
 
-                var isActive = false
+                var isActiveFlag = false
                 var latestTransaction: StoreKit.Transaction?
                 var latestRenewalInfo: Product.SubscriptionInfo.RenewalInfo?
 
@@ -115,7 +120,7 @@ final class StoreKitManager: ObservableObject {
                     } else {
                         activeForState = (s.state == .subscribed || s.state == .inGracePeriod)
                     }
-                    if activeForState { isActive = true }
+                    if activeForState { isActiveFlag = true }
 
                     if latestTransaction == nil ||
                         (latestTransaction!.expirationDate ?? .distantPast) < (t.expirationDate ?? .distantPast) {
@@ -127,10 +132,18 @@ final class StoreKitManager: ObservableObject {
                 let exp = latestTransaction?.expirationDate
                 let willAutoRenew = latestRenewalInfo?.willAutoRenew ?? false
 
-                debug("statusAPI → active=\(isActive), willAutoRenew=\(willAutoRenew), exp=\(String(describing: exp))")
+                if let exp, !willAutoRenew, exp > now {
+                    pendingLapseAt = exp
+                } else if willAutoRenew {
+                    pendingLapseAt = nil
+                }
 
-                await setPro(isActive)
-                scheduleExpiryCheck(for: isActive ? exp : nil, willAutoRenew: willAutoRenew)
+                let effectiveActive = isActiveFlag || (pendingLapseAt != nil && pendingLapseAt! > now)
+
+                debug("statusAPI → active=\(isActiveFlag) → effective=\(effectiveActive), willAutoRenew=\(willAutoRenew), exp=\(String(describing: exp)), pendingLapseAt=\(String(describing: pendingLapseAt))")
+
+                await setPro(effectiveActive, reason: "statusAPI")
+                scheduleExpiryCheck(for: effectiveActive ? exp : nil, willAutoRenew: willAutoRenew)
                 return
             } catch {
                 debug("statusAPI error: \(error.localizedDescription)")
@@ -149,14 +162,21 @@ final class StoreKitManager: ObservableObject {
             }
 
             if let t = latest {
-                let active = (t.revocationDate == nil) && (t.expirationDate == nil || t.expirationDate! > Date())
-                debug("currentEntitlement → active=\(active), exp=\(String(describing: t.expirationDate))")
-                await setPro(active)
-                scheduleExpiryCheck(for: active ? t.expirationDate : nil, willAutoRenew: true)
+                let active = isActive(t)
+                let effectiveActive = active || (pendingLapseAt != nil && pendingLapseAt! > now)
+                debug("currentEntitlement → active=\(active) → effective=\(effectiveActive), exp=\(String(describing: t.expirationDate)), pendingLapseAt=\(String(describing: pendingLapseAt))")
+                await setPro(effectiveActive, reason: "currentEntitlements")
+                scheduleExpiryCheck(for: effectiveActive ? t.expirationDate : nil, willAutoRenew: true)
             } else {
-                debug("no entitlement present → set false")
-                scheduleExpiryCheck(for: nil, willAutoRenew: false)
-                await setPro(false)
+                if let until = pendingLapseAt, until > now {
+                    debug("no entitlement present, but pendingLapseAt=\(until) in future → keep Pro true")
+                    await setPro(true, reason: "noEntitlement/locked")
+                    scheduleExpiryCheck(for: until, willAutoRenew: false)
+                } else {
+                    debug("no entitlement present & no pending lapse → set false")
+                    scheduleExpiryCheck(for: nil, willAutoRenew: false)
+                    await setPro(false, reason: "noEntitlement")
+                }
             }
         } catch {
             debug("entitlement scan error: \(error.localizedDescription)")
@@ -182,16 +202,21 @@ final class StoreKitManager: ObservableObject {
 
     private func scheduleExpiryCheck(for date: Date?, willAutoRenew: Bool) {
         expiryTask?.cancel()
-        guard let date = date else { return }
-        guard !willAutoRenew else { return }
+        guard let date = date else { pendingLapseAt = nil; proLockUntil = nil; return }
+        guard !willAutoRenew else { pendingLapseAt = nil; proLockUntil = nil; return }
+
+        pendingLapseAt = date
+        proLockUntil = date.addingTimeInterval(2) // 2s safety buffer past expiry
+
         let delay = max(0, date.timeIntervalSinceNow + 1.0)
         expiryTask = Task { [weak self] in
-            let ns = UInt64(delay * 1_000_000_000)
-            try? await Task.sleep(nanoseconds: ns)
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             await self?.refreshEntitlement()
+            self?.pendingLapseAt = nil
+            self?.proLockUntil = nil // unlock after reevaluating at/after expiry
             self?.debug("expiry check fired → refreshEntitlement()")
         }
-        debug("scheduled expiry check at: \(date)")
+        debug("scheduled expiry check at: \(date) (lock until \(proLockUntil!))")
     }
 
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
@@ -205,7 +230,27 @@ final class StoreKitManager: ObservableObject {
         print("[StoreKitManager] \(msg)")
     }
 
-    private func setPro(_ value: Bool) async {
+    private func setPro(_ value: Bool, reason: String? = nil) async {
+        let now = Date()
+
+        if value == false {
+            if let lock = proLockUntil, now < lock {
+                debug("blocked false (locked until \(lock)) reason=\(reason ?? "-")")
+                return
+            }
+            if falseDebounceStart == nil {
+                falseDebounceStart = now
+                debug("false proposed; starting debounce (\(falseDebounceWindow)s). reason=\(reason ?? "-")")
+                return
+            } else if now.timeIntervalSince(falseDebounceStart!) < falseDebounceWindow {
+                debug("false within debounce window; skipping write. reason=\(reason ?? "-")")
+                return
+            }
+            falseDebounceStart = nil
+        } else {
+            falseDebounceStart = nil
+        }
+
         await MainActor.run { self.isSubscribed = value }
         await updateProStatusInFirebase(isPro: value)
     }
