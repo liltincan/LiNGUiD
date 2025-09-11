@@ -600,6 +600,7 @@ struct VideoPlayerView: View {
                     player.seek(to: .zero)
                     player.play()
                     isPlaying = true
+                    startWatchTimer()
                 }
             }
             
@@ -866,6 +867,7 @@ struct VideoPlayerView: View {
                 // Set initial speed with smooth transition
                 self.setPlayerSpeed(self.speedArray[self.currentSpeedIndex])
                 isPlaying = true
+                startWatchTimer()
             }
         }
     }
@@ -958,7 +960,11 @@ struct VideoPlayerView: View {
             if totalWatchTime >= 1.0 && !hasBeenMarkedAsWatched {
                 hasBeenMarkedAsWatched = true
                 Task { @MainActor in
-                    guard let userID = Auth.auth().currentUser?.uid else { return }
+                    guard
+                        let userID = Auth.auth().currentUser?.uid,
+                        let lang = language, !lang.isEmpty
+                    else { return }
+                    await videoPlayerViewModel.incrementViewCount(lang: lang, videoId: videoId)
                     await videoPlayerViewModel.markVideoAsWatched(videoId, userID: userID)
                 }
             }

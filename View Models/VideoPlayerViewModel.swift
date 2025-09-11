@@ -255,3 +255,28 @@ class VideoPlayerViewModel: ObservableObject {
         }
     }
 }
+
+@MainActor
+extension VideoPlayerViewModel {
+    func incrementViewCount(lang: String, videoId: String) async {
+        let db = Firestore.firestore()
+        let ref = db
+            .collection("videos/\(lang)/items")
+            .document(videoId)
+
+        do {
+            try await ref.updateData([
+                "views": FieldValue.increment(Int64(1))
+            ])
+            print("✅ Incremented view count for \(videoId)")
+        } catch {
+            do {
+                try await ref.setData(["views": 1], merge: true)
+                print("ℹ️ Created view count field for \(videoId)")
+            } catch {
+                print("❌ Failed to increment view: \(error)")
+            }
+        }
+    }
+}
+
