@@ -19,18 +19,20 @@ struct OtherUserProfileView: View {
     @State private var showingFullScreenProfilePicture: Bool = false
     @State private var fullScreenProfilePictureURL: String?
     @State private var hasTaskExecuted = false
-    @State private var showingReportConfirmation = false // <-- Add this state
+    @State private var showingReportConfirmation = false
+    @State private var pendingAutoOpenVideoId: String? = nil
     
     let userId: String
     @Binding var selectedTab: Int
     
     let onLogout: () -> Void
     
-    init(userId: String, selectedTab: Binding<Int>, onLogout: @escaping () -> Void) {
+    init(userId: String, selectedTab: Binding<Int>, onLogout: @escaping () -> Void, autoOpenVideoId: String? = nil) {
         self.userId = userId
         self._selectedTab = selectedTab
         _vm = StateObject(wrappedValue: OtherUserProfileViewModel(userId: userId))
         self.onLogout = onLogout
+        self._pendingAutoOpenVideoId = State(initialValue: autoOpenVideoId)
     }
     
     var body: some View {
@@ -118,6 +120,17 @@ struct OtherUserProfileView: View {
         .task {
             Task {
                 await loadData()
+            }
+        }
+        .onChange(of: vm.dataReady) { _, ready in
+            guard ready, let vid = pendingAutoOpenVideoId, !vid.isEmpty else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                NotificationCenter.default.post(
+                    name: .openVideoFromOtherUserProfile,
+                    object: nil,
+                    userInfo: ["videoId": vid]
+                )
+                pendingAutoOpenVideoId = nil
             }
         }
         .overlay(

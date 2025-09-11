@@ -628,84 +628,100 @@ struct VideoGridSection: View {
     @EnvironmentObject var userSession: UserSessionViewModel
     let fromOtherUserProfile: Bool
     let onLogout: () -> Void
+    
+    @State private var programmaticOpenTarget: String? = nil
 
     var body: some View {
-        if videoThumbnails.isEmpty && uploadingVideos.isEmpty {
-            VStack {
-                Spacer()
-                Text(noVideosMessage ?? "No videos available.")
-                    .font(.headline)
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-                    .padding()
-                Spacer()
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
-        } else {
-            LazyVGrid(columns: Array(repeating: GridItem(.fixed(gridItemWidth), spacing: 0), count: 3),
-                      spacing: 0) {
-                ForEach(uploadingVideos.reversed()) { video in
-                    ZStack {
-                        Image(uiImage: video.thumbnail)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: gridItemWidth, height: thumbnailHeight)
-                            .clipped()
-
-                        if video.isUploading {
-                            Color.appPrimaryColor.opacity(0.5)
-                            ZStack {
-                                Color.clear
-                                CustomProgressView(progress: video.progress)
-                                if video.progress < 0.99{
-                                    VStack {
-                                        Spacer()
-                                        Spacer()
-                                        Button {
-                                            backgroundUploader.cancelUpload(id: video.localIdentifier)
-                                            uploadManager.removeUploadingVideo(id: video.localIdentifier)
-                                        } label: {
-                                            Text("cancel")
-                                                .font(.system(size: 12, weight: .medium))
-                                                .foregroundColor(.white)
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 4)
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 4)
-                                                        .stroke(Color.white, lineWidth: 1.0)
-                                                )
+        Group{
+            if videoThumbnails.isEmpty && uploadingVideos.isEmpty {
+                VStack {
+                    Spacer()
+                    Text(noVideosMessage ?? "No videos available.")
+                        .font(.headline)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+            } else {
+                LazyVGrid(columns: Array(repeating: GridItem(.fixed(gridItemWidth), spacing: 0), count: 3),
+                          spacing: 0) {
+                    ForEach(uploadingVideos.reversed()) { video in
+                        ZStack {
+                            Image(uiImage: video.thumbnail)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: gridItemWidth, height: thumbnailHeight)
+                                .clipped()
+                            
+                            if video.isUploading {
+                                Color.appPrimaryColor.opacity(0.5)
+                                ZStack {
+                                    Color.clear
+                                    CustomProgressView(progress: video.progress)
+                                    if video.progress < 0.99{
+                                        VStack {
+                                            Spacer()
+                                            Spacer()
+                                            Button {
+                                                backgroundUploader.cancelUpload(id: video.localIdentifier)
+                                                uploadManager.removeUploadingVideo(id: video.localIdentifier)
+                                            } label: {
+                                                Text("cancel")
+                                                    .font(.system(size: 12, weight: .medium))
+                                                    .foregroundColor(.white)
+                                                    .padding(.horizontal, 8)
+                                                    .padding(.vertical, 4)
+                                                    .overlay(
+                                                        RoundedRectangle(cornerRadius: 4)
+                                                            .stroke(Color.white, lineWidth: 1.0)
+                                                    )
+                                            }
+                                            .padding(.bottom, 30)
                                         }
-                                        .padding(.bottom, 30)
                                     }
                                 }
                             }
                         }
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
+                        )
                     }
-                    .overlay(
-                        Rectangle()
-                            .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
-                    )
+                    ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
+                        Videos(
+                            thumbnailURL: thumbnailURL,
+                            videoURL: videoURLs[index],
+                            index: index,
+                            videoArray: videoArray,
+                            allVideoURLs: videoURLs,
+                            onLogout: onLogout,
+                            selectedTab: $selectedTab,
+                            fromOtherUserProfile: fromOtherUserProfile,
+                            programmaticOpenTarget: $programmaticOpenTarget
+                        )
+                        .environmentObject(userSession)
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
+                        )
+                    }
                 }
-                ForEach(Array(videoThumbnails.enumerated()), id: \.offset) { index, thumbnailURL in
-                    Videos(
-                        thumbnailURL: thumbnailURL,
-                        videoURL: videoURLs[index],
-                        index: index,
-                        videoArray: videoArray,
-                        allVideoURLs: videoURLs,
-                        onLogout: onLogout,
-                        selectedTab: $selectedTab,
-                        fromOtherUserProfile: fromOtherUserProfile
-                    )
-                    .environmentObject(userSession)
-                    .overlay(
-                        Rectangle()
-                            .stroke(Color.primary.opacity(1.0), lineWidth: 1.5)
-                    )
-                }
+                .padding(.horizontal, 5)
+                .frame(maxWidth: .infinity, alignment: .center)
             }
-            .padding(.horizontal, 5)
-            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openVideoFromOtherUserProfile)) { note in
+            guard fromOtherUserProfile else { return }
+            guard let incoming = note.userInfo?["videoId"] as? String, !incoming.isEmpty else { return }
+
+            // Try id first, then allow url fallback
+            if let match = videoArray.first(where: { $0.id == incoming || $0.url.absoluteString == incoming }) {
+                programmaticOpenTarget = match.url.absoluteString
+            } else if videoURLs.contains(incoming) {
+                programmaticOpenTarget = incoming
+            }
         }
     }
 }
@@ -762,6 +778,8 @@ struct Videos: View {
 
     let fromOtherUserProfile: Bool
     
+    @Binding var programmaticOpenTarget: String?
+    
     var body: some View {
         if let video = selectedVideo {
             Button {
@@ -801,6 +819,20 @@ struct Videos: View {
                 .frame(width: gridItemWidth, height: thumbnailHeight)
                 .clipped()
                 .id(reloadID)
+            }
+            .onChange(of: programmaticOpenTarget) { _, target in
+                guard let target = target else { return }
+                if target == videoURL || target == video.id {
+                    isShowingVideoSheet = true
+                    DispatchQueue.main.async { programmaticOpenTarget = nil }
+                }
+            }
+            .onAppear {
+                if let target = programmaticOpenTarget,
+                   target == videoURL || target == video.id {
+                    isShowingVideoSheet = true
+                    DispatchQueue.main.async { programmaticOpenTarget = nil }
+                }
             }
             .fullScreenCover(isPresented: $isShowingVideoSheet) {
                 GeometryReader { geometry in

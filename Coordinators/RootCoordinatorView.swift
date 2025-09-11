@@ -14,6 +14,7 @@ struct RootCoordinatorView: View {
     @State private var deepLinkedProfileId: String? = nil
     @State private var showingProfileSheet = false
     @State private var logoShow = true
+    @State private var pendingProfileVideoId: String? = nil
     
     @EnvironmentObject var notificationService: NotificationService
 
@@ -37,6 +38,10 @@ struct RootCoordinatorView: View {
             
             if let uid = note.userInfo?["profileId"] as? String {
                 deepLinkCoordinator.deepLinkProfileID = uid
+            }
+            
+            if let vid = note.userInfo?["videoId"] as? String, !vid.isEmpty {
+                pendingProfileVideoId = vid
             }
         }
         .onChange(of: deepLinkCoordinator.deepLinkVideoID) { _, newId in
@@ -72,13 +77,15 @@ struct RootCoordinatorView: View {
             print("🔗 Profile sheet dismissed, cleaning up state")
             deepLinkedProfileId = nil
             deepLinkCoordinator.deepLinkProfileID = nil
+            pendingProfileVideoId = nil
         }) {
             if let profileId = deepLinkedProfileId {
                 // Remove NavigationView wrapper to prevent extra padding
                 OtherUserProfileView(
                     userId: profileId,
                     selectedTab: $selectedTab,
-                    onLogout: logout
+                    onLogout: logout,
+                    autoOpenVideoId: pendingProfileVideoId
                 )
                 .environmentObject(userSession)
                 .onAppear { NotificationCenter.default.post(name: .pauseAllVideos, object: nil) }

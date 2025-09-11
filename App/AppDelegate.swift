@@ -153,12 +153,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
            kind == "report",
            let posterUid = userInfo["posterUid"] as? String,
            !posterUid.isEmpty {
+            let videoId = (userInfo["targetId"] as? String) ?? (userInfo["videoId"] as? String)
             NotificationCenter.default.post(name: .pauseAllVideos, object: nil)
             
             NotificationCenter.default.post(
                 name: .openProfileFromNotification,
                 object: nil,
-                userInfo: ["profileId": posterUid]
+                userInfo: ["profileId": posterUid, "videoId": videoId ?? ""]
             )
             completionHandler()
             return
@@ -193,4 +194,5 @@ extension Notification.Name {
     static let openFromNotification = Notification.Name("openFromNotification")
     static let openProfileFromNotification = Notification.Name("openProfileFromNotification")
     static let pauseAllVideos = Notification.Name("pauseAllVideos")
+    static let openVideoFromOtherUserProfile = Notification.Name("openVideoFromOtherUserProfile")
 }

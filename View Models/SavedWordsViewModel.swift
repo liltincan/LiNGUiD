@@ -9,7 +9,7 @@ import Combine
 import FirebaseFirestore
 import Foundation
 import FirebaseAuth
-import SwiftUICore
+import SwiftUI
 
 enum WordType {
     case known
