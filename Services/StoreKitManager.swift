@@ -265,8 +265,33 @@ final class StoreKitManager: ObservableObject {
             lastUid = uid
             lastIsProWritten = isPro
             debug("wrote isPro=\(isPro) for uid=\(uid)")
+            if !isPro {
+                await clampTargetLanguagesToCurrent(for: uid, db: db)
+            }
         } catch {
             debug("firestore write error: \(error.localizedDescription)")
+        }
+    }
+    
+    private func clampTargetLanguagesToCurrent(for uid: String, db: Firestore) async {
+        let ref = db.collection("users").document(uid)
+        do {
+            let snap = try await ref.getDocument()
+            guard let data = snap.data() else {
+                        debug("clamp: no user doc for uid=\(uid)")
+                        return
+            }
+            if let current = data["targetLanguage"] as? String {
+                try await ref.updateData(["targetLanguageList": [current]])
+                debug("clamp: set targetLanguageList = [\(current)] for uid=\(uid)")
+            } else if let list = data["targetLanguageList"] as? [String], let first = list.first {
+                try await ref.updateData(["targetLanguage": first, "targetLanguageList": [first]])
+                debug("clamp: targetLanguage missing; set to \(first) and clamped list for uid=\(uid)")
+            } else {
+                debug("clamp: no targetLanguage or list to clamp for uid=\(uid)")
+            }
+        } catch {
+            debug("clamp error: \(error.localizedDescription)")
         }
     }
 }
