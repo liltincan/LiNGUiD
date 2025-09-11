@@ -579,6 +579,9 @@ struct VideoPlayerView: View {
                 .navigationBarBackButtonHidden(true)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .pauseAllVideos)) { _ in
+            player.pause()
+        }
         .onAppear {
             words = []
             currentCaptionText = ""

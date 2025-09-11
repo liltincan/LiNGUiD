@@ -148,15 +148,38 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                                 didReceive response: UNNotificationResponse,
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         let userInfo = response.notification.request.content.userInfo
-        
-        if let videoId = userInfo["videoId"] as? String {
-            NotificationCenter.default.post(name: .openFromNotification, object: nil, userInfo: [
-                "videoId": videoId
-            ])
+
+        if let kind = userInfo["kind"] as? String,
+           kind == "report",
+           let posterUid = userInfo["posterUid"] as? String,
+           !posterUid.isEmpty {
+            NotificationCenter.default.post(name: .pauseAllVideos, object: nil)
+            
+            NotificationCenter.default.post(
+                name: .openProfileFromNotification,
+                object: nil,
+                userInfo: ["profileId": posterUid]
+            )
+            completionHandler()
+            return
         }
-        
+
+        if let videoId = userInfo["videoId"] as? String {
+            NotificationCenter.default.post(name: .openFromNotification, object: nil, userInfo: ["videoId": videoId])
+            completionHandler()
+            return
+        }
+        if let targetType = userInfo["targetType"] as? String,
+           targetType == "video",
+           let targetId = userInfo["targetId"] as? String {
+            NotificationCenter.default.post(name: .openFromNotification, object: nil, userInfo: ["videoId": targetId])
+            completionHandler()
+            return
+        }
+
         completionHandler()
     }
+
 
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
@@ -168,4 +191,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
 
 extension Notification.Name {
     static let openFromNotification = Notification.Name("openFromNotification")
+    static let openProfileFromNotification = Notification.Name("openProfileFromNotification")
+    static let pauseAllVideos = Notification.Name("pauseAllVideos")
 }

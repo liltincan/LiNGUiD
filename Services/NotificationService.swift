@@ -9,8 +9,8 @@ class NotificationService: NSObject, ObservableObject, UNUserNotificationCenterD
     
     override init() {
         super.init()
-        UNUserNotificationCenter.current().delegate = self
-        Messaging.messaging().delegate = self
+//        UNUserNotificationCenter.current().delegate = self
+//        Messaging.messaging().delegate = self
     }
     
     func setupNotifications() {

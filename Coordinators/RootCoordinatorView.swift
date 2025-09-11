@@ -32,6 +32,13 @@ struct RootCoordinatorView: View {
         .task {
             await checkInitialState()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .openProfileFromNotification)) { note in
+            NotificationCenter.default.post(name: .pauseAllVideos, object: nil)
+            
+            if let uid = note.userInfo?["profileId"] as? String {
+                deepLinkCoordinator.deepLinkProfileID = uid
+            }
+        }
         .onChange(of: deepLinkCoordinator.deepLinkVideoID) { _, newId in
             handleDeepLinkVideoChange(newId)
         }
@@ -74,6 +81,7 @@ struct RootCoordinatorView: View {
                     onLogout: logout
                 )
                 .environmentObject(userSession)
+                .onAppear { NotificationCenter.default.post(name: .pauseAllVideos, object: nil) }
                 .onAppear{
                     print("🔗 Opening \(profileId) from deeplink")
                 }
@@ -183,7 +191,8 @@ struct RootCoordinatorView: View {
     
     private func handleDeepLinkVideoChange(_ newId: String?) {
         guard let videoId = newId else { return }
-
+        NotificationCenter.default.post(name: .pauseAllVideos, object: nil)
+        
         print("🔗 Processing video deep link: \(videoId)")
         startingVideoId = nil // Reset to trigger reload
         selectedTab = 0
