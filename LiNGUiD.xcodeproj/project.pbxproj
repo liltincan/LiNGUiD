@@ -58,6 +58,7 @@
 		8177D3E82DF8D69A00FA6800 /* VideoThumbnailSelectableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */; };
 		818F2EEA2E4AD12200DD9EBE /* ManageSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */; };
 		819A09FE2E4D572F00A58DDF /* Location Verifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 819A09FD2E4D572600A58DDF /* Location Verifier.swift */; };
+		81BD48522E7276EC001362B5 /* FollowersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81BD48512E7276E4001362B5 /* FollowersView.swift */; };
 		81CC3AEF2E15B4000010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AEE2E15B4000010512B /* CropViewController */; };
 		81CC3AF12E15B4000010512B /* TOCropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF02E15B4000010512B /* TOCropViewController */; };
 		81CC3AF32E15B44A0010512B /* CropViewController in Frameworks */ = {isa = PBXBuildFile; productRef = 81CC3AF22E15B44A0010512B /* CropViewController */; };
@@ -182,6 +183,7 @@
 		8177D3E72DF8D68300FA6800 /* VideoThumbnailSelectableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoThumbnailSelectableView.swift; sourceTree = "<group>"; };
 		818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageSubscriptionView.swift; sourceTree = "<group>"; };
 		819A09FD2E4D572600A58DDF /* Location Verifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Location Verifier.swift"; sourceTree = "<group>"; };
+		81BD48512E7276E4001362B5 /* FollowersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FollowersView.swift; sourceTree = "<group>"; };
 		81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomProgessView.swift; sourceTree = "<group>"; };
 		81E960712E20350500EEE22D /* UploadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadManager.swift; sourceTree = "<group>"; };
 		81F436402DF2830500DA9BDA /* LanguageLevelSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageLevelSelectionView.swift; sourceTree = "<group>"; };
@@ -352,6 +354,7 @@
 		8F51F21E2DE01C8A00397726 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				81BD48512E7276E4001362B5 /* FollowersView.swift */,
 				7E64AE962E4B2A3800857F53 /* AudioPlayerView.swift */,
 				818F2EE92E4AD11A00DD9EBE /* ManageSubscriptionView.swift */,
 				81CCF3C52E453AAC00FA495B /* CustomProgessView.swift */,
@@ -664,6 +667,7 @@
 				D69E51D62DE6735A00329D64 /* VideoCache.swift in Sources */,
 				134970E42E1B3E030053E214 /* OtherUserProfileView.swift in Sources */,
 				60974D8A2DE803810075CAAE /* PracticeWordView.swift in Sources */,
+				81BD48522E7276EC001362B5 /* FollowersView.swift in Sources */,
 				D69E52012DE6CC5500329D64 /* PlayerView.swift in Sources */,
 				8138F40A2E480A8900675DB6 /* BackgroundUploader.swift in Sources */,
 				81F436412DF2830600DA9BDA /* LanguageLevelSelectionView.swift in Sources */,

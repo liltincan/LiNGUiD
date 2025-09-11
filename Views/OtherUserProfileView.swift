@@ -79,9 +79,7 @@ struct OtherUserProfileView: View {
                             videoCount: vm.videoCount,
                             inputAmount: vm.inputAmount,
                             followerCount: vm.followerCount,
-                            onFollowersTapped: {
-                                print("Followers tapped")
-                            }
+                            ownerUid: userId
                         )
                         .padding(.top, -10)
                         
