@@ -33,13 +33,14 @@ struct User: Codable, Identifiable {
     var streak: Int?
     var profilePhotoUrl: String?
     var didCompleteOnboarding: Bool?
+    var isAdmin: Bool?
 
     enum CodingKeys: CodingKey {
         case id, email, userName, createdAt, flameDate, flameStatus,
             globalWatchTime, interests, targetLanguage, targetLanguageList, languagesData,
             likedVideos, savedVideos, watchedVideos, uploadedVideos,
             nativeLanguage, nativeLanguageList,
-            followers, following, chats, country, streak, profilePhotoUrl, didCompleteOnboarding
+            followers, following, chats, country, streak, profilePhotoUrl, didCompleteOnboarding, isAdmin
     }
 
     private enum AlternateKeys: String, CodingKey {
@@ -121,6 +122,7 @@ struct User: Codable, Identifiable {
             String.self,
             forKey: .profilePhotoUrl
         )
+        isAdmin = try container.decodeIfPresent(Bool.self, forKey: .isAdmin)
     }
 
 }

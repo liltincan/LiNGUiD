@@ -120,7 +120,6 @@ struct VideoPlayerView: View {
     @ObservedObject var viewModel = ChatListViewModel()
     @Environment(\.scenePhase) private var scenePhase
     
-    
     private var hasMeaning: Bool {
         let m = (translatedText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return !m.isEmpty
@@ -376,8 +375,10 @@ struct VideoPlayerView: View {
 
                                         handleReportVideo()
                                     }
-                                    if (uploaderId == Auth.auth().currentUser?.uid) {
-                                        Button("Delete Video", role: .destructive) {
+                                    if (uploaderId == Auth.auth().currentUser?.uid || userSession.isAdmin) {
+                                        Button(userSession.isAdmin && uploaderId != Auth.auth().currentUser?.uid
+                                               ? "Remove Video (Admin)" : "Delete Video",
+                                               role: .destructive) {
                                             showingDeleteConfirmation = true
                                         }
                                     }

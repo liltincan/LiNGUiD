@@ -13,6 +13,7 @@ import Foundation
 class UserSessionViewModel: ObservableObject {
 
     @Published var currentUser: User?
+    var isAdmin: Bool { currentUser?.isAdmin ?? false }
     private let firestoreService = FirestoreService.shared
 
     init() {
