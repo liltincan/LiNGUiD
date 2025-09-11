@@ -257,6 +257,20 @@ struct ProfileView: View {
         return Int(((backgroundUploader.progressById[id] ?? 0) * 100).rounded())
     }
 }
+extension Int {
+    func abbreviated() -> String {
+        let n = Double(self)
+        func fmt(_ v: Double) -> String {
+            v.rounded() == v ? String(Int(v)) : String(format: "%.1f", v)
+        }
+        switch n {
+        case 0..<1_000: return String(Int(n))
+        case 1_000..<1_000_000: return fmt(n/1_000) + "K"
+        case 1_000_000..<1_000_000_000: return fmt(n/1_000_000) + "M"
+        default: return fmt(n/1_000_000_000) + "B"
+        }
+    }
+}
 
 struct ProfileHeaderView: View {
     let userSession: UserSessionViewModel
@@ -761,6 +775,7 @@ struct Videos: View {
     private let maxRetryCount = 3
 
     @State private var isShowingVideoSheet = false
+    @StateObject private var viewCounts = ViewCountsStore()
 
     private var selectedVideo: Video? {
         videoArray.first { $0.url.absoluteString == videoURL }
@@ -785,39 +800,48 @@ struct Videos: View {
             Button {
                 isShowingVideoSheet = true
             } label: {
-                AsyncImage(url: URL(string: thumbnailURL), transaction: Transaction(animation: .easeInOut)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: gridItemWidth, height: thumbnailHeight)
-                            .clipped()
-                            .onAppear {
-                                retryCount = 0
-                            }
-
-                    case .failure(_):
-                        VStack {
+                ZStack(alignment: .bottomTrailing) {
+                    AsyncImage(url: URL(string: thumbnailURL), transaction: Transaction(animation: .easeInOut)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                                .frame(width: gridItemWidth, height: thumbnailHeight)
+                                .clipped()
+                                .onAppear { retryCount = 0 }
+                        case .failure(_):
                             Color.gray.frame(width: gridItemWidth, height: thumbnailHeight)
                                 .onAppear {
                                     if retryCount < maxRetryCount {
                                         retryCount += 1
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                                            reloadID = UUID()
-                                        }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { reloadID = UUID() }
                                     }
                                 }
+                        case .empty:
+                            Color.gray.frame(width: gridItemWidth, height: thumbnailHeight)
+                        @unknown default:
+                            Color.gray.frame(width: gridItemWidth, height: thumbnailHeight)
                         }
+                    }
+                    .frame(width: gridItemWidth, height: thumbnailHeight)
+                    .clipped()
 
-                    case .empty:
-                        Color.gray.frame(width: gridItemWidth, height: thumbnailHeight)
-                    @unknown default:
-                        Color.gray.frame(width: gridItemWidth, height: thumbnailHeight)
+                    if let vid = selectedVideo {
+                        let count = viewCounts.value(lang: vid.language, id: vid.id)
+                        ZStack(alignment: .bottomTrailing) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "play")
+                                    .symbolRenderingMode(.monochrome)
+                                Text(count.abbreviated())
+                            }
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.6), radius: 4, x: 0, y: 1)
+                            .padding(.trailing, 4)
+                            .padding(.bottom, 3)
+                        }
+                        .onAppear { viewCounts.attach(lang: vid.language, id: vid.id) }
                     }
                 }
-                .frame(width: gridItemWidth, height: thumbnailHeight)
-                .clipped()
                 .id(reloadID)
             }
             .onChange(of: programmaticOpenTarget) { _, target in
@@ -873,3 +897,37 @@ struct Buttons: View{
             .cornerRadius(8)
     }
 }
+
+final class ViewCountsStore: ObservableObject {
+    @Published private(set) var counts: [String: Int] = [:]
+    private let db = Firestore.firestore()
+    private var listeners: [String: ListenerRegistration] = [:]
+
+    private func key(_ lang: String, _ id: String) -> String { "\(lang)#\(id)" }
+
+    deinit { listeners.values.forEach { $0.remove() } }
+
+    func attach(lang: String, id: String) {
+        let k = key(lang, id)
+        guard listeners[k] == nil else { return }
+
+        listeners[k] = db
+            .collection("videos").document(lang)
+            .collection("items").document(id)
+            .addSnapshotListener { [weak self] snap, _ in
+                guard let self = self, let data = snap?.data() else { return }
+                if let v = data["views"] as? Int {
+                    self.counts[k] = v
+                } else if let d = data["views"] as? Double {
+                    self.counts[k] = Int(d)
+                }
+            }
+    }
+
+    func value(lang: String, id: String) -> Int { counts[key(lang, id)] ?? 0 }
+
+    func prefetch(videos: [Video]) {
+        videos.forEach { attach(lang: $0.language, id: $0.id) }
+    }
+}
+
