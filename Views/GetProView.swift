@@ -24,7 +24,6 @@ struct GetProView: View {
     private let productID = "LiNGUiD.Pro"
     @State private var proProduct: Product?
     @State private var isRestoring = false
-    @State private var legalSheet: LegalSheet?
 
     var body: some View {
         VStack(spacing: 24) {
@@ -136,14 +135,6 @@ struct GetProView: View {
                   .multilineTextAlignment(.center)
             }
             .padding(.top, -20)
-            .fullScreenCover(item: $legalSheet) { which in
-                switch which {
-                case .terms:
-                    TermsOfServiceView()
-                case .privacy:
-                    PrivacyPolicyView()
-                }
-            }
         }
         .padding()
         .background(

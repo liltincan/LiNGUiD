@@ -171,14 +171,6 @@ struct LoginView: View {
                     }
                     .multilineTextAlignment(.center)
                 }
-                .fullScreenCover(item: $legalSheet) { which in
-                    switch which {
-                    case .terms:
-                        TermsOfServiceView()
-                    case .privacy:
-                        PrivacyPolicyView()
-                    }
-                }
             }
             .padding()
             
