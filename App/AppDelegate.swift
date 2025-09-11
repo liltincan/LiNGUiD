@@ -55,7 +55,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         //log out user on first install
         LaunchManager.shared.checkFirstLaunchAndLogoutIfNeeded()
         
+        clearBadgeAndDelivered()
         return true
+    }
+    
+    private func clearBadgeAndDelivered() {
+        let center = UNUserNotificationCenter.current()
+        center.removeAllDeliveredNotifications() // optional tidy-up
+        if #available(iOS 16.0, *) {
+            Task {
+                do { try await center.setBadgeCount(0) }
+                catch {
+                    UIApplication.shared.applicationIconBadgeNumber = 0
+                    print("Badge clear failed:", error)
+                }
+            }
+        } else {
+            UIApplication.shared.applicationIconBadgeNumber = 0
+        }
     }
 
     private func startAdminSubscriptionWatcher() {

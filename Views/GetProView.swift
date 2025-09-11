@@ -16,6 +16,7 @@ struct GetProView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openURL) private var openURL
 
     var onDone: (() -> Void)? = nil
     var fromSettings: Bool = false
@@ -105,7 +106,9 @@ struct GetProView: View {
                         .multilineTextAlignment(.center)
                   HStack(spacing: 16) {
                       Button {
-                          legalSheet = .terms
+                          if let url = URL(string: "https://learnwithlinguid.com/") {
+                              openURL(url)
+                          }
                       } label: {
                           Text("Terms of Service")
                               .fontWeight(.medium)
@@ -118,7 +121,9 @@ struct GetProView: View {
                           .foregroundColor(.gray)
                       
                       Button {
-                          legalSheet = .privacy
+                          if let url = URL(string: "https://learnwithlinguid.com/") {
+                              openURL(url)
+                          }
                       } label: {
                           Text("Privacy Policy")
                               .fontWeight(.medium)
@@ -184,7 +189,7 @@ struct GetProView: View {
                 self.products = storeProducts
                 self.proProduct = storeProducts.first(where: { $0.id == productID })
                 if products.isEmpty {
-                    self.purchaseError = "Couldn't find product \(productID). Check App Store Connect or StoreKit config."
+                    self.purchaseError = "Couldn't find product \(productID)."
                 }
             }
         } catch {
