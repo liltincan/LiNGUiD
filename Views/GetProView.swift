@@ -20,7 +20,7 @@ struct GetProView: View {
     var onDone: (() -> Void)? = nil
     var fromSettings: Bool = false
 
-    private let productID = "LiNGUiD.Pro"
+    private let productID = "linguid.subscription"
     @State private var proProduct: Product?
     @State private var isRestoring = false
     @State private var legalSheet: LegalSheet?

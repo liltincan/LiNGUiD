@@ -9,7 +9,7 @@ final class StoreKitManager: ObservableObject {
     static let shared = StoreKitManager()
     private init() {}
     
-    private let productID = "LiNGUiD.Pro"
+    private let productID = "linguid.subscription"
 
     @Published private(set) var isSubscribed: Bool = false
     private var proProduct: Product?
