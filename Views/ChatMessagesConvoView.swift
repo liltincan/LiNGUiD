@@ -429,6 +429,13 @@ struct ChatMessagesConvoView: View {
             }
         }
         .padding(.horizontal, 10)
+        //this needs to be called here cus if they are in the chat and read it then it should be 'read'
+        .onAppear {
+            //check if they are in the chat then it should be read
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                viewModel.markMessagesAsRead(for: chatID)
+            }
+        }
     }
     //MARK: - This will show who replied and with what message
     private func replyHeader(text: String, reply: String) -> some View {

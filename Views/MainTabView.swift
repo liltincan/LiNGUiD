@@ -48,5 +48,20 @@ struct MainTabView: View {
                 .tag(4)
         }
         .accentColor(Color(red: 142/255, green: 84/255, blue: 229/255))
+        //this will appear and automatically customize the tab bar
+        .onAppear {
+            let appearance = UITabBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            //this will be the background of the tab bar
+            appearance.backgroundColor = .black
+            UITabBar.appearance().tintColor = UIColor(
+                red: 142/255, green: 84/255, blue: 229/255, alpha: 1
+            )
+            UITabBar.appearance().unselectedItemTintColor = .lightGray
+            UITabBar.appearance().standardAppearance = appearance
+            if #available(iOS 15.0, *) {
+                UITabBar.appearance().scrollEdgeAppearance = appearance
+            }
+        }
     }
 }
