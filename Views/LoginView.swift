@@ -10,7 +10,7 @@ struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
     
     @EnvironmentObject var appState: AppState
-    @State private var legalSheet: LegalSheet?
+    @Environment(\.openURL) private var openURL
     
     let onSuccess: () -> Void
 
@@ -145,10 +145,14 @@ struct LoginView: View {
                         Text("By clicking continue, you agree to our")
                             .foregroundColor(.white.opacity(0.6))
                             .multilineTextAlignment(.center)
-                        Button("Terms of Service") { legalSheet = .terms }
-                            .buttonStyle(.plain)
-                            .foregroundColor(.white)
-                            .fontWeight(.medium)
+                        Button("Terms of Service") {
+                            if let url = URL(string: "https://learnwithlinguid.com/") {
+                                openURL(url)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundColor(.white)
+                        .fontWeight(.medium)
                     }
                     .multilineTextAlignment(.center)
 
@@ -156,20 +160,16 @@ struct LoginView: View {
                         Text("and")
                             .foregroundColor(.white.opacity(0.6))
 
-                        Button("Privacy Policy") { legalSheet = .privacy }
-                            .buttonStyle(.plain)
-                            .foregroundColor(.white)
-                            .fontWeight(.medium)
+                        Button("Privacy Policy") {
+                            if let url = URL(string: "https://learnwithlinguid.com/") {
+                                openURL(url)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundColor(.white)
+                        .fontWeight(.medium)
                     }
                     .multilineTextAlignment(.center)
-                }
-                .fullScreenCover(item: $legalSheet) { which in
-                    switch which {
-                    case .terms:
-                        TermsOfServiceView()
-                    case .privacy:
-                        PrivacyPolicyView()
-                    }
                 }
             }
             .padding()
