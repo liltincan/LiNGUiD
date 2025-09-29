@@ -106,7 +106,7 @@
           ],
           "productID" : "linguid.subscription",
           "recurringSubscriptionPeriod" : "P1M",
-          "referenceName" : null,
+          "referenceName" : "LiNGUiD Pro Subscription",
           "subscriptionGroupID" : "2FE928D6",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
