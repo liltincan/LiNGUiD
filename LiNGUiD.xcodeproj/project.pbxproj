@@ -71,6 +71,7 @@
 		81F436452DF2831D00DA9BDA /* OnboardingFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */; };
 		81F436472DF2835100DA9BDA /* OnboardingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436462DF2835100DA9BDA /* OnboardingPageView.swift */; };
 		81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F731932E0A1C8C0057786F /* CountrySelectionView.swift */; };
+		8F17159C2E8DF58400252B6C /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F17159B2E8DF58400252B6C /* StoreKit.framework */; };
 		8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F1FE2DE0183300397726 /* LiNGUiDApp.swift */; };
 		8F51F2052DE0183300397726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F1F62DE0183300397726 /* Assets.xcassets */; };
 		8F51F2122DE01A1C00397726 /* .README in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F2112DE01A1800397726 /* .README */; };
@@ -193,6 +194,7 @@
 		81F436442DF2831D00DA9BDA /* OnboardingFlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlowView.swift; sourceTree = "<group>"; };
 		81F436462DF2835100DA9BDA /* OnboardingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageView.swift; sourceTree = "<group>"; };
 		81F731932E0A1C8C0057786F /* CountrySelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountrySelectionView.swift; sourceTree = "<group>"; };
+		8F17159B2E8DF58400252B6C /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		8F51F1F62DE0183300397726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F51F1FC2DE0183300397726 /* LiNGUiD.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiNGUiD.entitlements; sourceTree = "<group>"; };
 		8F51F1FD2DE0183300397726 /* LiNGUiD.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = LiNGUiD.xcodeproj; sourceTree = "<group>"; };
@@ -260,6 +262,7 @@
 				8FB929612DE10B9B0020AFCD /* FirebaseStorage in Frameworks */,
 				8F51F2262DE022D200397726 /* FirebaseAI in Frameworks */,
 				8F51F22E2DE022D200397726 /* FirebaseAppCheck in Frameworks */,
+				8F17159C2E8DF58400252B6C /* StoreKit.framework in Frameworks */,
 				60C7E5BB2DE2C0C500C1AAF2 /* GoogleSignIn in Frameworks */,
 				8FB9295B2DE10B7B0020AFCD /* FirebaseCore in Frameworks */,
 				8FB9295F2DE10B910020AFCD /* FirebaseFirestore in Frameworks */,
@@ -476,6 +479,7 @@
 		8FB929592DE10B7B0020AFCD /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				8F17159B2E8DF58400252B6C /* StoreKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -931,7 +935,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LiNGUiD.LiNGUiD;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -984,7 +988,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
-				MARKETING_VERSION = 2.0;
+				MARKETING_VERSION = 3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LiNGUiD.LiNGUiD;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
