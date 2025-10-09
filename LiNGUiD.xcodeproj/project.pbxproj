@@ -51,7 +51,6 @@
 		7EFDD81C2E0C8DB400154192 /* Chat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81B2E0C8DB200154192 /* Chat.swift */; };
 		7EFDD81E2E0C8DD600154192 /* ChatListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */; };
 		810707522E41247E00F9E709 /* ProStatusViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810707512E41247200F9E709 /* ProStatusViewModel.swift */; };
-		81166EC62E710DF700AEFF90 /* StoreKit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 81166EC52E710DF700AEFF90 /* StoreKit.storekit */; };
 		81166EC82E711B7500AEFF90 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81166EC72E711B7200AEFF90 /* StoreKitManager.swift */; };
 		8138F40A2E480A8900675DB6 /* BackgroundUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8138F4092E480A7D00675DB6 /* BackgroundUploader.swift */; };
 		8177D3E62DF8D4B100FA6800 /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8177D3E52DF8D4AC00FA6800 /* UploadView.swift */; };
@@ -72,6 +71,9 @@
 		81F436472DF2835100DA9BDA /* OnboardingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436462DF2835100DA9BDA /* OnboardingPageView.swift */; };
 		81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F731932E0A1C8C0057786F /* CountrySelectionView.swift */; };
 		8F17159C2E8DF58400252B6C /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F17159B2E8DF58400252B6C /* StoreKit.framework */; };
+		8F3C0A232E973E01000A60A5 /* LiNGUiD StoreKit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 8F3C0A222E973E01000A60A5 /* LiNGUiD StoreKit.storekit */; };
+		8F3C0A242E973E01000A60A5 /* LiNGUiD StoreKit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 8F3C0A222E973E01000A60A5 /* LiNGUiD StoreKit.storekit */; };
+		8F3C0A252E973E01000A60A5 /* LiNGUiD StoreKit.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 8F3C0A222E973E01000A60A5 /* LiNGUiD StoreKit.storekit */; };
 		8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F1FE2DE0183300397726 /* LiNGUiDApp.swift */; };
 		8F51F2052DE0183300397726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F1F62DE0183300397726 /* Assets.xcassets */; };
 		8F51F2122DE01A1C00397726 /* .README in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F2112DE01A1800397726 /* .README */; };
@@ -178,7 +180,6 @@
 		7EFDD81B2E0C8DB200154192 /* Chat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chat.swift; sourceTree = "<group>"; };
 		7EFDD81D2E0C8DD100154192 /* ChatListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatListViewModel.swift; sourceTree = "<group>"; };
 		810707512E41247200F9E709 /* ProStatusViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProStatusViewModel.swift; sourceTree = "<group>"; };
-		81166EC52E710DF700AEFF90 /* StoreKit.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = StoreKit.storekit; sourceTree = "<group>"; };
 		81166EC72E711B7200AEFF90 /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		8138F4092E480A7D00675DB6 /* BackgroundUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundUploader.swift; sourceTree = "<group>"; };
 		8177D3E52DF8D4AC00FA6800 /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadView.swift; sourceTree = "<group>"; };
@@ -195,6 +196,7 @@
 		81F436462DF2835100DA9BDA /* OnboardingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageView.swift; sourceTree = "<group>"; };
 		81F731932E0A1C8C0057786F /* CountrySelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountrySelectionView.swift; sourceTree = "<group>"; };
 		8F17159B2E8DF58400252B6C /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		8F3C0A222E973E01000A60A5 /* LiNGUiD StoreKit.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = "LiNGUiD StoreKit.storekit"; sourceTree = "<group>"; };
 		8F51F1F62DE0183300397726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F51F1FC2DE0183300397726 /* LiNGUiD.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiNGUiD.entitlements; sourceTree = "<group>"; };
 		8F51F1FD2DE0183300397726 /* LiNGUiD.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = LiNGUiD.xcodeproj; sourceTree = "<group>"; };
@@ -447,7 +449,7 @@
 		8F823B432DD987F8007B6E5E = {
 			isa = PBXGroup;
 			children = (
-				81166EC52E710DF700AEFF90 /* StoreKit.storekit */,
+				8F3C0A222E973E01000A60A5 /* LiNGUiD StoreKit.storekit */,
 				60C7E5902DE1AA2000C1AAF2 /* Fonts */,
 				8F823B4D2DD987F8007B6E5E /* Products */,
 				8F51F2202DE01C9C00397726 /* Coordinators */,
@@ -634,7 +636,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8F51F2142DE01A2800397726 /* .gitignore in Resources */,
-				81166EC62E710DF700AEFF90 /* StoreKit.storekit in Resources */,
+				8F3C0A232E973E01000A60A5 /* LiNGUiD StoreKit.storekit in Resources */,
 				60E0B8F52DF268230065B772 /* GoogleService-Info.plist in Resources */,
 				8F51F2122DE01A1C00397726 /* .README in Resources */,
 				8F51F2052DE0183300397726 /* Assets.xcassets in Resources */,
@@ -646,6 +648,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				609FE7C92DE2D42600F6DE0E /* Info.plist in Resources */,
+				8F3C0A242E973E01000A60A5 /* LiNGUiD StoreKit.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -654,6 +657,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				609FE7CA2DE2D42600F6DE0E /* Info.plist in Resources */,
+				8F3C0A252E973E01000A60A5 /* LiNGUiD StoreKit.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -907,7 +911,7 @@
 				CODE_SIGN_ENTITLEMENTS = LiNGUiD.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = WBXZ64TNQB;
 				ENABLE_PREVIEWS = YES;
@@ -935,7 +939,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
-				MARKETING_VERSION = 3;
+				MARKETING_VERSION = 5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LiNGUiD.LiNGUiD;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -960,7 +964,7 @@
 				CODE_SIGN_ENTITLEMENTS = LiNGUiD.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = WBXZ64TNQB;
 				ENABLE_PREVIEWS = YES;
@@ -988,7 +992,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.4;
-				MARKETING_VERSION = 3;
+				MARKETING_VERSION = 5;
 				PRODUCT_BUNDLE_IDENTIFIER = com.LiNGUiD.LiNGUiD;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
