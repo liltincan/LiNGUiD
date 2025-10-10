@@ -60,5 +60,13 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>LiNGUiD uses your location during onboarding to verify your identity by cross-referencing it with your account details, ensuring only authorized users access personalized language learning features. For example, it confirms your location matches your registered region to prevent fraudulent access.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Access to photo library is required to upload videos for language practice.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera access allows you to record videos for language learning exercises.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access is needed to record audio for video uploads and practice sessions.</string>
 </dict>
 </plist>

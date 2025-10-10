@@ -2,6 +2,7 @@ import SwiftUI
 import StoreKit
 import FirebaseAuth
 import FirebaseFirestore
+import FirebaseFunctions
 
 private enum LegalSheet: Identifiable {
     case terms, privacy
@@ -105,7 +106,7 @@ struct GetProView: View {
                         .multilineTextAlignment(.center)
                   HStack(spacing: 16) {
                       Button {
-                          if let url = URL(string: "https://learnwithlinguid.com/") {
+                          if let url = URL(string: "https://learnwithlinguid.com/terms-of-service") {
                               openURL(url)
                           }
                       } label: {
@@ -118,9 +119,9 @@ struct GetProView: View {
 
                       Text("|")
                           .foregroundColor(.gray)
-                      
+
                       Button {
-                          if let url = URL(string: "https://learnwithlinguid.com/") {
+                          if let url = URL(string: "https://learnwithlinguid.com/privacy-policy") {
                               openURL(url)
                           }
                       } label: {
@@ -209,10 +210,32 @@ struct GetProView: View {
                 await transaction.finish()
                 StoreKitManager.shared.refreshNow()
 
-                await MainActor.run {
-                    showSuccess = true
-                    onDone?()
-                    if fromSettings { dismiss() }
+                // Validate receipt on server
+                guard let uid = Auth.auth().currentUser?.uid,
+                      let receiptData = ReceiptValidator.shared.fetchAppStoreReceipt() else {
+                    await MainActor.run { purchaseError = "Failed to fetch receipt or user ID." }
+                    return
+                }
+
+                ReceiptValidator.shared.validateReceipt(receiptData: receiptData, uid: uid) { result in
+                    switch result {
+                    case .success(let response):
+                        if let isValid = response["isValid"] as? Bool, isValid {
+                            Task { @MainActor in
+                                showSuccess = true
+                                onDone?()
+                                if fromSettings { dismiss() }
+                            }
+                        } else {
+                            Task { @MainActor in
+                                purchaseError = "Receipt validation failed. Please contact support."
+                            }
+                        }
+                    case .failure(let error):
+                        Task { @MainActor in
+                            purchaseError = "Receipt validation error: \(error.localizedDescription)"
+                        }
+                    }
                 }
 
             case .userCancelled:
@@ -249,10 +272,34 @@ struct GetProView: View {
 
             StoreKitManager.shared.refreshNow()
 
-            if !restored {
-                await MainActor.run { purchaseError = "No active subscription found to restore." }
+            if restored {
+                // Validate receipt on server after restore
+                guard let uid = Auth.auth().currentUser?.uid,
+                      let receiptData = ReceiptValidator.shared.fetchAppStoreReceipt() else {
+                    await MainActor.run { purchaseError = "Failed to fetch receipt or user ID after restore." }
+                    return
+                }
+
+                ReceiptValidator.shared.validateReceipt(receiptData: receiptData, uid: uid) { result in
+                    switch result {
+                    case .success(let response):
+                        if let isValid = response["isValid"] as? Bool, isValid {
+                            Task { @MainActor in
+                                showSuccess = true
+                            }
+                        } else {
+                            Task { @MainActor in
+                                purchaseError = "Restore validation failed. Please contact support."
+                            }
+                        }
+                    case .failure(let error):
+                        Task { @MainActor in
+                            purchaseError = "Restore validation error: \(error.localizedDescription)"
+                        }
+                    }
+                }
             } else {
-                await MainActor.run { showSuccess = true }
+                await MainActor.run { purchaseError = "No active subscription found to restore." }
             }
         } catch {
             await MainActor.run { purchaseError = "Restore failed: \(error.localizedDescription)" }
