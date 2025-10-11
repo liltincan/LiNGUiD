@@ -75,10 +75,22 @@ struct TermsOfServiceView: View {
                         .foregroundColor(.white.opacity(0.8))
                         .lineSpacing(4)
                 }
-                
+
                 // Section 3
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("3. Community Standards")
+                    Text("3. Subscriptions")
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundColor(.white)
+
+                    Text("LiNGUiD offers an auto-renewable subscription called 'LiNGUiD Pro' for 1 month at $9.99 or 1 year at $99.99. Subscriptions automatically renew unless canceled at least 24 hours before the end of the current period. Payment will be charged to your iTunes account. For more details on subscriptions, billing, and cancellation, please refer to our Privacy Policy and these Terms of Service.")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineSpacing(4)
+                }
+
+                // Section 4
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("4. Community Standards")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white)
                     
@@ -112,9 +124,9 @@ struct TermsOfServiceView: View {
                         .lineSpacing(4)
                 }
                 
-                // Section 4
+                // Section 5
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("4. Arbitration and Dispute Resolution")
+                    Text("5. Arbitration and Dispute Resolution")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white)
                     
@@ -134,9 +146,9 @@ struct TermsOfServiceView: View {
                         .lineSpacing(4)
                 }
                 
-                // Section 5
+                // Section 6
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("5. Termination")
+                    Text("6. Termination")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white)
                     
@@ -146,9 +158,9 @@ struct TermsOfServiceView: View {
                         .lineSpacing(4)
                 }
                 
-                // Section 6
+                // Section 7
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("6. Disclaimers and Limitations of Liability")
+                    Text("7. Disclaimers and Limitations of Liability")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white)
                     
@@ -168,9 +180,9 @@ struct TermsOfServiceView: View {
                         .lineSpacing(4)
                 }
                 
-                // Section 7
+                // Section 8
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("7. Miscellaneous")
+                    Text("8. Miscellaneous")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white)
                     

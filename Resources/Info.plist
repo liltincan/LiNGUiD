@@ -13,6 +13,8 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location data is collected to specify dialectal and language variety information, helping to tailor language lessons and recommendations based on your region.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string></string>

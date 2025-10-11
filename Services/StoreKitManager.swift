@@ -5,6 +5,9 @@ import FirebaseFirestore
 import UIKit
 import Combine
 
+// Backend URL for receipt validation
+private let backendBaseURL = "https://makechicken.onrender.com"
+
 final class StoreKitManager: ObservableObject {
     static let shared = StoreKitManager()
     private init() {}
@@ -152,6 +155,7 @@ final class StoreKitManager: ObservableObject {
 
                 await setPro(effectiveActive, reason: "statusAPI")
                 scheduleExpiryCheck(for: effectiveActive ? exp : nil, willAutoRenew: willAutoRenew)
+                await validateReceiptWithBackend()
                 return
             } catch {
                 debug("statusAPI error: \(error.localizedDescription)")
@@ -181,6 +185,7 @@ final class StoreKitManager: ObservableObject {
                 debug("currentEntitlement → active=\(active) → effective=\(effectiveActive), exp=\(String(describing: t.expirationDate)), pendingLapseAt=\(String(describing: pendingLapseAt))")
                 await setPro(effectiveActive, reason: "currentEntitlements")
                 scheduleExpiryCheck(for: effectiveActive ? t.expirationDate : nil, willAutoRenew: true)
+                await validateReceiptWithBackend()
             } else {
                 await MainActor.run {
                     self.expirationDate = nil
@@ -310,6 +315,53 @@ final class StoreKitManager: ObservableObject {
             }
         } catch {
             debug("clamp error: \(error.localizedDescription)")
+        }
+    }
+
+    private func getReceiptData() -> Data? {
+        guard let receiptURL = Bundle.main.appStoreReceiptURL,
+              let receiptData = try? Data(contentsOf: receiptURL) else {
+            return nil
+        }
+        return receiptData
+    }
+
+    private func validateReceiptWithBackend() async {
+        guard let receiptData = getReceiptData() else {
+            debug("No receipt data available")
+            return
+        }
+        let base64Receipt = receiptData.base64EncodedString()
+        let url = URL(string: "\(backendBaseURL)/validateReceipt")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body = ["receipt-data": base64Receipt]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                debug("Backend validation failed with status: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                return
+            }
+            // Assume response: {"isValid": true, "expires_date": "timestamp", "product_id": "linguid.subscription"}
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let isValid = json["isValid"] as? Bool {
+                if isValid {
+                    debug("Receipt validated by backend")
+                    // Optionally update expiration if provided
+                    if let expiresDateStr = json["expires_date"] as? String,
+                       let expiresDate = ISO8601DateFormatter().date(from: expiresDateStr) {
+                        await MainActor.run {
+                            self.expirationDate = expiresDate
+                        }
+                    }
+                } else {
+                    await setPro(false, reason: "backend validation failed")
+                }
+            }
+        } catch {
+            debug("Error validating receipt with backend: \(error.localizedDescription)")
         }
     }
 }
