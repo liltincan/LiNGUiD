@@ -72,6 +72,7 @@
 		81F436472DF2835100DA9BDA /* OnboardingPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F436462DF2835100DA9BDA /* OnboardingPageView.swift */; };
 		81F731942E0A1C990057786F /* CountrySelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F731932E0A1C8C0057786F /* CountrySelectionView.swift */; };
 		8F17159C2E8DF58400252B6C /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F17159B2E8DF58400252B6C /* StoreKit.framework */; };
+		8F2144312E9AA9CD0025DC70 /* ReceiptValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2144302E9AA9CC0025DC70 /* ReceiptValidator.swift */; };
 		8F51F2022DE0183300397726 /* LiNGUiDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F51F1FE2DE0183300397726 /* LiNGUiDApp.swift */; };
 		8F51F2052DE0183300397726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F1F62DE0183300397726 /* Assets.xcassets */; };
 		8F51F2122DE01A1C00397726 /* .README in Resources */ = {isa = PBXBuildFile; fileRef = 8F51F2112DE01A1800397726 /* .README */; };
@@ -195,6 +196,7 @@
 		81F436462DF2835100DA9BDA /* OnboardingPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageView.swift; sourceTree = "<group>"; };
 		81F731932E0A1C8C0057786F /* CountrySelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountrySelectionView.swift; sourceTree = "<group>"; };
 		8F17159B2E8DF58400252B6C /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		8F2144302E9AA9CC0025DC70 /* ReceiptValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptValidator.swift; sourceTree = "<group>"; };
 		8F51F1F62DE0183300397726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F51F1FC2DE0183300397726 /* LiNGUiD.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LiNGUiD.entitlements; sourceTree = "<group>"; };
 		8F51F1FD2DE0183300397726 /* LiNGUiD.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = LiNGUiD.xcodeproj; sourceTree = "<group>"; };
@@ -323,6 +325,7 @@
 		8F51F2192DE01C2C00397726 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				8F2144302E9AA9CC0025DC70 /* ReceiptValidator.swift */,
 				81BD48782E7662F1001362B5 /* PushManager.swift */,
 				81166EC72E711B7200AEFF90 /* StoreKitManager.swift */,
 				047C2F522E0C5FA40052C0C3 /* VideoUploadService.swift */,
@@ -737,6 +740,7 @@
 				81BD48792E7662F6001362B5 /* PushManager.swift in Sources */,
 				D6BA59E62DF3682000E6E137 /* ShareSheetView.swift in Sources */,
 				139ABECE2DF2271100EB45FD /* ChangePasswordViewModel.swift in Sources */,
+				8F2144312E9AA9CD0025DC70 /* ReceiptValidator.swift in Sources */,
 				D69E51D42DE66EF600329D64 /* VideoPlayerView.swift in Sources */,
 				8177D3E82DF8D69A00FA6800 /* VideoThumbnailSelectableView.swift in Sources */,
 				81F436472DF2835100DA9BDA /* OnboardingPageView.swift in Sources */,

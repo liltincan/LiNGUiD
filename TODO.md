@@ -1,20 +1,13 @@
-# TODO: Fix App Store Review Issues
+# TODO: Address App Store Rejection Issues
 
-## 1. Update Info.plist for Location Purpose String ✅
-- Edit `NSLocationWhenInUseUsageDescription` to provide a clear, specific example of how location is used.
+## Tasks
+- [x] Update Resources/Info.plist to add NSLocationWhenInUseUsageDescription explaining location use for specifying dialectal and language variety information.
+- [x] Modify Services/StoreKitManager.swift to add server-side receipt validation by sending receipts to the backend /validateReceipt endpoint, handling production vs sandbox retries.
+- [x] Edit Views/TermsOfServiceView.swift to add a "Subscriptions" section with required details for auto-renewable subscriptions.
+- [x] Create Services/ReceiptValidator.swift to handle receipt fetching and backend validation for GetProView.
+- [ ] Advise on App Store Connect: Set Support URL to https://learnwithlinguid.com/support and Terms of Use to https://learnwithlinguid.com/terms-of-service.
 
-## 2. Fix IAP Receipt Validation in ReceiptValidator.swift ✅
-- Replace Firebase function call with direct HTTP POST to backend `/api/iap/validateReceipt`.
-- Fetch and base64-encode receipt data from `Bundle.main.appStoreReceiptURL`.
-- Include `uid` from FirebaseAuth in the request.
-- Handle server response for validation result.
-
-## 3. Update GetProView.swift for Server Validation ✅
-- In `purchasePro()`, after transaction finish, fetch receipt and call updated `ReceiptValidator.shared.validateReceipt(receiptData: data, uid: uid)`.
-- Update success/error handling based on server response.
-- In `restorePurchases()`, add server validation after AppStore.sync().
-
-## 4. Non-Code Followups
-- Update website (https://learnwithlinguid.com) to include support information (e.g., FAQ, contact form).
-- In App Store Connect: Add Terms of Use link to App Description; confirm Privacy Policy URL; ensure Paid Apps Agreement accepted.
-- Test IAP in sandbox/TestFlight; rebuild and resubmit.
+## Followup Steps
+- [ ] Test IAP flows in sandbox and production environments to ensure receipt validation works.
+- [ ] Verify location permission prompt displays the updated purpose string.
+- [ ] Submit updated app for review and monitor for approval.
