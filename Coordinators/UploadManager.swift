@@ -16,8 +16,8 @@ class UploadManager: ObservableObject {
         let localIdentifier: String
         let thumbnail: UIImage
         var isUploading: Bool
-        var progress: Double = 0 // NEW
-        var filename: String = "" // optional
+        var progress: Double = 0
+        var filename: String = ""
     }
     
     @Published var totalToUpload: Int = 0
@@ -32,32 +32,38 @@ class UploadManager: ObservableObject {
 
     init() {
         NotificationCenter.default.addObserver(
-            forName: BackgroundUploader.progressNote,
-            object: nil,
-            queue: .main
-        ) { [weak self] note in
-            guard
-                let localId = note.userInfo?["localIdentifier"] as? String,
-                let progress = note.userInfo?["progress"] as? Double
-            else { return }
-
-            if let idx = self?.uploadingVideos.firstIndex(where: { $0.localIdentifier == localId }) {
-                self?.uploadingVideos[idx].progress = progress
-            }
-        }
-
-        NotificationCenter.default.addObserver(
             forName: BackgroundUploader.finishedNote,
             object: nil,
             queue: .main
         ) { [weak self] note in
-            guard let localId = note.userInfo?["localIdentifier"] as? String else { return }
-            self?.markUploaded(localId)
+            guard let self,
+                  let localId = note.userInfo?["localIdentifier"] as? String else { return }
+
+            let ok = (note.userInfo?["ok"] as? Bool) ?? {
+                let status = note.userInfo?["statusCode"] as? Int ?? 0
+                let err = note.userInfo?["error"] as? NSError
+                return (200..<300).contains(status) && err == nil
+            }()
+
+            if ok {
+                self.markUploaded(localId)
+            } else {
+                self.handleUploadFailed(localId)
+            }
         }
+
+//        NotificationCenter.default.addObserver(
+//            forName: BackgroundUploader.finishedNote,
+//            object: nil,
+//            queue: .main
+//        ) { [weak self] note in
+//            guard let localId = note.userInfo?["localIdentifier"] as? String else { return }
+//            self?.markUploaded(localId)
+//        }
     }
 
     func addUploadingVideos(_ assets: [PHAsset], thumbnails: [String: UIImage]) {
-        totalToUpload = assets.count // <- set this once
+        totalToUpload = assets.count
         for asset in assets {
             let id = asset.localIdentifier
             let thumbnail = thumbnails[id] ?? UIImage(systemName: "video")!
@@ -88,10 +94,8 @@ class UploadManager: ObservableObject {
             self.uploadTasks.removeValue(forKey: id)
             self.completedCount += 1
 
-            // Trigger refresh
             self.onUploadFinished?()
 
-            // If this was the last upload, schedule a cleanup/reset
             if self.completedCount == self.totalToUpload {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     self.reset()
@@ -112,7 +116,19 @@ class UploadManager: ObservableObject {
     func removeUploadingVideo(id: String) {
         if let i = uploadingVideos.firstIndex(where: { $0.localIdentifier == id }) {
             uploadingVideos.remove(at: i)
-            objectWillChange.send() // nudge any views bound to the array
+            objectWillChange.send()
+        }
+    }
+    
+    @MainActor
+    private func handleUploadFailed(_ id: String) {
+        uploadingVideos.removeAll { $0.localIdentifier == id }
+        if totalToUpload > 0 { totalToUpload -= 1 }
+
+        if completedCount == totalToUpload {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                self.reset()
+            }
         }
     }
 
@@ -121,7 +137,7 @@ extension UploadManager {
     var progress: Double {
         guard totalToUpload > 0 else { return 0 }
 
-        let totalSteps = totalToUpload + 1  // +1 for final "Upload complete" state
+        let totalSteps = totalToUpload + 1
         let currentStep = min(completedCount + 1, totalSteps)
 
         return Double(currentStep) / Double(totalSteps)

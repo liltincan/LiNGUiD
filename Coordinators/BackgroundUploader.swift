@@ -15,13 +15,11 @@ final class BackgroundUploader: NSObject, ObservableObject {
     static let progressNote = Notification.Name("BGUploadProgress")
     static let finishedNote  = Notification.Name("BGUploadFinished")
 
-    // Live per-item progress (0…1)
     @Published private(set) var progressById: [String: Double] = [:]
 
-    // NEW: queue state so UI can compute steps without UploadManager
-    @Published private(set) var enqueuedIds: [String] = []      // in order
-    @Published private(set) var activeId: String?               // current uploading id
-    @Published private(set) var completedIds: Set<String> = []  // finished ids
+    @Published private(set) var enqueuedIds: [String] = []
+    @Published private(set) var activeId: String?
+    @Published private(set) var completedIds: Set<String> = []
 
     var totalToUpload: Int { enqueuedIds.count }
     var completedCount: Int { completedIds.count }
@@ -63,11 +61,12 @@ final class BackgroundUploader: NSObject, ObservableObject {
         config.waitsForConnectivity = true
         config.allowsExpensiveNetworkAccess = true
         config.allowsConstrainedNetworkAccess = true
-        config.httpMaximumConnectionsPerHost = 1 // sequential
+        config.httpMaximumConnectionsPerHost = 1
         return URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }
 
     struct PayloadMeta: Codable {
+        let sessionId: String
         let localIdentifier: String
         let filename: String
         let category: String
@@ -84,8 +83,19 @@ final class BackgroundUploader: NSObject, ObservableObject {
         category: String,
         language: String,
         uploaderId: String?,
-        localIdentifier: String
+        localIdentifier: String,
+        sessionId: String
     ) throws {
+        let isDupInPending = pending.contains { t in
+            guard let m = decodeMeta(for: t) else { return false }
+            return m.sessionId == sessionId && m.localIdentifier == localIdentifier
+        }
+        let isDupActive: Bool = {
+            guard let a = active, let m = decodeMeta(for: a) else { return false }
+            return m.sessionId == sessionId && m.localIdentifier == localIdentifier
+        }()
+        guard !isDupInPending && !isDupActive else { return }
+
         let request = try buildRequest()
         let multipartURL = try writeMultipartToDisk(
             videoFileURL: videoFileURL,
@@ -93,12 +103,14 @@ final class BackgroundUploader: NSObject, ObservableObject {
             filename: filename,
             category: category,
             language: language,
-            uploaderId: uploaderId
+            uploaderId: uploaderId,
+            uploadId: "\(sessionId):\(localIdentifier)"
         )
 
         var task = session.uploadTask(with: request, fromFile: multipartURL)
 
         let meta = PayloadMeta(
+            sessionId: sessionId,
             localIdentifier: localIdentifier,
             filename: filename,
             category: category,
@@ -109,7 +121,6 @@ final class BackgroundUploader: NSObject, ObservableObject {
         let metaData = try JSONEncoder().encode(meta)
         task.taskDescription = String(data: metaData, encoding: .utf8)
 
-        // NEW: seed UI state
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             if !self.enqueuedIds.contains(localIdentifier) {
@@ -135,7 +146,7 @@ final class BackgroundUploader: NSObject, ObservableObject {
             let meta = try? JSONDecoder().decode(PayloadMeta.self, from: metaJSON)
         {
             DispatchQueue.main.async { [weak self] in
-                self?.activeId = meta.localIdentifier     // NEW: tell UI which one is running
+                self?.activeId = meta.localIdentifier
             }
         }
         active?.resume()
@@ -160,7 +171,8 @@ final class BackgroundUploader: NSObject, ObservableObject {
         filename: String,
         category: String,
         language: String,
-        uploaderId: String?
+        uploaderId: String?,
+        uploadId: String
     ) throws -> URL {
         let tmp = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)
@@ -179,6 +191,7 @@ final class BackgroundUploader: NSObject, ObservableObject {
         if let uploaderId { addText(name: "uploader_id", value: uploaderId) }
         addText(name: "topics", value: "[]")
         addText(name: "level", value: "auto")
+        addText(name: "upload_id", value: uploadId)
 
         if let thumb = thumbnailJPEG {
             append("--\(boundary)\r\n")
@@ -188,9 +201,16 @@ final class BackgroundUploader: NSObject, ObservableObject {
             append("\r\n")
         }
 
+        let base  = videoFileURL.lastPathComponent
+        let lower = base.lowercased()
+        let mime  = lower.hasSuffix(".mov") ? "video/quicktime"
+                 : lower.hasSuffix(".mp4") ? "video/mp4"
+                 : "application/octet-stream"
+
         append("--\(boundary)\r\n")
-        append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n")
-        append("Content-Type: video/mp4\r\n\r\n")
+        append("Content-Disposition: form-data; name=\"file\"; filename=\"\(base)\"\r\n")
+        append("Content-Type: \(mime)\r\n\r\n")
+
         let fh = try FileHandle(forReadingFrom: videoFileURL)
         if let chunk = try? fh.readToEnd() { data.append(chunk) }
         try? fh.close()
@@ -203,7 +223,7 @@ final class BackgroundUploader: NSObject, ObservableObject {
     
     @MainActor
     func clearFinishedBatchVisuals() {
-        // Only clear if nothing is uploading anymore
+        
         guard isUploadComplete else { return }
         enqueuedIds.removeAll()
         completedIds.removeAll()
@@ -227,17 +247,15 @@ extension BackgroundUploader: URLSessionDelegate, URLSessionTaskDelegate, URLSes
 
         let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
 
-        // Legacy broadcast (optional)
+        
         NotificationCenter.default.post(
             name: BackgroundUploader.progressNote,
             object: nil,
             userInfo: ["localIdentifier": meta.localIdentifier, "progress": progress]
         )
 
-        // Update published progress
         DispatchQueue.main.async { [weak self] in
             self?.progressById[meta.localIdentifier] = progress
-            // keep activeId accurate even if the system reorders callbacks
             if self?.activeId != meta.localIdentifier {
                 self?.activeId = meta.localIdentifier
             }
@@ -247,47 +265,39 @@ extension BackgroundUploader: URLSessionDelegate, URLSessionTaskDelegate, URLSes
     func urlSession(_ session: URLSession,
                     task: URLSessionTask,
                     didCompleteWithError error: Error?) {
-        // Decode task metadata once; keep it for cleanup + notifications
         var meta: PayloadMeta? = nil
         if let data = task.taskDescription?.data(using: .utf8) {
             meta = try? JSONDecoder().decode(PayloadMeta.self, from: data)
         }
 
-        // Always clean up the multipart temp file (if we know it)
-        if let m = meta {
-            try? FileManager.default.removeItem(atPath: m.multipartPath)
-        }
+        if let m = meta { try? FileManager.default.removeItem(atPath: m.multipartPath) }
 
-        // If we have metadata, notify listeners (optional but preserves your current behavior)
+        let status = (task.response as? HTTPURLResponse)?.statusCode ?? 0
+        let ok = (200..<300).contains(status) && error == nil
+
         if let m = meta {
             NotificationCenter.default.post(
                 name: BackgroundUploader.finishedNote,
                 object: nil,
-                userInfo: ["localIdentifier": m.localIdentifier, "error": error as NSError? as Any]
+                userInfo: [
+                    "localIdentifier": m.localIdentifier,
+                    "error": (error as NSError?) as Any,
+                    "statusCode": status,
+                    "ok": ok
+                ]
             )
         }
 
-        // Update UI state on main
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-
             if let m = meta {
-                let nsErr = error as NSError?
-
-                if nsErr == nil {
+                if ok {
                     self.progressById[m.localIdentifier] = 1
                     self.completedIds.insert(m.localIdentifier)
-                }
-                else if nsErr?.domain == NSURLErrorDomain && nsErr?.code == NSURLErrorCancelled {
-                    self.progressById.removeValue(forKey: m.localIdentifier)
-                    self.enqueuedIds.removeAll { $0 == m.localIdentifier }
-                }
-                else {
+                } else {
                     self.progressById.removeValue(forKey: m.localIdentifier)
                 }
             }
-
-            // Advance the queue if this task was the active one
             if self.active?.taskIdentifier == task.taskIdentifier {
                 self.active = nil
                 self.activeId = nil
@@ -295,6 +305,7 @@ extension BackgroundUploader: URLSessionDelegate, URLSessionTaskDelegate, URLSes
             }
         }
     }
+
 
 
     func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
@@ -308,24 +319,20 @@ extension BackgroundUploader: URLSessionDelegate, URLSessionTaskDelegate, URLSes
 extension BackgroundUploader {
     @MainActor
     func cancelUpload(id: String) {
-        // cancel pending task if found
         if let i = pending.firstIndex(where: { decodeMeta(for: $0)?.localIdentifier == id }) {
             let task = pending.remove(at: i)
             task.cancel()
         }
-        // cancel active task if it's the one
         else if let a = active, decodeMeta(for: a)?.localIdentifier == id {
             a.cancel()
             active = nil
             activeId = nil
         }
 
-        // Shrink the batch size: treat cancelled as removed from the plan
         enqueuedIds.removeAll { $0 == id }
         progressById.removeValue(forKey: id)
-        completedIds.remove(id) // in case it was accidentally marked
+        completedIds.remove(id)
 
-        // Move on if needed
         kickstartIfIdle()
     }
 
@@ -343,7 +350,6 @@ extension BackgroundUploader {
         progressById.removeAll()
     }
 
-    // Decode helper for matching tasks to ids
     fileprivate func decodeMeta(for task: URLSessionTask) -> PayloadMeta? {
         guard let data = task.taskDescription?.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(PayloadMeta.self, from: data)

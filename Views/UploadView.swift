@@ -474,6 +474,7 @@ struct AddThumbnailView: View {
                         // Show items in your UI bar
                         uploadManager.addUploadingVideos(assets, thumbnails: thumbnailOverrides)
                     }
+                    let sessionId = UUID().uuidString
 
                     for asset in assets {
                         guard let fileURL = tempCompressedURLs[asset.localIdentifier] else { continue }
@@ -488,7 +489,8 @@ struct AddThumbnailView: View {
                                 category: "general",
                                 language: "auto",
                                 uploaderId: Auth.auth().currentUser?.uid,
-                                localIdentifier: asset.localIdentifier
+                                localIdentifier: asset.localIdentifier,
+                                sessionId: sessionId
                             )
                         } catch {
                             print("Failed to enqueue \(asset.localIdentifier): \(error)")
