@@ -381,48 +381,27 @@ class FirestoreService {  //talks to Firebase so users are not doing it directly
         likedVideoId: String,
         completion: @escaping (Result<Void, Error>) -> Void
     ) {
-        // Update user's liked videos list
-        db.collection("users").document(uid).updateData([
-            "likedVideos": likedVideos
-        ]) { [weak self] error in
+        let batch = db.batch()
+
+        let userRef = db.collection("users").document(uid)
+        let path = likedVideoId.split(separator: "/")
+        guard path.count == 3 else {
+            completion(.failure(NSError(domain: "InvalidVideoId", code: -1)))
+            return
+        }
+        let videoRef = db.collection("videos").document(String(path[0])).collection(String(path[1])).document(String(path[2]))
+
+        batch.updateData(["likedVideos": likedVideos], forDocument: userRef)
+
+        let incrementValue = likedVideos.contains(likedVideoId) ? 1 : -1
+        batch.updateData(["likes": FieldValue.increment(Int64(incrementValue))], forDocument: videoRef)
+
+        batch.commit { error in
             if let error = error {
                 completion(.failure(error))
-                return
+            } else {
+                completion(.success(()))
             }
-
-            // Update the video's like count
-            let path = likedVideoId.split(separator: "/")
-            guard path.count == 3 else {
-                completion(
-                    .failure(
-                        NSError(
-                            domain: "InvalidVideoId",
-                            code: -1,
-                            userInfo: [
-                                NSLocalizedDescriptionKey:
-                                    "Invalid video ID format"
-                            ]
-                        )
-                    )
-                )
-                return
-            }
-
-            let incrementValue = likedVideos.contains(likedVideoId) ? 1 : -1
-
-            self?.db.collection("videos")
-                .document(String(path[0]))
-                .collection(String(path[1]))
-                .document(String(path[2]))
-                .updateData([
-                    "likes": FieldValue.increment(Int64(incrementValue))
-                ]) { error in
-                    if let error = error {
-                        completion(.failure(error))
-                    } else {
-                        completion(.success(()))
-                    }
-                }
         }
     }
 
