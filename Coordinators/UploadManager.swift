@@ -52,14 +52,26 @@ class UploadManager: ObservableObject {
             }
         }
 
-//        NotificationCenter.default.addObserver(
-//            forName: BackgroundUploader.finishedNote,
-//            object: nil,
-//            queue: .main
-//        ) { [weak self] note in
-//            guard let localId = note.userInfo?["localIdentifier"] as? String else { return }
-//            self?.markUploaded(localId)
-//        }
+        NotificationCenter.default.addObserver(
+            forName: BackgroundUploader.progressNote,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            guard
+                let self,
+                let id = note.userInfo?["localIdentifier"] as? String,
+                let progress = note.userInfo?["progress"] as? Double
+            else { return }
+
+            self.setProgress(progress, for: id)
+        }
+    }
+    
+    @MainActor
+    private func setProgress(_ progress: Double, for id: String) {
+        guard let idx = uploadingVideos.firstIndex(where: { $0.localIdentifier == id }) else { return }
+        uploadingVideos[idx].progress = max(0, min(1, progress))
+        objectWillChange.send()
     }
 
     func addUploadingVideos(_ assets: [PHAsset], thumbnails: [String: UIImage]) {

@@ -10,6 +10,8 @@ struct ProfileView: View {
     
     @State private var showingFullScreenProfilePicture: Bool = false
     @State private var fullScreenProfilePictureURL: String?
+    @State private var uploadedVideosListener: ListenerRegistration?
+    @State private var lastUploadedVideos: [String] = []
     
     @EnvironmentObject var uploadManager: UploadManager
     @EnvironmentObject var backgroundUploader: BackgroundUploader
@@ -99,14 +101,16 @@ struct ProfileView: View {
                 await refreshData()
             }
             .onAppear {
-                uploadManager.onUploadFinished = {
-                    Task {
-                        await refreshData()
-                    }
-                }
+                uploadManager.onUploadFinished = { Task { await refreshData() } }
                 Task {
                     await loadData()
+                    if let uid = Auth.auth().currentUser?.uid {
+                        startUploadedVideosListener(uid: uid)
+                    }
                 }
+            }
+            .onDisappear {
+                stopUploadedVideosListener()
             }
             .overlay(
                 ZStack {
@@ -243,6 +247,42 @@ struct ProfileView: View {
             userSession.getCurrentUser()
         }
     }
+    private func startUploadedVideosListener(uid: String) {
+        let doc = Firestore.firestore().collection("users").document(uid)
+
+        uploadedVideosListener?.remove()
+        uploadedVideosListener = doc.addSnapshotListener(includeMetadataChanges: false) { snapshot, error in
+            if let error = error {
+                print("uploadedVideos listener error:", error)
+                return
+            }
+            guard let data = snapshot?.data() else { return }
+
+            let newArray: [String] =
+                (data["uploadedVideos"] as? [String])
+                ?? (data["uploadedVideos"] as? [Any])?.compactMap { "\($0)" }
+                ?? []
+
+            if newArray != lastUploadedVideos {
+                lastUploadedVideos = newArray
+                debouncedRefresh()
+            }
+        }
+    }
+
+    private func stopUploadedVideosListener() {
+        uploadedVideosListener?.remove()
+        uploadedVideosListener = nil
+    }
+
+    @State private var refreshWorkItem: DispatchWorkItem?
+    private func debouncedRefresh(_ delay: TimeInterval = 0.25) {
+        refreshWorkItem?.cancel()
+        let work = DispatchWorkItem { Task { await refreshData() } }
+        refreshWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
     
     private var currentUploadId: String? {
         let i = uploadManager.currentIndex
