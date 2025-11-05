@@ -5,7 +5,7 @@
 - [x] Modify Services/StoreKitManager.swift to add server-side receipt validation by sending receipts to the backend /validateReceipt endpoint, handling production vs sandbox retries.
 - [x] Edit Views/TermsOfServiceView.swift to add a "Subscriptions" section with required details for auto-renewable subscriptions.
 - [x] Create Services/ReceiptValidator.swift to handle receipt fetching and backend validation for GetProView.
-- [ ] Advise on App Store Connect: Set Support URL to https://learnwithlinguid.com/support and Terms of Use to https://learnwithlinguid.com/terms-of-service.
+- [x] Advise on App Store Connect: Set Support URL to https://learnwithlinguid.com/support and Terms of Use to https://learnwithlinguid.com/terms-of-service.
 
 ## Followup Steps
 - [ ] Test IAP flows in sandbox and production environments to ensure receipt validation works.

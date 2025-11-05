@@ -11,6 +11,7 @@ struct Video: Identifiable, Codable, Equatable {
     let likes: Int
     let saves: Int
     let commentCount: Int
+    let shares: Int
     let language: String
     static func == (lhs: Video, rhs: Video) -> Bool {
         return lhs.id == rhs.id

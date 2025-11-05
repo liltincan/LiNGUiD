@@ -410,6 +410,7 @@ class ProfileViewModel: ObservableObject {
             }
             let title = (data["title"] as? String) ?? "N/A"
             let commentCount = data["commentCount"] as? Int ?? 0
+            let shares = data["shares"] as? Int ?? 0
             
             let captions: [Captions] = captionDicts.compactMap { dict in
                 guard let start = dict["start"] as? Double,
@@ -422,7 +423,7 @@ class ProfileViewModel: ObservableObject {
             }
             
             let detectedLevel = data["detected_level"] as? Int ?? 2
-            
+
             return Video(
                 id: docId,
                 url: url,
@@ -433,6 +434,7 @@ class ProfileViewModel: ObservableObject {
                 likes: likes,
                 saves: saves,
                 commentCount: commentCount,
+                shares: shares,
                 language: language
             )
             

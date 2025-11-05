@@ -680,7 +680,6 @@ struct ChatMessagesConvoView: View {
             uploadAudioFile(audioFileURL) { audioURLString in
                 if let audioURLString = audioURLString {
                     viewModel.sendMessage(audioURLString, to: chatID, replyingTo: replyingTo)
-                    //TODO: add the amplituded to the viewmodel or the DB
                 }
             }
         }

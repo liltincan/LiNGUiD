@@ -6,15 +6,20 @@ final class FirestoreVideoRepository: VideoRepository {
     
     func fetchVideos(afterID: String?, limit: Int, user: User, selectedLanguages: [String]) async throws -> [Video] {
         var allVideos: [Video] = []
-        
+
         for lang in selectedLanguages {
             let langCode = lang.lowercased()
             let userLevel = user.languagesData?[langCode]?.comprehensionLevel ?? 2
-            
-            let snapshot = try await db.collection(videosCollection)
+
+            var query = db.collection(videosCollection)
                 .document(langCode)
                 .collection("items")
-                .getDocuments()
+                .order(by: FieldPath.documentID())
+            if let afterID = afterID {
+                query = query.start(after: [afterID])
+            }
+            query = query.limit(to: limit * 10) // Fetch more to allow for engagement sorting after filtering
+            let snapshot = try await query.getDocuments()
 
             let unwatchedDocuments = snapshot.documents.filter { document in
                 !(user.watchedVideos?.contains(document.documentID) ?? false)
@@ -43,7 +48,8 @@ final class FirestoreVideoRepository: VideoRepository {
                 let detectedLevel = document.data()["detected_level"] as? Int ?? 2
                 let title = document.data()["title"] as? String ?? ""
                 let commentCount = document.data()["commentCount"] as? Int ?? 0
-                
+                let shares = document.data()["shares"] as? Int ?? 0
+
                 return Video(
                     id: document.documentID,
                     url: url,
@@ -54,6 +60,7 @@ final class FirestoreVideoRepository: VideoRepository {
                     likes: likes,
                     saves: saves,
                     commentCount: commentCount,
+                    shares: shares,
                     language: langCode
                 )
             }
@@ -61,11 +68,18 @@ final class FirestoreVideoRepository: VideoRepository {
             let filtered = videos.filter {
                 $0.detectedLevel >= (userLevel - 1) && $0.detectedLevel <= (userLevel + 1)
             }
-            
+
             allVideos.append(contentsOf: filtered)
         }
 
-        return Array(allVideos.prefix(limit))
+        // Sort by engagement score: likes + saves + comments + shares, descending
+        let sortedVideos = allVideos.sorted { (video1, video2) -> Bool in
+            let score1 = video1.likes + video1.saves + video1.commentCount + video1.shares
+            let score2 = video2.likes + video2.saves + video2.commentCount + video2.shares
+            return score1 > score2
+        }
+
+        return Array(sortedVideos.prefix(limit))
     }
 
     
@@ -112,8 +126,9 @@ final class FirestoreVideoRepository: VideoRepository {
 
         let detectedLevel = data["detected_level"] as? Int ?? 2
         let commentCount = data["commentCount"] as? Int ?? 0
+        let shares = data["shares"] as? Int ?? 0
         let title = data["title"] as? String ?? ""
-        return Video(id: videoId, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes, saves: saves, commentCount: commentCount, language: langCode)
+        return Video(id: videoId, url: url, captions: captions, title: title, detectedLevel: detectedLevel, uploaderId: uploaderId, likes: likes, saves: saves, commentCount: commentCount, shares: shares, language: langCode)
     }
 
 
