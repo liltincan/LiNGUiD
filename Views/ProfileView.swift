@@ -623,18 +623,23 @@ struct ProfileActionButtons: View {
             } label: {
                 Buttons(text: "edit")
             }
-            NavigationLink(isActive: $isShowingUploadView) {
-                UploadView(onComplete: {
-                    isShowingUploadView = false
-                    Task {
-                        await onUploadComplete()
-                    }
-                })
+            Button {
+                isShowingUploadView = true
             } label: {
-                Buttons(text: isUploading ? "upload" : "upload")
-                        .opacity(isUploading ? 0.6 : 1)
+                Buttons(text: "upload")
+                    .opacity(isUploading ? 0.6 : 1)
             }
             .disabled(isUploading)
+
+            .fullScreenCover(isPresented: $isShowingUploadView) {
+                UploadView(onComplete: {
+                    isShowingUploadView = false
+                    Task { await onUploadComplete() }
+                })
+                .preferredColorScheme(.dark)
+                .ignoresSafeArea()
+                .interactiveDismissDisabled(true)
+            }
             .animation(isUploading ? .easeInOut.delay(1) : .easeInOut, value: isUploading)
             
             Button {

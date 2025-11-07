@@ -20,6 +20,7 @@ struct UploadView: View {
     @State private var thumbnailOverrides: [String: UIImage] = [:]
     @State private var compressedVideoURLs: [String: URL] = [:]
     @State private var isCompressing = false
+    @Environment(\.dismiss) private var dismiss
 
     let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 3)
     private let selectionLimit = 25
@@ -27,15 +28,33 @@ struct UploadView: View {
     var body: some View {
         ZStack(alignment: .top) {
             Color.black.ignoresSafeArea()
+            HStack {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.leading, 16)
+                }
+                Spacer()
+                Text("Upload")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                Spacer()
+                Spacer().frame(width: 44) // balance the leading button
+            }
+            .padding(.top, 75)
+            .frame(height: 56)
 
             VStack(spacing: 0) {
                 // 🟣 Header
-                Text("Upload")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 10)
-                    .padding(.bottom, 30)
+//                Text("Upload")
+//                    .font(.system(size: 24, weight: .semibold))
+//                    .foregroundColor(.white)
+//                    .frame(maxWidth: .infinity, alignment: .center)
+//                    .padding(.top, 10)
+//                    .padding(.bottom, 30)
 
                 // 🟣 Selection Menu
 //                HStack {
@@ -78,6 +97,7 @@ struct UploadView: View {
                         }
                     }
                     .padding(.horizontal, 2.5)
+                    .padding(.top, 125)
                     .frame(maxHeight: geometry.size.height) // 🔧 adjust 180 based on header & buttons
                 }
 
@@ -99,56 +119,56 @@ struct UploadView: View {
                         
                         Spacer()
                         
-                        NavigationLink(
-                            destination: AddThumbnailView(
-                                assets: selectedAssets,
-                                compressedVideoURLs: compressedVideoURLs,
-                                onComplete: {
-                                    navigateToThumbnail = false
-                                    onComplete?()  // tells ProfileView to pop UploadView
-                                },
-                                thumbnailOverrides: $thumbnailOverrides
-                            ),
-                            isActive: $navigateToThumbnail
-                        ) {
-                            Button(action: {
+                        Button(action: {
+                            isCompressing = true
+                            Task {
                                 isCompressing = true
-
-                                Task {
-                                    isCompressing = true
-
-                                    for asset in selectedAssets {
-                                        if compressedVideoURLs[asset.localIdentifier] == nil {
-                                            if let url = await compressVideo(from: asset) {
-                                                compressedVideoURLs[asset.localIdentifier] = url
-                                            }
+                                for asset in selectedAssets {
+                                    if compressedVideoURLs[asset.localIdentifier] == nil {
+                                        if let url = await compressVideo(from: asset) {
+                                            compressedVideoURLs[asset.localIdentifier] = url
                                         }
                                     }
-
-                                    isCompressing = false
-                                    navigateToThumbnail = true
                                 }
-                            }) {
-                                Text("Next")
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 10)
-                                    .background(Color.appPrimaryColor)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(8)
+                                isCompressing = false
+                                navigateToThumbnail = true
                             }
+                        }) {
+                            Text("Next")
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(Color.appPrimaryColor)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
                         }
                         .disabled(selectedAssets.isEmpty)
                         .padding(.trailing, 2.5)
+                        
                     }
-                    .padding(.bottom, 5)
+                    .padding(.bottom, 50)
                 }
             }
         }
+        .padding(.top, 20)
         .animation(.easeInOut, value: isCompressing)
         .onAppear {
             loadVideos()
         }
         .allowsHitTesting(!isCompressing)
+        .fullScreenCover(isPresented: $navigateToThumbnail) {
+            AddThumbnailView(
+                assets: selectedAssets,
+                compressedVideoURLs: compressedVideoURLs,
+                onComplete: {
+                    navigateToThumbnail = false
+                    onComplete?()  // tells ProfileView to refresh/close
+                },
+                thumbnailOverrides: $thumbnailOverrides
+            )
+            .preferredColorScheme(.dark)
+            .ignoresSafeArea()
+            .interactiveDismissDisabled(true) // optional
+        }
         .overlay(
             Group {
                 if isCompressing {
@@ -415,106 +435,127 @@ struct AddThumbnailView: View {
     @State private var compressedVideoURL: [String: URL] = [:]
     
     var body: some View {
-        VStack {
-            Text("Edit Thumbnails")
-                .font(.title)
-                .foregroundColor(.white)
-                .padding(.top, 10)
-
-            ScrollView {
-                LazyVStack(spacing: 5) {
-                    ForEach(assets, id: \.localIdentifier) { asset in
-                        HStack {
-                            VideoThumbnailMiniView(
-                                asset: asset,
-                                overrideImage: thumbnailOverrides[asset.localIdentifier]
-                            )
-                            .frame(width: 90, height: 160)
-
-                            Spacer()
-
-                            Button(action: {
-                                showingFrameSelectorFor = asset
-                            }) {
-                                Text("Edit Thumbnail")
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal)
-                                    .padding(.vertical, 8)
-                                    .background(Color.appPrimaryColor)
-                                    .cornerRadius(8)
-                            }
-
-                            Spacer()
-                        }
-                        .padding()
-                        .background(Color.black)
-                        .cornerRadius(8)
-
-                        Divider()
-                            .background(Color.white.opacity(1.0))
-                    }
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+            HStack {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.leading, 16)
                 }
-                .padding(.horizontal, 10)
-            }
-
-            Button(action: {
-                isProcessing = true
-
-                Task.detached(priority: .userInitiated) {
-                    var tempCompressedURLs: [String: URL] = [:]
-
-                    // Compress (or just map to original) first
-                    for asset in assets {
-                        if let compressedURL = await compressVideo(from: asset) {
-                            tempCompressedURLs[asset.localIdentifier] = compressedURL
-                        }
-                    }
-
-                    await MainActor.run {
-                        // Show items in your UI bar
-                        uploadManager.addUploadingVideos(assets, thumbnails: thumbnailOverrides)
-                    }
-                    let sessionId = UUID().uuidString
-
-                    for asset in assets {
-                        guard let fileURL = tempCompressedURLs[asset.localIdentifier] else { continue }
-                        let filename = getVideoFilename(from: asset)
-                        let thumbData = thumbnailOverrides[asset.localIdentifier]?.jpegData(compressionQuality: 0.9)
-
-                        do {
-                            try BackgroundUploader.shared.enqueue(
-                                videoFileURL: fileURL,
-                                thumbnailJPEG: thumbData,
-                                filename: filename,
-                                category: "general",
-                                language: "auto",
-                                uploaderId: Auth.auth().currentUser?.uid,
-                                localIdentifier: asset.localIdentifier,
-                                sessionId: sessionId
-                            )
-                        } catch {
-                            print("Failed to enqueue \(asset.localIdentifier): \(error)")
-                        }
-                    }
-
-                    await MainActor.run {
-                        onComplete?()   // navigate back; uploads keep going in bg
-                        isProcessing = false
-                    }
-                }
-
-            }) {
-                Text("Upload")
-                    .font(.headline)
+                Spacer()
+                Text("Edit Thumbnails")
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, maxHeight: 60)
-                    .background(Color.appPrimaryColor)
-                    .cornerRadius(8)
+                Spacer()
+                Spacer().frame(width: 44)
             }
-            .disabled(isProcessing)
-            .padding(.bottom, 10)
-            .padding(.horizontal, 10)
-
+            .padding(.top, 75)
+            VStack {
+//                Text("Edit Thumbnails")
+//                    .font(.title)
+//                    .foregroundColor(.white)
+//                    .padding(.top, 10)
+                
+                ScrollView {
+                    LazyVStack(spacing: 5) {
+                        ForEach(assets, id: \.localIdentifier) { asset in
+                            HStack {
+                                VideoThumbnailMiniView(
+                                    asset: asset,
+                                    overrideImage: thumbnailOverrides[asset.localIdentifier]
+                                )
+                                .frame(width: 90, height: 160)
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    showingFrameSelectorFor = asset
+                                }) {
+                                    Text("Edit Thumbnail")
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal)
+                                        .padding(.vertical, 8)
+                                        .background(Color.appPrimaryColor)
+                                        .cornerRadius(8)
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding()
+                            .background(Color.black)
+                            .cornerRadius(8)
+                            
+                            Divider()
+                                .background(Color.white.opacity(1.0))
+                        }
+                    }
+                    .padding(.horizontal, 10)
+                }
+                .padding(.top, 125)
+                
+                Button(action: {
+                    isProcessing = true
+                    
+                    Task.detached(priority: .userInitiated) {
+                        var tempCompressedURLs: [String: URL] = [:]
+                        
+                        // Compress (or just map to original) first
+                        for asset in assets {
+                            if let compressedURL = await compressVideo(from: asset) {
+                                tempCompressedURLs[asset.localIdentifier] = compressedURL
+                            }
+                        }
+                        
+                        await MainActor.run {
+                            // Show items in your UI bar
+                            uploadManager.addUploadingVideos(assets, thumbnails: thumbnailOverrides)
+                        }
+                        let sessionId = UUID().uuidString
+                        
+                        for asset in assets {
+                            guard let fileURL = tempCompressedURLs[asset.localIdentifier] else { continue }
+                            let filename = getVideoFilename(from: asset)
+                            let thumbData = thumbnailOverrides[asset.localIdentifier]?.jpegData(compressionQuality: 0.9)
+                            
+                            do {
+                                try BackgroundUploader.shared.enqueue(
+                                    videoFileURL: fileURL,
+                                    thumbnailJPEG: thumbData,
+                                    filename: filename,
+                                    category: "general",
+                                    language: "auto",
+                                    uploaderId: Auth.auth().currentUser?.uid,
+                                    localIdentifier: asset.localIdentifier,
+                                    sessionId: sessionId
+                                )
+                            } catch {
+                                print("Failed to enqueue \(asset.localIdentifier): \(error)")
+                            }
+                        }
+                        
+                        await MainActor.run {
+                            onComplete?()   // navigate back; uploads keep going in bg
+                            isProcessing = false
+                        }
+                    }
+                    
+                }) {
+                    Text("Upload")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, maxHeight: 60)
+                        .background(Color.appPrimaryColor)
+                        .cornerRadius(8)
+                }
+                .disabled(isProcessing)
+                .padding(.bottom, 30)
+                .padding(.horizontal, 10)
+                
+            }
         }
         .onAppear {
             preloadDefaultThumbnails()
