@@ -140,37 +140,11 @@ struct LoginView: View {
 
 
 
-                VStack {
-                    HStack(spacing: 6) {
-                        Text("By clicking continue, you agree to our")
-                            .foregroundColor(.white.opacity(0.6))
-                            .multilineTextAlignment(.center)
-                        Button("Terms of Service") {
-                            if let url = URL(string: "https://learnwithlinguid.com/") {
-                                openURL(url)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundColor(.white)
-                        .fontWeight(.medium)
-                    }
+                Text("By clicking continue, you agree to our [Terms of Service](https://learnwithlinguid.com/terms-of-service) and [Privacy Policy](https://learnwithlinguid.com/privacy-policy)")
+                    .foregroundColor(.white.opacity(0.6))
+                    .tint(.white)
                     .multilineTextAlignment(.center)
-
-                    HStack(spacing: 6) {
-                        Text("and")
-                            .foregroundColor(.white.opacity(0.6))
-
-                        Button("Privacy Policy") {
-                            if let url = URL(string: "https://learnwithlinguid.com/") {
-                                openURL(url)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundColor(.white)
-                        .fontWeight(.medium)
-                    }
-                    .multilineTextAlignment(.center)
-                }
+                    .font(.system(size: 14))
             }
             .padding()
             

@@ -154,7 +154,7 @@ struct PrivacyPolicyView: View {
                         .foregroundColor(.white.opacity(0.8))
                         .lineSpacing(4)
                     
-                    Text("• Data Access and Deletion: Request a copy of your data or ask us to delete your account by contacting support@linguidapp.com.")
+                    Text("• Data Access and Deletion: Request a copy of your data or ask us to delete your account by contacting learnwithlinguid@gmail.com.")
                         .font(.system(size: 15))
                         .foregroundColor(.white.opacity(0.8))
                         .lineSpacing(4)

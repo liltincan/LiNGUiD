@@ -82,7 +82,7 @@ struct TermsOfServiceView: View {
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white)
 
-                    Text("LiNGUiD offers an auto-renewable subscription called 'LiNGUiD Pro' for 1 month at $9.99 or 1 year at $99.99. Subscriptions automatically renew unless canceled at least 24 hours before the end of the current period. Payment will be charged to your iTunes account. For more details on subscriptions, billing, and cancellation, please refer to our Privacy Policy and these Terms of Service.")
+                    Text("LiNGUiD offers an auto-renewable subscription called 'LiNGUiD Pro.' Current subscription duration and price are displayed in the app before purchase. Subscriptions automatically renew unless canceled at least 24 hours before the end of the current period. Payment will be charged to your iTunes account. For more details on subscriptions, billing, and cancellation, please refer to our Privacy Policy and these Terms of Service.")
                         .font(.system(size: 15))
                         .foregroundColor(.white.opacity(0.8))
                         .lineSpacing(4)
@@ -152,7 +152,7 @@ struct TermsOfServiceView: View {
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white)
                     
-                    Text("We may suspend or terminate your account for violating these Terms, with or without notice. You may delete your account at any time by contacting support@linguidapp.com. Upon termination, your license to use the Services ends, but certain provisions (e.g., arbitration, content licenses) survive.")
+                    Text("We may suspend or terminate your account for violating these Terms, with or without notice. You may delete your account at any time by contacting learnwithlinguid@gmail.com. Upon termination, your license to use the Services ends, but certain provisions (e.g., arbitration, content licenses) survive.")
                         .font(.system(size: 15))
                         .foregroundColor(.white.opacity(0.8))
                         .lineSpacing(4)

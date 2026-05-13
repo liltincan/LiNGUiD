@@ -56,8 +56,14 @@ struct SettingsView: View {
 
                         SettingsSection(title: "Information") {
                             SettingsRowLink(title: "About", destination: AboutView())
-                            SettingsRowLink(title: "Privacy", destination: PrivacyPolicyView())
-                            SettingsRowLink(title: "Terms Of Service", destination: TermsOfServiceView())
+                            Link(destination: URL(string: "https://learnwithlinguid.com/privacy-policy")!) {
+                                SettingsRowContent(title: "Privacy Policy")
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            Link(destination: URL(string: "https://learnwithlinguid.com/terms-of-service")!) {
+                                SettingsRowContent(title: "Terms of Service")
+                            }
+                            .buttonStyle(PlainButtonStyle())
                             SettingsRowLink(title: "Request a Feature", destination: RequestFeatureView())
                         }
 
