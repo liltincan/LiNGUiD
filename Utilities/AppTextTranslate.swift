@@ -13,7 +13,7 @@ func translateTextV2(
     targetLang: String,
     completion: @escaping (String?) -> Void
 ) {
-    let urlString = "https://translation.googleapis.com/language/translate/v2?key=AIzaSyDVKfGA_svso6ifwM0Eb8-BOTkVR4F3Brs"
+    let urlString = "https://translation.googleapis.com/language/translate/v2?key=xxxxxxxxxxxxxx"
     guard let url = URL(string: urlString) else {
         completion(nil)
         return
