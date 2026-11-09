@@ -40,3 +40,17 @@ playground.xcworkspace
 # App-specific
 # (Uncomment if you do NOT want to commit your Firebase config)
 # GoogleService-Info.plist
+# Local secrets, signing material, and user exports
+.env
+.env.*
+!.env.example
+*.local.xcconfig
+*.pem
+*.p8
+*.p12
+*.mobileprovision
+**/*firebase-adminsdk*.json
+**/service-account*.json
+**/credentials.json
+**/users.json
+**/*auth-export*.json
